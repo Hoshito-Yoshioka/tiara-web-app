@@ -1,0 +1,30 @@
+# --- OS特有のファイル ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# --- IDE・エディタ設定 ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- 言語/ツール共通（必要に応じてコメント解除） ---
+# node_modules/
+# dist/
+# build/
+# .env
+# .env.local
+# __pycache__/
+# *.pyc
+
+# --- ログファイル ---
+*.log
+
+# --- VSCode 拡張 ---
+.history/
