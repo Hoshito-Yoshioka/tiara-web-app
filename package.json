@@ -1,0 +1,12 @@
+{
+  "name": "tiara-web-app",
+  "private": true,
+  "description": "A web application for the bar 'Tiara', built with Vue, Hono, and Go.",
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:bff": "pnpm --filter bff dev"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5"
+  }
+}

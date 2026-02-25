@@ -15,16 +15,32 @@ ehthumbs.db
 *~
 
 # --- 言語/ツール共通（必要に応じてコメント解除） ---
-# node_modules/
-# dist/
-# build/
-# .env
-# .env.local
-# __pycache__/
-# *.pyc
+node_modules/
+dist/
+build/
+.env
+.env.local
+__pycache__/
+*.pyc
 
 # --- ログファイル ---
 *.log
 
 # --- VSCode 拡張 ---
 .history/
+
+# --- Go modules ---
+go.work
+go.work.sum
+
+# --- Docker ---
+.docker/
+
+# --- Package specific ignored files ---
+packages/*/dist/
+packages/*/node_modules/
+
+# Go backend compiled binary
+packages/backend/backend
+packages/backend/backend # Go binary
+packages/backend/bin/

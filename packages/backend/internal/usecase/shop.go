@@ -1,0 +1,38 @@
+package usecase
+
+import (
+	"context"
+	"tiara-web-app/backend/internal/domain"
+)
+
+// ShopRepository は店舗データの永続化を抽象化するインターフェースです。
+// これはinfrastructure層によって実装されます。
+type ShopRepository interface {
+	ListShops(ctx context.Context) ([]domain.Shop, error)
+}
+
+// ShopUsecase は店舗に関するビジネスロジックを定義するインターフェースです。
+type ShopUsecase interface {
+	ListShops(ctx context.Context) ([]domain.Shop, error)
+}
+
+// shopUsecase はShopUsecaseインターフェースの実装です。
+type shopUsecase struct {
+	shopRepo ShopRepository
+}
+
+// NewShopUsecase は新しいShopUsecaseのインスタンスを作成します。
+func NewShopUsecase(repo ShopRepository) ShopUsecase {
+	return &shopUsecase{
+		shopRepo: repo,
+	}
+}
+
+// ListShops はすべての店舗を取得します。
+func (u *shopUsecase) ListShops(ctx context.Context) ([]domain.Shop, error) {
+	shops, err := u.shopRepo.ListShops(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return shops, nil
+}
