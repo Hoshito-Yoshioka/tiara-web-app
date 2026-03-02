@@ -1,3 +1,66 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* 黒を基調としたラグジュアリーテーマ */
+    --background: 0 0% 4%; /* #0a0a0a */
+    --foreground: 40 20% 92%; /* クリーム白 */
+
+    --card: 0 0% 7%; /* やや明るい黒 */
+    --card-foreground: 40 20% 92%;
+
+    --popover: 0 0% 7%;
+    --popover-foreground: 40 20% 92%;
+
+    --primary: 43 52% 58%; /* ゴールド */
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 40 20% 92%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 52%;
+
+    --accent: 0 0% 14%;
+    --accent-foreground: 40 20% 92%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 40 20% 92%;
+
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 43 52% 58%;
+
+    --radius: 0.125rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+
+  /* スクロールバーをテーマに合わせる */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
