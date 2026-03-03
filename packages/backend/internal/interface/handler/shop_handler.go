@@ -24,3 +24,16 @@ func (h *ShopHandler) ListShops(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, shops)
 }
+
+func (h *ShopHandler) GetShopByID(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "id is required"})
+	}
+
+	shop, err := h.shopUsecase.GetShopByID(c.Request().Context(), id)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "shop not found"})
+	}
+	return c.JSON(http.StatusOK, shop)
+}

@@ -7,7 +7,28 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const getShopByID = `-- name: GetShopByID :one
+SELECT id, name, address, opening_time, closing_time, created_at, updated_at FROM shops WHERE id = $1
+`
+
+func (q *Queries) GetShopByID(ctx context.Context, id pgtype.UUID) (Shop, error) {
+	row := q.db.QueryRow(ctx, getShopByID, id)
+	var i Shop
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.OpeningTime,
+		&i.ClosingTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 const listShops = `-- name: ListShops :many
 SELECT id, name, address, opening_time, closing_time, created_at, updated_at FROM shops

@@ -22,6 +22,11 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3001"},
+		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE},
+		AllowHeaders: []string{echo.HeaderContentType, echo.HeaderAuthorization},
+	}))
 
 	// Database Connection
 	databaseURL := os.Getenv("DATABASE_URL")
@@ -47,13 +52,22 @@ func main() {
 
 	// Dependencies
 	queries := db.New(pool)
+
 	shopRepo := db.NewShopRepository(queries)
 	shopUsecase := usecase.NewShopUsecase(shopRepo)
 	shopHandler := handler.NewShopHandler(shopUsecase)
 
+	staffRepo := db.NewStaffRepository(queries)
+	staffUsecase := usecase.NewStaffUsecase(staffRepo)
+	staffHandler := handler.NewStaffHandler(staffUsecase)
+
 	// Routes
 	e.GET("/", healthCheck)
 	e.GET("/shops", shopHandler.ListShops)
+	e.GET("/shops/:id", shopHandler.GetShopByID)
+	e.GET("/staffs", staffHandler.ListStaffs)
+	e.GET("/staffs/:id", staffHandler.GetStaffWithSchedules)
+	e.GET("/schedules", staffHandler.ListAllStaffsWithSchedules)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

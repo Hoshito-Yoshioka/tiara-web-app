@@ -2,9 +2,9 @@ package db
 
 import (
 	"context"
-	"time" // timeパッケージを再度インポート
 	"tiara-web-app/backend/internal/domain"
 	"tiara-web-app/backend/internal/usecase"
+	"time" // timeパッケージを再度インポート
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype" // pgtypeパッケージをインポート
@@ -13,21 +13,20 @@ import (
 // Helper function to convert pgtype.Time to time.Time
 // This assumes the date part is irrelevant for TIME type and defaults to 0001-01-01 UTC
 func convertPgtypeTimeToTime(pgt pgtype.Time) time.Time {
-    if !pgt.Valid {
-        return time.Time{} // Return zero time if not valid
-    }
-    // Microseconds since midnight
-    totalMicroseconds := pgt.Microseconds
-    hour := totalMicroseconds / (3600 * 1_000_000)
-    totalMicroseconds %= (3600 * 1_000_000)
-    minute := totalMicroseconds / (60 * 1_000_000)
-    totalMicroseconds %= (60 * 1_000_000)
-    second := totalMicroseconds / 1_000_000
-    microsecond := totalMicroseconds % 1_000_000
+	if !pgt.Valid {
+		return time.Time{} // Return zero time if not valid
+	}
+	// Microseconds since midnight
+	totalMicroseconds := pgt.Microseconds
+	hour := totalMicroseconds / (3600 * 1_000_000)
+	totalMicroseconds %= (3600 * 1_000_000)
+	minute := totalMicroseconds / (60 * 1_000_000)
+	totalMicroseconds %= (60 * 1_000_000)
+	second := totalMicroseconds / 1_000_000
+	microsecond := totalMicroseconds % 1_000_000
 
-    return time.Date(0, 1, 1, int(hour), int(minute), int(second), int(microsecond*1000), time.UTC)
+	return time.Date(0, 1, 1, int(hour), int(minute), int(second), int(microsecond*1000), time.UTC)
 }
-
 
 // shopRepository は usecase.ShopRepository インターフェースの実装です。
 type shopRepository struct {
@@ -51,14 +50,43 @@ func (r *shopRepository) ListShops(ctx context.Context) ([]domain.Shop, error) {
 	shops := make([]domain.Shop, len(rows))
 	for i, row := range rows {
 		shops[i] = domain.Shop{
-			ID:          uuid.UUID(row.ID.Bytes),                               // pgtype.UUID to uuid.UUID
+			ID:          uuid.UUID(row.ID.Bytes), // pgtype.UUID to uuid.UUID
 			Name:        row.Name,
 			Address:     row.Address,
 			OpeningTime: convertPgtypeTimeToTime(row.OpeningTime), // pgtype.Time to time.Time
 			ClosingTime: convertPgtypeTimeToTime(row.ClosingTime), // pgtype.Time to time.Time
-			CreatedAt:   row.CreatedAt.Time,                              // pgtype.Timestamptz to time.Time
-			UpdatedAt:   row.UpdatedAt.Time,                              // pgtype.Timestamptz to time.Time
+			CreatedAt:   row.CreatedAt.Time,                       // pgtype.Timestamptz to time.Time
+			UpdatedAt:   row.UpdatedAt.Time,                       // pgtype.Timestamptz to time.Time
 		}
 	}
 	return shops, nil
+}
+
+// GetShopByID は指定されたIDの店舗をデータベースから取得します。
+func (r *shopRepository) GetShopByID(ctx context.Context, id string) (domain.Shop, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return domain.Shop{}, err
+	}
+
+	pgtypeUUID := pgtype.UUID{
+		Bytes: uid,
+		Valid: true,
+	}
+
+	row, err := r.q.GetShopByID(ctx, pgtypeUUID)
+	if err != nil {
+		return domain.Shop{}, err
+	}
+
+	shop := domain.Shop{
+		ID:          uuid.UUID(row.ID.Bytes),
+		Name:        row.Name,
+		Address:     row.Address,
+		OpeningTime: convertPgtypeTimeToTime(row.OpeningTime),
+		ClosingTime: convertPgtypeTimeToTime(row.ClosingTime),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
+	}
+	return shop, nil
 }
