@@ -28,6 +28,23 @@ func convertPgtypeTimeToTime(pgt pgtype.Time) time.Time {
 	return time.Date(0, 1, 1, int(hour), int(minute), int(second), int(microsecond*1000), time.UTC)
 }
 
+// parseTimeToPgtype は "HH:MM" or "HH:MM:SS" 形式の時刻文字列を pgtype.Time に変換する。
+// admin API でフロントエンドから受け取った時刻文字列をDBに保存する際に使用。
+func parseTimeToPgtype(timeStr string) (pgtype.Time, error) {
+	t, err := time.Parse("15:04", timeStr)
+	if err != nil {
+		t, err = time.Parse("15:04:05", timeStr)
+		if err != nil {
+			return pgtype.Time{}, err
+		}
+	}
+	microseconds := int64(t.Hour())*3600*1_000_000 + int64(t.Minute())*60*1_000_000 + int64(t.Second())*1_000_000
+	return pgtype.Time{
+		Microseconds: microseconds,
+		Valid:        true,
+	}, nil
+}
+
 // shopRepository は usecase.ShopRepository インターフェースの実装です。
 type shopRepository struct {
 	q *Queries
@@ -89,4 +106,43 @@ func (r *shopRepository) GetShopByID(ctx context.Context, id string) (domain.Sho
 		UpdatedAt:   row.UpdatedAt.Time,
 	}
 	return shop, nil
+}
+
+// UpdateShop は指定されたIDの店舗情報を更新する。
+func (r *shopRepository) UpdateShop(ctx context.Context, id string, input domain.UpdateShopInput) (domain.Shop, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return domain.Shop{}, err
+	}
+
+	openingTime, err := parseTimeToPgtype(input.OpeningTime)
+	if err != nil {
+		return domain.Shop{}, err
+	}
+
+	closingTime, err := parseTimeToPgtype(input.ClosingTime)
+	if err != nil {
+		return domain.Shop{}, err
+	}
+
+	row, err := r.q.UpdateShop(ctx, UpdateShopParams{
+		ID:          pgtype.UUID{Bytes: uid, Valid: true},
+		Name:        input.Name,
+		Address:     input.Address,
+		OpeningTime: openingTime,
+		ClosingTime: closingTime,
+	})
+	if err != nil {
+		return domain.Shop{}, err
+	}
+
+	return domain.Shop{
+		ID:          uuid.UUID(row.ID.Bytes),
+		Name:        row.Name,
+		Address:     row.Address,
+		OpeningTime: convertPgtypeTimeToTime(row.OpeningTime),
+		ClosingTime: convertPgtypeTimeToTime(row.ClosingTime),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
+	}, nil
 }

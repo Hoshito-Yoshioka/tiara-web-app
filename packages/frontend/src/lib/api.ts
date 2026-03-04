@@ -24,6 +24,11 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     )
   }
 
+  // 204 No Content のハンドリング（DELETE 等のレスポンスボディがないケース）
+  if (res.status === 204) {
+    return undefined as T
+  }
+
   // BFF ではなく別サーバー（Vite 等）が応答した場合を検知
   const contentType = res.headers.get('content-type') ?? ''
   if (!contentType.includes('application/json')) {

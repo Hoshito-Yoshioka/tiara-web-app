@@ -4,6 +4,9 @@ import { cors } from 'hono/cors'
 import { shopRoutes } from './routes/shop'
 import { staffRoutes } from './routes/staff'
 import { scheduleRoutes } from './routes/schedule'
+import { authRoutes } from './routes/auth'
+import { adminShopRoutes } from './routes/admin/shop'
+import { adminStaffRoutes } from './routes/admin/staff'
 
 const app = new Hono()
 
@@ -22,14 +25,17 @@ app.get('/', (c) => {
   return c.json({ message: 'Tiara BFF is running' })
 })
 
-// Shop routes — /api/shops 配下にマウント
+// Public routes
 app.route('/api/shops', shopRoutes)
-
-// Staff routes — /api/staffs 配下にマウント
 app.route('/api/staffs', staffRoutes)
-
-// Schedule routes — /api/schedules 配下にマウント
 app.route('/api/schedules', scheduleRoutes)
+
+// Auth routes
+app.route('/api/auth', authRoutes)
+
+// Admin routes (認証ミドルウェアは各ルートファイル内で適用)
+app.route('/api/admin/shops', adminShopRoutes)
+app.route('/api/admin/staffs', adminStaffRoutes)
 
 // Node.js HTTP サーバーとして起動
 const port = Number(process.env.PORT) || 3001

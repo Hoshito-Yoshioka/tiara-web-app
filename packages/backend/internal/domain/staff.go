@@ -37,3 +37,31 @@ type StaffWithSchedules struct {
 	Staff     Staff
 	Schedules []StaffSchedule
 }
+
+// CreateStaffInput はスタッフ作成時の入力構造体。
+type CreateStaffInput struct {
+	ShopID    string
+	Name      string
+	Role      string
+	Bio       string
+	ImageURL  string
+	SortOrder int
+	Schedules []ScheduleInput
+}
+
+// UpdateStaffInput はスタッフ更新時の入力構造体。
+type UpdateStaffInput struct {
+	Name      string
+	Role      string
+	Bio       string
+	ImageURL  string
+	SortOrder int
+	Schedules []ScheduleInput
+}
+
+// ScheduleInput は出勤スケジュールの入力構造体。
+type ScheduleInput struct {
+	DayOfWeek int
+	StartTime string
+	EndTime   string
+}

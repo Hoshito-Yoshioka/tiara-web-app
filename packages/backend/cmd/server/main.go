@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"tiara-web-app/backend/internal/infrastructure/db"
-	handler "tiara-web-app/backend/internal/interface/handler" // handlerパッケージをエイリアス
+	handler "tiara-web-app/backend/internal/interface/handler"
+	authMiddleware "tiara-web-app/backend/internal/interface/middleware"
 	"tiara-web-app/backend/internal/usecase"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -57,17 +58,32 @@ func main() {
 	shopUsecase := usecase.NewShopUsecase(shopRepo)
 	shopHandler := handler.NewShopHandler(shopUsecase)
 
-	staffRepo := db.NewStaffRepository(queries)
+	staffRepo := db.NewStaffRepository(queries, pool)
 	staffUsecase := usecase.NewStaffUsecase(staffRepo)
 	staffHandler := handler.NewStaffHandler(staffUsecase)
 
-	// Routes
+	adminRepo := db.NewAdminRepository(queries)
+	authUsecase := usecase.NewAuthUsecase(adminRepo)
+	authHandler := handler.NewAuthHandler(authUsecase)
+
+	// Public Routes
 	e.GET("/", healthCheck)
 	e.GET("/shops", shopHandler.ListShops)
 	e.GET("/shops/:id", shopHandler.GetShopByID)
 	e.GET("/staffs", staffHandler.ListStaffs)
 	e.GET("/staffs/:id", staffHandler.GetStaffWithSchedules)
 	e.GET("/schedules", staffHandler.ListAllStaffsWithSchedules)
+
+	// Auth Routes
+	e.POST("/auth/login", authHandler.Login)
+
+	// Admin Routes (JWT Protected)
+	admin := e.Group("/admin", authMiddleware.JWTAuth())
+	admin.GET("/auth/verify", authHandler.Verify)
+	admin.PUT("/shops/:id", shopHandler.UpdateShop)
+	admin.POST("/staffs", staffHandler.CreateStaff)
+	admin.PUT("/staffs/:id", staffHandler.UpdateStaff)
+	admin.DELETE("/staffs/:id", staffHandler.DeleteStaff)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

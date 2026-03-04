@@ -61,3 +61,36 @@ func (q *Queries) ListShops(ctx context.Context) ([]Shop, error) {
 	}
 	return items, nil
 }
+
+type UpdateShopParams struct {
+	ID          pgtype.UUID
+	Name        string
+	Address     string
+	OpeningTime pgtype.Time
+	ClosingTime pgtype.Time
+}
+
+const updateShop = `-- name: UpdateShop :one
+UPDATE shops SET name = $2, address = $3, opening_time = $4, closing_time = $5 WHERE id = $1 RETURNING id, name, address, opening_time, closing_time, created_at, updated_at
+`
+
+func (q *Queries) UpdateShop(ctx context.Context, arg UpdateShopParams) (Shop, error) {
+	row := q.db.QueryRow(ctx, updateShop,
+		arg.ID,
+		arg.Name,
+		arg.Address,
+		arg.OpeningTime,
+		arg.ClosingTime,
+	)
+	var i Shop
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.OpeningTime,
+		&i.ClosingTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

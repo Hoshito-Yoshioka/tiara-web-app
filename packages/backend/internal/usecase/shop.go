@@ -10,12 +10,14 @@ import (
 type ShopRepository interface {
 	ListShops(ctx context.Context) ([]domain.Shop, error)
 	GetShopByID(ctx context.Context, id string) (domain.Shop, error)
+	UpdateShop(ctx context.Context, id string, input domain.UpdateShopInput) (domain.Shop, error)
 }
 
 // ShopUsecase は店舗に関するビジネスロジックを定義するインターフェースです。
 type ShopUsecase interface {
 	ListShops(ctx context.Context) ([]domain.Shop, error)
 	GetShopByID(ctx context.Context, id string) (domain.Shop, error)
+	UpdateShop(ctx context.Context, id string, input domain.UpdateShopInput) (domain.Shop, error)
 }
 
 // shopUsecase はShopUsecaseインターフェースの実装です。
@@ -46,4 +48,9 @@ func (u *shopUsecase) GetShopByID(ctx context.Context, id string) (domain.Shop, 
 		return domain.Shop{}, err
 	}
 	return shop, nil
+}
+
+// UpdateShop は指定されたIDの店舗情報を更新します。
+func (u *shopUsecase) UpdateShop(ctx context.Context, id string, input domain.UpdateShopInput) (domain.Shop, error) {
+	return u.shopRepo.UpdateShop(ctx, id, input)
 }

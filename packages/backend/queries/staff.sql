@@ -12,3 +12,18 @@ SELECT * FROM staff_schedules WHERE staff_id = $1 ORDER BY day_of_week ASC;
 
 -- name: ListAllSchedules :many
 SELECT * FROM staff_schedules ORDER BY staff_id, day_of_week ASC;
+
+-- name: CreateStaff :one
+INSERT INTO staffs (shop_id, name, role, bio, image_url, sort_order) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+
+-- name: UpdateStaff :one
+UPDATE staffs SET name = $2, role = $3, bio = $4, image_url = $5, sort_order = $6 WHERE id = $1 RETURNING *;
+
+-- name: DeleteStaff :exec
+DELETE FROM staffs WHERE id = $1;
+
+-- name: DeleteSchedulesByStaffID :exec
+DELETE FROM staff_schedules WHERE staff_id = $1;
+
+-- name: CreateSchedule :one
+INSERT INTO staff_schedules (staff_id, day_of_week, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING *;

@@ -11,6 +11,10 @@ type StaffRepository interface {
 	GetStaffByID(ctx context.Context, id string) (domain.Staff, error)
 	ListSchedulesByStaffID(ctx context.Context, staffID string) ([]domain.StaffSchedule, error)
 	ListAllSchedules(ctx context.Context) ([]domain.StaffSchedule, error)
+	CreateStaff(ctx context.Context, input domain.CreateStaffInput) (domain.Staff, error)
+	UpdateStaff(ctx context.Context, id string, input domain.UpdateStaffInput) (domain.Staff, error)
+	DeleteStaff(ctx context.Context, id string) error
+	ReplaceSchedules(ctx context.Context, staffID string, schedules []domain.ScheduleInput) ([]domain.StaffSchedule, error)
 }
 
 // StaffUsecase はスタッフに関するビジネスロジックを定義するインターフェース。
@@ -18,6 +22,9 @@ type StaffUsecase interface {
 	ListStaffs(ctx context.Context) ([]domain.Staff, error)
 	GetStaffWithSchedules(ctx context.Context, id string) (domain.StaffWithSchedules, error)
 	ListAllStaffsWithSchedules(ctx context.Context) ([]domain.StaffWithSchedules, error)
+	CreateStaff(ctx context.Context, input domain.CreateStaffInput) (domain.StaffWithSchedules, error)
+	UpdateStaff(ctx context.Context, id string, input domain.UpdateStaffInput) (domain.StaffWithSchedules, error)
+	DeleteStaff(ctx context.Context, id string) error
 }
 
 type staffUsecase struct {
@@ -82,4 +89,48 @@ func (u *staffUsecase) ListAllStaffsWithSchedules(ctx context.Context) ([]domain
 	}
 
 	return result, nil
+}
+
+// CreateStaff は新しいスタッフを作成し、スケジュールも登録する。
+func (u *staffUsecase) CreateStaff(ctx context.Context, input domain.CreateStaffInput) (domain.StaffWithSchedules, error) {
+	staff, err := u.staffRepo.CreateStaff(ctx, input)
+	if err != nil {
+		return domain.StaffWithSchedules{}, err
+	}
+
+	var schedules []domain.StaffSchedule
+	if len(input.Schedules) > 0 {
+		schedules, err = u.staffRepo.ReplaceSchedules(ctx, staff.ID.String(), input.Schedules)
+		if err != nil {
+			return domain.StaffWithSchedules{}, err
+		}
+	}
+
+	return domain.StaffWithSchedules{
+		Staff:     staff,
+		Schedules: schedules,
+	}, nil
+}
+
+// UpdateStaff は指定されたIDのスタッフ情報とスケジュールを更新する。
+func (u *staffUsecase) UpdateStaff(ctx context.Context, id string, input domain.UpdateStaffInput) (domain.StaffWithSchedules, error) {
+	staff, err := u.staffRepo.UpdateStaff(ctx, id, input)
+	if err != nil {
+		return domain.StaffWithSchedules{}, err
+	}
+
+	schedules, err := u.staffRepo.ReplaceSchedules(ctx, id, input.Schedules)
+	if err != nil {
+		return domain.StaffWithSchedules{}, err
+	}
+
+	return domain.StaffWithSchedules{
+		Staff:     staff,
+		Schedules: schedules,
+	}, nil
+}
+
+// DeleteStaff は指定されたIDのスタッフを削除する。
+func (u *staffUsecase) DeleteStaff(ctx context.Context, id string) error {
+	return u.staffRepo.DeleteStaff(ctx, id)
 }

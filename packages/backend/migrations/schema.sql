@@ -1,3 +1,34 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- ==============================
+-- トリガー関数（updated_at 自動更新用）
+-- 全テーブルで共有するため、最初に定義する
+-- ==============================
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ==============================
+-- admins テーブル
+-- 管理者認証用。パスワードは bcrypt ハッシュで保存。
+-- ==============================
+CREATE TABLE admins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_admins_updated_at
+BEFORE UPDATE ON admins
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
 CREATE TABLE shops (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
@@ -7,15 +38,6 @@ CREATE TABLE shops (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
--- トリガー関数とトリガーの定義（updated_atの自動更新用）
-CREATE OR REPLACE FUNCTION update_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_shops_updated_at
 BEFORE UPDATE ON shops
