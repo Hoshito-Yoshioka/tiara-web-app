@@ -91,10 +91,10 @@ docker-compose ps
 
 ```bash
 cd packages/backend
-source ../../.env && go run ./cmd/server/main.go
+set -a && source ../../.env && set +a && go run ./cmd/server/main.go
 ```
 
-> **Note:** Go は `.env` ファイルを自動で読み込みません。`source` で環境変数をシェルにロードしてから起動します。
+> **Note:** Go は `.env` ファイルを自動で読み込みません。`set -a` で変数を自動 export する設定にしてから `source` で読み込み、`set +a` で元に戻しています。
 
 起動確認：ターミナルに `Successfully connected to the database!` が表示されれば OK。
 
@@ -159,7 +159,7 @@ tiara-web-app/
 ## よくあるエラー
 
 **`DATABASE_URL environment variable is not set`**
-→ Go は `.env` を自動で読み込みません。起動コマンドに `source ../../.env &&` を付けて実行してください（[② バックエンドを起動](#②-バックエンドgo--echoを起動) 参照）。`.env` 自体が存在しない場合は [環境変数の設定](#2-環境変数を設定) を確認してください。
+→ Go は `.env` を自動で読み込みません。起動コマンドに `set -a && source ../../.env && set +a &&` を付けて実行してください（[② バックエンドを起動](#②-バックエンドgo--echoを起動) 参照）。`.env` 自体が存在しない場合は [環境変数の設定](#2-環境変数を設定) を確認してください。
 
 **`Unable to connect to database`**
 → Docker コンテナが起動していません。`docker-compose up -d` を実行してから再試行してください。
