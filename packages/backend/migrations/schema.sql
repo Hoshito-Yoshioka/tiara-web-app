@@ -84,3 +84,41 @@ CREATE TRIGGER update_staff_schedules_updated_at
 BEFORE UPDATE ON staff_schedules
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
+
+-- ==============================
+-- menu_categories テーブル
+-- PRICEページに表示するメニューのカテゴリ（例: Cocktails, Whisky & Spirits）
+-- ==============================
+CREATE TABLE menu_categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_menu_categories_updated_at
+BEFORE UPDATE ON menu_categories
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- ==============================
+-- menu_items テーブル
+-- 各カテゴリに属するメニュー品目と価格
+-- ==============================
+CREATE TABLE menu_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    category_id UUID NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    price VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_menu_items_updated_at
+BEFORE UPDATE ON menu_items
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();

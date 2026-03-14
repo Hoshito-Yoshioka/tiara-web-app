@@ -49,6 +49,7 @@
     const result = await updateShop(shopId.value, form.value)
     if (result) {
       successMessage.value = '店舗情報を更新しました'
+      window.scrollTo({ top: 0, behavior: 'smooth' })
       setTimeout(() => {
         successMessage.value = null
       }, 3000)

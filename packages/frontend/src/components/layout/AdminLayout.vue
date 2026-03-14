@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { RouterLink, useRouter } from 'vue-router'
   import { useAuthStore } from '@/stores/auth'
-  import { LogOut, Store, Users, Home } from 'lucide-vue-next'
+  import { LogOut, Store, Users, Home, UtensilsCrossed } from 'lucide-vue-next'
 
   const authStore = useAuthStore()
   const router = useRouter()
@@ -42,6 +42,14 @@
               <Users :size="14" />
               スタッフ管理
             </RouterLink>
+            <RouterLink
+              to="/admin/menu"
+              class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              active-class="text-foreground"
+            >
+              <UtensilsCrossed :size="14" />
+              メニュー管理
+            </RouterLink>
           </nav>
         </div>
 
@@ -80,6 +88,14 @@
         >
           <Users :size="14" />
           スタッフ管理
+        </RouterLink>
+        <RouterLink
+          to="/admin/menu"
+          class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          active-class="text-foreground"
+        >
+          <UtensilsCrossed :size="14" />
+          メニュー管理
         </RouterLink>
       </nav>
     </header>

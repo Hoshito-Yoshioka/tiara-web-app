@@ -79,6 +79,12 @@ const router = createRouter({
       component: () => import('@/views/admin/AdminStaffEditView.vue'),
       meta: { layout: 'admin', requiresAuth: true },
     },
+    {
+      path: '/admin/menu',
+      name: 'admin-menu-edit',
+      component: () => import('@/views/admin/AdminMenuView.vue'),
+      meta: { layout: 'admin', requiresAuth: true },
+    },
   ],
 })
 

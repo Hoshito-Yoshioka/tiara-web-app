@@ -2,9 +2,13 @@
  * API クライアントの共通設定。
  * すべての API 呼び出しはこの基底関数を通すことで、
  * ベース URL やエラーハンドリングを一元管理する。
+ *
+ * 開発環境: BFF は localhost:3001 で起動する。
+ *           BFF 側で CORS が設定済み（origin: localhost:5173）。
+ * 本番環境: VITE_API_BASE_URL で BFF の URL を指定する。
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`

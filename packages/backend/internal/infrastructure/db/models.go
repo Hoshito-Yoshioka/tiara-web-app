@@ -47,3 +47,23 @@ type StaffSchedule struct {
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
 }
+
+type MenuCategory struct {
+	ID          pgtype.UUID
+	Name        string
+	Description string
+	SortOrder   int32
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type MenuItem struct {
+	ID          pgtype.UUID
+	CategoryID  pgtype.UUID
+	Name        string
+	Price       string
+	Description string
+	SortOrder   int32
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}

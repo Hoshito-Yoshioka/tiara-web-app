@@ -4,9 +4,11 @@ import { cors } from 'hono/cors'
 import { shopRoutes } from './routes/shop'
 import { staffRoutes } from './routes/staff'
 import { scheduleRoutes } from './routes/schedule'
+import { menuRoutes } from './routes/menu'
 import { authRoutes } from './routes/auth'
 import { adminShopRoutes } from './routes/admin/shop'
 import { adminStaffRoutes } from './routes/admin/staff'
+import { adminMenuRoutes } from './routes/admin/menu'
 
 const app = new Hono()
 
@@ -29,6 +31,7 @@ app.get('/', (c) => {
 app.route('/api/shops', shopRoutes)
 app.route('/api/staffs', staffRoutes)
 app.route('/api/schedules', scheduleRoutes)
+app.route('/api/menus', menuRoutes)
 
 // Auth routes
 app.route('/api/auth', authRoutes)
@@ -36,6 +39,7 @@ app.route('/api/auth', authRoutes)
 // Admin routes (認証ミドルウェアは各ルートファイル内で適用)
 app.route('/api/admin/shops', adminShopRoutes)
 app.route('/api/admin/staffs', adminStaffRoutes)
+app.route('/api/admin/menu', adminMenuRoutes)
 
 // Node.js HTTP サーバーとして起動
 const port = Number(process.env.PORT) || 3001

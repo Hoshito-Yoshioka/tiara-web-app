@@ -66,6 +66,10 @@ func main() {
 	authUsecase := usecase.NewAuthUsecase(adminRepo)
 	authHandler := handler.NewAuthHandler(authUsecase)
 
+	menuRepo := db.NewMenuRepository(queries)
+	menuUsecase := usecase.NewMenuUsecase(menuRepo)
+	menuHandler := handler.NewMenuHandler(menuUsecase)
+
 	// Public Routes
 	e.GET("/", healthCheck)
 	e.GET("/shops", shopHandler.ListShops)
@@ -73,6 +77,7 @@ func main() {
 	e.GET("/staffs", staffHandler.ListStaffs)
 	e.GET("/staffs/:id", staffHandler.GetStaffWithSchedules)
 	e.GET("/schedules", staffHandler.ListAllStaffsWithSchedules)
+	e.GET("/menus", menuHandler.ListMenuCategoriesWithItems)
 
 	// Auth Routes
 	e.POST("/auth/login", authHandler.Login)
@@ -84,6 +89,12 @@ func main() {
 	admin.POST("/staffs", staffHandler.CreateStaff)
 	admin.PUT("/staffs/:id", staffHandler.UpdateStaff)
 	admin.DELETE("/staffs/:id", staffHandler.DeleteStaff)
+	admin.POST("/menu/categories", menuHandler.CreateMenuCategory)
+	admin.PUT("/menu/categories/:id", menuHandler.UpdateMenuCategory)
+	admin.DELETE("/menu/categories/:id", menuHandler.DeleteMenuCategory)
+	admin.POST("/menu/items", menuHandler.CreateMenuItem)
+	admin.PUT("/menu/items/:id", menuHandler.UpdateMenuItem)
+	admin.DELETE("/menu/items/:id", menuHandler.DeleteMenuItem)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

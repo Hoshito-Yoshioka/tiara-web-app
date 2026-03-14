@@ -44,3 +44,34 @@ export interface ScheduleInput {
   startTime: string
   endTime: string
 }
+
+/** メニューカテゴリ作成フォームの入力型 */
+export interface CreateMenuCategoryInput {
+  name: string
+  description: string
+  sortOrder: number
+}
+
+/** メニューカテゴリ更新フォームの入力型 */
+export interface UpdateMenuCategoryInput {
+  name: string
+  description: string
+  sortOrder: number
+}
+
+/** メニューアイテム作成フォームの入力型 */
+export interface CreateMenuItemInput {
+  categoryId: string
+  name: string
+  price: string
+  description: string
+  sortOrder: number
+}
+
+/** メニューアイテム更新フォームの入力型 */
+export interface UpdateMenuItemInput {
+  name: string
+  price: string
+  description: string
+  sortOrder: number
+}

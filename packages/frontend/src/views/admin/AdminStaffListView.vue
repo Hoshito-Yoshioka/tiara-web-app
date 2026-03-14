@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { onMounted } from 'vue'
+  import { ref, onMounted } from 'vue'
   import { RouterLink } from 'vue-router'
   import AdminLayout from '@/components/layout/AdminLayout.vue'
   import { useStaffApi } from '@/composables/useStaffApi'
@@ -8,6 +8,8 @@
 
   const { staffList, fetchStaffs, isLoading } = useStaffApi()
   const { deleteStaff, isLoading: isDeleting } = useAdminApi()
+
+  const successMessage = ref<string | null>(null)
 
   onMounted(() => {
     fetchStaffs()
@@ -19,6 +21,11 @@
     const success = await deleteStaff(id)
     if (success) {
       await fetchStaffs()
+      successMessage.value = `「${name}」を削除しました`
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setTimeout(() => {
+        successMessage.value = null
+      }, 3000)
     }
   }
 </script>
@@ -40,6 +47,14 @@
           <Plus :size="16" />
           新規作成
         </RouterLink>
+      </div>
+
+      <!-- 成功メッセージ -->
+      <div
+        v-if="successMessage"
+        class="mb-4 bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-3"
+      >
+        <p class="text-sm text-green-400">{{ successMessage }}</p>
       </div>
 
       <div v-if="isLoading" class="text-muted-foreground text-sm">読み込み中...</div>

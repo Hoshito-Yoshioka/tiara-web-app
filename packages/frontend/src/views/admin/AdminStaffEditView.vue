@@ -113,6 +113,7 @@
       })
       if (result) {
         successMessage.value = 'スタッフ情報を更新しました'
+        window.scrollTo({ top: 0, behavior: 'smooth' })
         setTimeout(() => {
           successMessage.value = null
         }, 3000)
