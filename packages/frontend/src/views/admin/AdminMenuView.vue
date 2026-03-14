@@ -38,6 +38,39 @@
     }, 3000)
   }
 
+  // ============================================================
+  // 料金フォーマットヘルパー
+  // ============================================================
+
+  /** DB保存値（"¥1,200〜"）から ¥ を除去して編集用テキスト（"1,200〜"）にする */
+  function stripYenPrefix(price: string): string {
+    return price.replace(/^¥/, '')
+  }
+
+  /**
+   * 入力中のテキストを整形する。
+   * - 数字部分にカンマを自動挿入（既存カンマは除去してから再整形）
+   * - 末尾の "〜" 等の非数字サフィックスは保持
+   */
+  function formatPriceText(raw: string): string {
+    const match = raw.match(/^([0-9,]+)(.*)$/)
+    if (!match) return raw
+    const digits = match[1].replace(/,/g, '')
+    const suffix = match[2]
+    const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    return formatted + suffix
+  }
+
+  /** フォーム内の price フィールドをリアルタイム整形する */
+  function onPriceInput(form: { price: string }) {
+    form.price = formatPriceText(form.price)
+  }
+
+  /** 編集用テキスト（"1,200〜"）を DB 保存用（"¥1,200〜"）に変換する */
+  function toStoragePrice(editPrice: string): string {
+    return '¥' + editPrice
+  }
+
   const editingCategoryId = ref<string | null>(null)
   const categoryForm = ref<CategoryForm>({ name: '', description: '', sortOrder: 0 })
   const showNewCategoryForm = ref(false)
@@ -99,7 +132,7 @@
     editingItemId.value = item.id
     itemForm.value = {
       name: item.name,
-      price: item.price,
+      price: stripYenPrefix(item.price),
       description: item.description,
       sortOrder: item.sortOrder,
     }
@@ -110,7 +143,10 @@
   }
 
   async function saveItem(id: string) {
-    const result = await updateMenuItem(id, itemForm.value)
+    const result = await updateMenuItem(id, {
+      ...itemForm.value,
+      price: toStoragePrice(itemForm.value.price),
+    })
     if (result) {
       editingItemId.value = null
       await fetchMenus()
@@ -133,7 +169,11 @@
   }
 
   async function handleCreateItem(categoryId: string) {
-    const result = await createMenuItem({ categoryId, ...newItemForm.value })
+    const result = await createMenuItem({
+      categoryId,
+      ...newItemForm.value,
+      price: toStoragePrice(newItemForm.value.price),
+    })
     if (result) {
       showNewItemCategoryId.value = null
       newItemForm.value = { name: '', price: '', description: '', sortOrder: 0 }
@@ -296,11 +336,17 @@
                     placeholder="アイテム名"
                     class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
                   />
-                  <input
-                    v-model="itemForm.price"
-                    placeholder="価格（例: ¥800〜）"
-                    class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
-                  />
+                  <div
+                    class="flex items-center bg-white/5 border border-white/10 rounded focus-within:border-white/30"
+                  >
+                    <span class="pl-3 text-sm text-muted-foreground select-none">¥</span>
+                    <input
+                      v-model="itemForm.price"
+                      @input="onPriceInput(itemForm)"
+                      placeholder="800〜"
+                      class="flex-1 bg-transparent py-1.5 px-1.5 text-sm text-foreground focus:outline-none"
+                    />
+                  </div>
                   <input
                     v-model="itemForm.description"
                     placeholder="説明（任意）"
@@ -366,11 +412,17 @@
                   placeholder="アイテム名 *"
                   class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
                 />
-                <input
-                  v-model="newItemForm.price"
-                  placeholder="価格（例: ¥800〜）*"
-                  class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
-                />
+                <div
+                  class="flex items-center bg-white/5 border border-white/10 rounded focus-within:border-white/30"
+                >
+                  <span class="pl-3 text-sm text-muted-foreground select-none">¥</span>
+                  <input
+                    v-model="newItemForm.price"
+                    @input="onPriceInput(newItemForm)"
+                    placeholder="800〜 *"
+                    class="flex-1 bg-transparent py-1.5 px-1.5 text-sm text-foreground focus:outline-none"
+                  />
+                </div>
                 <input
                   v-model="newItemForm.description"
                   placeholder="説明（任意）"

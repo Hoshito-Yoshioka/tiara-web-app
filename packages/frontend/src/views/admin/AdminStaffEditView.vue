@@ -87,7 +87,7 @@
   function addSchedule() {
     schedules.value.push({
       dayOfWeek: 1,
-      startTime: '18:00',
+      startTime: '20:00',
       endTime: '02:00',
     })
   }
