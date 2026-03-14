@@ -46,8 +46,8 @@ INSERT INTO menu_categories (id, name, description, sort_order) VALUES
 INSERT INTO menu_items (category_id, name, price, description, sort_order) VALUES
 -- System
 ('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a01', 'チャージ', '¥1,000', 'お一人様あたり', 1),
-('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a01', 'セット料金（60分）', '¥3,000', 'チャージ＋ドリンク2杯', 2),
-('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a01', '延長（30分）', '¥1,500', 'ドリンク1杯付き', 3),
+('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a01', 'セット料金（60分）', '¥3,000', '', 2),
+('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a01', '延長（30分）', '¥1,500', '', 3),
 -- Cocktails
 ('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a02', 'スタンダードカクテル', '¥800〜', '', 1),
 ('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a02', 'プレミアムカクテル', '¥1,200〜', '', 2),
