@@ -14,6 +14,9 @@ importers:
 
   packages/bff:
     dependencies:
+      '@hono/node-server':
+        specifier: ^1.19.10
+        version: 1.19.10(hono@4.12.2)
       '@hono/zod-validator':
         specifier: ^0.2.2
         version: 0.2.2(hono@4.12.2)(zod@3.25.76)
@@ -420,6 +423,12 @@ packages:
 
   '@floating-ui/vue@1.1.10':
     resolution: {integrity: sha512-vdf8f6rHnFPPLRsmL4p12wYl+Ux4mOJOkjzKEMYVnwdf7UFdvBtHlLvQyx8iKG5vhPRbDRgZxdtpmyigDPjzYg==}
+
+  '@hono/node-server@1.19.10':
+    resolution: {integrity: sha512-hZ7nOssGqRgyV3FVVQdfi+U4q02uB23bpnYpdvNXkYTRRyWx84b7yf1ans+dnJ/7h41sGL3CeQTfO+ZGxuO+Iw==}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
 
   '@hono/zod-validator@0.2.2':
     resolution: {integrity: sha512-dSDxaPV70Py8wuIU2QNpoVEIOSzSXZ/6/B/h4xA7eOMz7+AarKTSGV8E6QwrdcCbBLkpqfJ4Q2TmBO0eP1tCBQ==}
@@ -1526,6 +1535,10 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
+
+  '@hono/node-server@1.19.10(hono@4.12.2)':
+    dependencies:
+      hono: 4.12.2
 
   '@hono/zod-validator@0.2.2(hono@4.12.2)(zod@3.25.76)':
     dependencies:

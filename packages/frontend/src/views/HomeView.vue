@@ -1,44 +1,26 @@
 <script setup lang="ts">
+  import { onMounted } from 'vue'
   import Button from '@/components/ui/button.vue'
   import Card from '@/components/ui/card.vue'
   import CardHeader from '@/components/ui/card-header.vue'
   import CardTitle from '@/components/ui/card-title.vue'
-  import CardDescription from '@/components/ui/card-description.vue'
   import CardContent from '@/components/ui/card-content.vue'
   import CardFooter from '@/components/ui/card-footer.vue'
+  import { useShopApi } from '@/composables/useShopApi'
 
-  // モックデータ（後にAPIから取得する想定）
-  interface ShopItem {
-    id: number
-    name: string
-    description: string
-    address: string
-    hours: string
+  const { shops, fetchShops } = useShopApi()
+
+  onMounted(() => {
+    fetchShops()
+  })
+
+  /** TIME型のISO文字列から "HH:MM" を抽出 */
+  function formatTime(raw: string): string {
+    const date = new Date(raw)
+    const hours = date.getUTCHours().toString().padStart(2, '0')
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0')
+    return `${hours}:${minutes}`
   }
-
-  const shops: ShopItem[] = [
-    {
-      id: 1,
-      name: 'The Midnight Sapphire',
-      description: 'A cozy spot with classic cocktails.',
-      address: '123 Bar Street, City',
-      hours: '18:00 – 02:00',
-    },
-    {
-      id: 2,
-      name: 'Crimson Lounge',
-      description: 'Modern mixology in a vibrant setting.',
-      address: '456 Lounge Avenue, City',
-      hours: '19:00 – 03:00',
-    },
-    {
-      id: 3,
-      name: 'Emerald Hideaway',
-      description: 'Exclusive whiskies and a serene atmosphere.',
-      address: '789 Secret Lane, City',
-      hours: '20:00 – 04:00',
-    },
-  ]
 </script>
 
 <template>
@@ -120,9 +102,6 @@
               <CardTitle class="text-base font-light tracking-[0.1em] text-foreground">
                 {{ shop.name }}
               </CardTitle>
-              <CardDescription class="text-xs tracking-wide text-muted-foreground">
-                {{ shop.description }}
-              </CardDescription>
             </CardHeader>
 
             <CardContent class="flex-grow pt-0">
@@ -133,7 +112,7 @@
                 </p>
                 <p class="flex items-center gap-2">
                   <span class="w-1 h-1 rounded-full bg-primary inline-block flex-shrink-0" />
-                  {{ shop.hours }}
+                  {{ formatTime(shop.openingTime) }} – {{ formatTime(shop.closingTime) }}
                 </p>
               </div>
             </CardContent>
@@ -144,7 +123,7 @@
                 class="w-full text-[11px] tracking-[0.2em] uppercase text-muted-foreground hover:text-foreground border border-transparent hover:border-white/20 transition-all duration-300 rounded-none"
                 as-child
               >
-                <router-link :to="`/shop`">View Details</router-link>
+                <router-link to="/shop">View Details</router-link>
               </Button>
             </CardFooter>
           </Card>

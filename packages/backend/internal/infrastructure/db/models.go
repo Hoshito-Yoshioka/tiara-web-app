@@ -8,12 +8,62 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Admin struct {
+	ID           pgtype.UUID
+	Username     string
+	PasswordHash string
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+}
+
 type Shop struct {
 	ID          pgtype.UUID
 	Name        string
 	Address     string
 	OpeningTime pgtype.Time
 	ClosingTime pgtype.Time
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type Staff struct {
+	ID        pgtype.UUID
+	ShopID    pgtype.UUID
+	Name      string
+	Role      string
+	Bio       string
+	ImageUrl  string
+	SortOrder int32
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type StaffSchedule struct {
+	ID        pgtype.UUID
+	StaffID   pgtype.UUID
+	DayOfWeek int32
+	StartTime pgtype.Time
+	EndTime   pgtype.Time
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type MenuCategory struct {
+	ID          pgtype.UUID
+	Name        string
+	Description string
+	SortOrder   int32
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type MenuItem struct {
+	ID          pgtype.UUID
+	CategoryID  pgtype.UUID
+	Name        string
+	Price       string
+	Description string
+	SortOrder   int32
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
 }

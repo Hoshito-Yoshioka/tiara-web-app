@@ -91,8 +91,10 @@ docker-compose ps
 
 ```bash
 cd packages/backend
-go run ./cmd/server/main.go
+set -a && source ../../.env && set +a && go run ./cmd/server/main.go
 ```
+
+> **Note:** Go は `.env` ファイルを自動で読み込みません。`set -a` で変数を自動 export する設定にしてから `source` で読み込み、`set +a` で元に戻しています。
 
 起動確認：ターミナルに `Successfully connected to the database!` が表示されれば OK。
 
@@ -104,7 +106,7 @@ go run ./cmd/server/main.go
 pnpm --filter bff dev
 ```
 
-> `http://localhost:3000`（または `src/index.ts` に記載のポート）で BFF が起動します。
+> `http://localhost:3001` で BFF が起動します。
 
 ### ④ フロントエンド（Vue / Vite）を起動
 
@@ -116,19 +118,25 @@ pnpm dev:frontend
 
 > `http://localhost:5173` でページが確認できます。
 
+> **Note:** Frontend は BFF (`http://localhost:3001`) に直接アクセスします。**③ BFF が先に起動している必要があります。**
+
 ---
 
 ## ページ一覧
 
-| パス         | ページ           |
-| ------------ | ---------------- |
-| `/`          | ホーム           |
-| `/shop`      | 店舗紹介         |
-| `/staff`     | スタッフ一覧     |
-| `/staff/:id` | スタッフ詳細     |
-| `/schedule`  | 出勤スケジュール |
-| `/price`     | 料金システム     |
-| `/access`    | アクセス         |
+| パス            | ページ                 |
+| --------------- | ---------------------- |
+| `/`             | ホーム                 |
+| `/shop`         | 店舗紹介               |
+| `/staff`        | スタッフ一覧           |
+| `/staff/:id`    | スタッフ詳細           |
+| `/schedule`     | 出勤スケジュール       |
+| `/price`        | 料金システム           |
+| `/access`       | アクセス               |
+| `/admin/login`  | 管理画面ログイン       |
+| `/admin/shop`   | 店舗情報編集（要認証） |
+| `/admin/staffs` | スタッフ管理（要認証） |
+| `/admin/menu`   | メニュー管理（要認証） |
 
 ---
 
@@ -157,10 +165,17 @@ tiara-web-app/
 ## よくあるエラー
 
 **`DATABASE_URL environment variable is not set`**
-→ `.env` ファイルが存在しない、または `DATABASE_URL` が未記入です。[環境変数の設定](#2-環境変数を設定) を確認してください。
+→ Go は `.env` を自動で読み込みません。起動コマンドに `set -a && source ../../.env && set +a &&` を付けて実行してください（[② バックエンドを起動](#②-バックエンドgo--echoを起動) 参照）。`.env` 自体が存在しない場合は [環境変数の設定](#2-環境変数を設定) を確認してください。
 
 **`Unable to connect to database`**
 → Docker コンテナが起動していません。`docker-compose up -d` を実行してから再試行してください。
+
+**`listen tcp :1323: bind: address already in use`**
+→ ポート 1323 を使っているプロセスが残っています。以下で停止してから再起動してください。
+
+```bash
+lsof -nP -iTCP:1323 | awk 'NR>1{print $2}' | sort -u | xargs kill -9
+```
 
 **`command not found: pnpm`**
 → `npm install -g pnpm` でインストールしてください。

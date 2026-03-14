@@ -44,3 +44,6 @@ packages/*/node_modules/
 packages/backend/backend
 packages/backend/backend # Go binary
 packages/backend/bin/
+
+# github
+.github/
