@@ -70,6 +70,17 @@ func main() {
 	menuUsecase := usecase.NewMenuUsecase(menuRepo)
 	menuHandler := handler.NewMenuHandler(menuUsecase)
 
+	// Staff Portal Dependencies
+	staffAccountRepo := db.NewStaffAccountRepository(queries)
+	staffAuthUsecase := usecase.NewStaffAuthUsecase(staffAccountRepo)
+	staffDraftRepo := db.NewStaffDraftRepository(queries, pool)
+	staffPortalUsecase := usecase.NewStaffPortalUsecase(staffDraftRepo, staffRepo)
+	staffPortalHandler := handler.NewStaffPortalHandler(staffAuthUsecase, staffPortalUsecase)
+	adminReviewUsecase := usecase.NewAdminReviewUsecase(staffDraftRepo, staffRepo)
+	adminReviewHandler := handler.NewAdminReviewHandler(adminReviewUsecase)
+	adminAccountUsecase := usecase.NewAdminAccountUsecase(staffAccountRepo)
+	adminAccountHandler := handler.NewAdminAccountHandler(adminAccountUsecase)
+
 	// Static file serving for uploaded images
 	e.Static("/uploads", "uploads")
 
@@ -84,6 +95,9 @@ func main() {
 
 	// Auth Routes
 	e.POST("/auth/login", authHandler.Login)
+
+	// Staff Auth Routes (スタッフポータル認証)
+	e.POST("/staff-auth/login", staffPortalHandler.Login)
 
 	// Admin Routes (JWT Protected)
 	admin := e.Group("/admin", authMiddleware.JWTAuth())
@@ -101,6 +115,27 @@ func main() {
 	admin.POST("/menu/items", menuHandler.CreateMenuItem)
 	admin.PUT("/menu/items/:id", menuHandler.UpdateMenuItem)
 	admin.DELETE("/menu/items/:id", menuHandler.DeleteMenuItem)
+	// Admin Review Routes (下書きレビュー)
+	admin.GET("/reviews/profiles", adminReviewHandler.ListPendingProfileDrafts)
+	admin.PUT("/reviews/profiles/:id", adminReviewHandler.ReviewProfileDraft)
+	admin.GET("/reviews/schedules", adminReviewHandler.ListPendingScheduleDrafts)
+	admin.PUT("/reviews/schedules/:id", adminReviewHandler.ReviewScheduleDraft)
+	// Admin Staff Account Management (スタッフアカウント管理)
+	admin.GET("/staff-accounts", adminAccountHandler.ListStaffAccounts)
+	admin.GET("/staff-accounts/staff/:staffId", adminAccountHandler.GetStaffAccountByStaffID)
+	admin.POST("/staff-accounts", adminAccountHandler.CreateStaffAccount)
+	admin.PUT("/staff-accounts/:id", adminAccountHandler.UpdateStaffAccount)
+	admin.DELETE("/staff-accounts/:id", adminAccountHandler.DeleteStaffAccount)
+
+	// Staff Portal Routes (スタッフ専用、Staff JWT Protected)
+	portal := e.Group("/portal", authMiddleware.StaffJWTAuth())
+	portal.GET("/auth/verify", staffPortalHandler.Verify)
+	portal.GET("/profile", staffPortalHandler.GetMyProfileDraft)
+	portal.PUT("/profile", staffPortalHandler.SaveMyProfileDraft)
+	portal.POST("/profile/:id/submit", staffPortalHandler.SubmitMyProfileDraft)
+	portal.GET("/schedule", staffPortalHandler.GetMyScheduleDraft)
+	portal.PUT("/schedule", staffPortalHandler.SaveMyScheduleDraft)
+	portal.POST("/schedule/:id/submit", staffPortalHandler.SubmitMyScheduleDraft)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

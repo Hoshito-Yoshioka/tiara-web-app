@@ -1,0 +1,413 @@
+package usecase
+
+import (
+	"context"
+	"errors"
+	"tiara-web-app/backend/internal/domain"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
+)
+
+// --- Repository Interfaces ---
+
+// StaffAccountRepository はスタッフアカウントの永続化を抽象化するインターフェース。
+type StaffAccountRepository interface {
+	GetStaffAccountByUsername(ctx context.Context, username string) (domain.StaffAccount, error)
+	GetStaffAccountByStaffID(ctx context.Context, staffID uuid.UUID) (domain.StaffAccount, error)
+	ListStaffAccounts(ctx context.Context) ([]domain.StaffAccount, error)
+	CreateStaffAccount(ctx context.Context, staffID uuid.UUID, username, passwordHash string) (domain.StaffAccount, error)
+	UpdateStaffAccount(ctx context.Context, id uuid.UUID, username, passwordHash string) (domain.StaffAccount, error)
+	DeleteStaffAccount(ctx context.Context, id uuid.UUID) error
+}
+
+// StaffDraftRepository はプロフィール/スケジュール下書きの永続化を抽象化するインターフェース。
+type StaffDraftRepository interface {
+	// Profile Draft
+	GetProfileDraftByStaffID(ctx context.Context, staffID uuid.UUID) (domain.StaffProfileDraft, error)
+	GetProfileDraftByID(ctx context.Context, id uuid.UUID) (domain.StaffProfileDraft, error)
+	ListPendingProfileDrafts(ctx context.Context) ([]domain.StaffProfileDraft, error)
+	CreateProfileDraft(ctx context.Context, staffID uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error)
+	UpdateProfileDraft(ctx context.Context, id uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error)
+	SubmitProfileDraft(ctx context.Context, id uuid.UUID) (domain.StaffProfileDraft, error)
+	ReviewProfileDraft(ctx context.Context, id uuid.UUID, input domain.ReviewDraftInput) (domain.StaffProfileDraft, error)
+	DeleteProfileDraft(ctx context.Context, id uuid.UUID) error
+	// Schedule Draft
+	GetScheduleDraftByStaffID(ctx context.Context, staffID uuid.UUID) (domain.StaffScheduleDraft, error)
+	GetScheduleDraftByID(ctx context.Context, id uuid.UUID) (domain.StaffScheduleDraft, error)
+	ListPendingScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error)
+	CreateScheduleDraft(ctx context.Context, staffID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error)
+	UpdateScheduleDraftItems(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error)
+	SubmitScheduleDraft(ctx context.Context, id uuid.UUID) (domain.StaffScheduleDraft, error)
+	ReviewScheduleDraft(ctx context.Context, id uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error)
+	DeleteScheduleDraft(ctx context.Context, id uuid.UUID) error
+}
+
+// --- Staff Auth Usecase ---
+
+// StaffAuthUsecase はスタッフ認証のビジネスロジックを定義するインターフェース。
+type StaffAuthUsecase interface {
+	Login(ctx context.Context, username, password string) (domain.StaffAccount, error)
+}
+
+type staffAuthUsecase struct {
+	accountRepo StaffAccountRepository
+}
+
+// NewStaffAuthUsecase は新しいStaffAuthUsecaseのインスタンスを作成する。
+func NewStaffAuthUsecase(repo StaffAccountRepository) StaffAuthUsecase {
+	return &staffAuthUsecase{accountRepo: repo}
+}
+
+// Login はユーザー名とパスワードでスタッフを認証する。
+func (u *staffAuthUsecase) Login(ctx context.Context, username, password string) (domain.StaffAccount, error) {
+	account, err := u.accountRepo.GetStaffAccountByUsername(ctx, username)
+	if err != nil {
+		return domain.StaffAccount{}, errors.New("invalid credentials")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(account.PasswordHash), []byte(password))
+	if err != nil {
+		return domain.StaffAccount{}, errors.New("invalid credentials")
+	}
+
+	return account, nil
+}
+
+// --- Staff Portal Usecase ---
+
+// StaffPortalUsecase はスタッフポータルのビジネスロジックを定義するインターフェース。
+// スタッフが自分のプロフィール・スケジュールの下書きを管理する。
+type StaffPortalUsecase interface {
+	// Profile Draft
+	GetMyProfileDraft(ctx context.Context, staffID uuid.UUID) (domain.StaffProfileDraft, error)
+	SaveProfileDraft(ctx context.Context, staffID uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error)
+	SubmitProfileDraft(ctx context.Context, staffID uuid.UUID, draftID uuid.UUID) (domain.StaffProfileDraft, error)
+	// Schedule Draft
+	GetMyScheduleDraft(ctx context.Context, staffID uuid.UUID) (domain.StaffScheduleDraft, error)
+	SaveScheduleDraft(ctx context.Context, staffID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error)
+	SubmitScheduleDraft(ctx context.Context, staffID uuid.UUID, draftID uuid.UUID) (domain.StaffScheduleDraft, error)
+}
+
+type staffPortalUsecase struct {
+	draftRepo StaffDraftRepository
+	staffRepo StaffRepository
+}
+
+// NewStaffPortalUsecase は新しいStaffPortalUsecaseのインスタンスを作成する。
+func NewStaffPortalUsecase(draftRepo StaffDraftRepository, staffRepo StaffRepository) StaffPortalUsecase {
+	return &staffPortalUsecase{draftRepo: draftRepo, staffRepo: staffRepo}
+}
+
+// GetMyProfileDraft は自分のアクティブなプロフィール下書きを取得する。
+// 下書きが存在しない場合は、現在のスタッフ情報から初期データを生成する。
+func (u *staffPortalUsecase) GetMyProfileDraft(ctx context.Context, staffID uuid.UUID) (domain.StaffProfileDraft, error) {
+	draft, err := u.draftRepo.GetProfileDraftByStaffID(ctx, staffID)
+	if err != nil {
+		// 下書きが存在しない場合、現在のスタッフ情報を元に返す（保存はしない）
+		staff, staffErr := u.staffRepo.GetStaffByID(ctx, staffID.String())
+		if staffErr != nil {
+			return domain.StaffProfileDraft{}, staffErr
+		}
+		return domain.StaffProfileDraft{
+			StaffID:           staffID,
+			Name:              staff.Name,
+			Role:              staff.Role,
+			Bio:               staff.Bio,
+			ImageURL:          staff.ImageURL,
+			ImageCropPosition: staff.ImageCropPosition,
+			Status:            "", // 下書き未作成を示す
+		}, nil
+	}
+	return draft, nil
+}
+
+// SaveProfileDraft はプロフィール下書きを保存する（作成または更新）。
+func (u *staffPortalUsecase) SaveProfileDraft(ctx context.Context, staffID uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
+	// 既存の下書きを探す
+	existing, err := u.draftRepo.GetProfileDraftByStaffID(ctx, staffID)
+	if err != nil {
+		// 存在しない場合は新規作成
+		return u.draftRepo.CreateProfileDraft(ctx, staffID, input)
+	}
+
+	// pending 状態の場合は編集不可
+	if existing.Status == domain.DraftStatusPending {
+		return domain.StaffProfileDraft{}, errors.New("承認待ちの下書きは編集できません")
+	}
+
+	// 既存の下書きを更新
+	return u.draftRepo.UpdateProfileDraft(ctx, existing.ID, input)
+}
+
+// SubmitProfileDraft はプロフィール下書きを承認申請する。
+// 自分の下書きのみ申請可能。
+func (u *staffPortalUsecase) SubmitProfileDraft(ctx context.Context, staffID uuid.UUID, draftID uuid.UUID) (domain.StaffProfileDraft, error) {
+	draft, err := u.draftRepo.GetProfileDraftByID(ctx, draftID)
+	if err != nil {
+		return domain.StaffProfileDraft{}, err
+	}
+
+	// 自分の下書きのみ操作可能
+	if draft.StaffID != staffID {
+		return domain.StaffProfileDraft{}, errors.New("他のスタッフの下書きは操作できません")
+	}
+
+	if draft.Status != domain.DraftStatusDraft {
+		return domain.StaffProfileDraft{}, errors.New("draft状態の下書きのみ申請できます")
+	}
+
+	return u.draftRepo.SubmitProfileDraft(ctx, draftID)
+}
+
+// GetMyScheduleDraft は自分のアクティブなスケジュール下書きを取得する。
+func (u *staffPortalUsecase) GetMyScheduleDraft(ctx context.Context, staffID uuid.UUID) (domain.StaffScheduleDraft, error) {
+	draft, err := u.draftRepo.GetScheduleDraftByStaffID(ctx, staffID)
+	if err != nil {
+		// 下書きが存在しない場合、現在のスケジュール情報を元に返す
+		schedules, schedErr := u.staffRepo.ListSchedulesByStaffID(ctx, staffID.String())
+		if schedErr != nil {
+			return domain.StaffScheduleDraft{}, schedErr
+		}
+		items := make([]domain.ScheduleDraftItem, len(schedules))
+		for i, s := range schedules {
+			items[i] = domain.ScheduleDraftItem{
+				DayOfWeek: s.DayOfWeek,
+				StartTime: s.StartTime,
+				EndTime:   s.EndTime,
+			}
+		}
+		return domain.StaffScheduleDraft{
+			StaffID: staffID,
+			Status:  "", // 下書き未作成
+			Items:   items,
+		}, nil
+	}
+	return draft, nil
+}
+
+// SaveScheduleDraft はスケジュール下書きを保存する（作成または更新）。
+func (u *staffPortalUsecase) SaveScheduleDraft(ctx context.Context, staffID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error) {
+	existing, err := u.draftRepo.GetScheduleDraftByStaffID(ctx, staffID)
+	if err != nil {
+		// 存在しない場合は新規作成
+		return u.draftRepo.CreateScheduleDraft(ctx, staffID, items)
+	}
+
+	if existing.Status == domain.DraftStatusPending {
+		return domain.StaffScheduleDraft{}, errors.New("承認待ちの下書きは編集できません")
+	}
+
+	return u.draftRepo.UpdateScheduleDraftItems(ctx, existing.ID, items)
+}
+
+// SubmitScheduleDraft はスケジュール下書きを承認申請する。
+func (u *staffPortalUsecase) SubmitScheduleDraft(ctx context.Context, staffID uuid.UUID, draftID uuid.UUID) (domain.StaffScheduleDraft, error) {
+	draft, err := u.draftRepo.GetScheduleDraftByID(ctx, draftID)
+	if err != nil {
+		return domain.StaffScheduleDraft{}, err
+	}
+
+	if draft.StaffID != staffID {
+		return domain.StaffScheduleDraft{}, errors.New("他のスタッフの下書きは操作できません")
+	}
+
+	if draft.Status != domain.DraftStatusDraft {
+		return domain.StaffScheduleDraft{}, errors.New("draft状態の下書きのみ申請できます")
+	}
+
+	return u.draftRepo.SubmitScheduleDraft(ctx, draftID)
+}
+
+// --- Admin Review Usecase ---
+
+// AdminReviewUsecase は管理者による下書きレビューのビジネスロジック。
+// 承認時にライブデータ（staffs, staff_schedules）に反映する。
+type AdminReviewUsecase interface {
+	ListPendingProfileDrafts(ctx context.Context) ([]domain.StaffProfileDraft, error)
+	ListPendingScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error)
+	ReviewProfileDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffProfileDraft, error)
+	ReviewScheduleDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error)
+}
+
+type adminReviewUsecase struct {
+	draftRepo StaffDraftRepository
+	staffRepo StaffRepository
+}
+
+// NewAdminReviewUsecase は新しいAdminReviewUsecaseのインスタンスを作成する。
+func NewAdminReviewUsecase(draftRepo StaffDraftRepository, staffRepo StaffRepository) AdminReviewUsecase {
+	return &adminReviewUsecase{draftRepo: draftRepo, staffRepo: staffRepo}
+}
+
+// ListPendingProfileDrafts は承認待ちのプロフィール下書き一覧を返す。
+func (u *adminReviewUsecase) ListPendingProfileDrafts(ctx context.Context) ([]domain.StaffProfileDraft, error) {
+	return u.draftRepo.ListPendingProfileDrafts(ctx)
+}
+
+// ListPendingScheduleDrafts は承認待ちのスケジュール下書き一覧を返す。
+func (u *adminReviewUsecase) ListPendingScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error) {
+	return u.draftRepo.ListPendingScheduleDrafts(ctx)
+}
+
+// ReviewProfileDraft は管理者がプロフィール下書きをレビューする。
+// 承認時はライブの staffs テーブルに反映する。
+func (u *adminReviewUsecase) ReviewProfileDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffProfileDraft, error) {
+	if input.Status != domain.DraftStatusApproved && input.Status != domain.DraftStatusRejected {
+		return domain.StaffProfileDraft{}, errors.New("ステータスは approved または rejected を指定してください")
+	}
+
+	draft, err := u.draftRepo.GetProfileDraftByID(ctx, draftID)
+	if err != nil {
+		return domain.StaffProfileDraft{}, err
+	}
+
+	if draft.Status != domain.DraftStatusPending {
+		return domain.StaffProfileDraft{}, errors.New("pending 状態の下書きのみレビューできます")
+	}
+
+	// レビュー結果を記録
+	reviewed, err := u.draftRepo.ReviewProfileDraft(ctx, draftID, input)
+	if err != nil {
+		return domain.StaffProfileDraft{}, err
+	}
+
+	// 承認の場合、ライブデータに反映
+	if input.Status == domain.DraftStatusApproved {
+		_, err := u.staffRepo.UpdateStaff(ctx, draft.StaffID.String(), domain.UpdateStaffInput{
+			Name:              draft.Name,
+			Role:              draft.Role,
+			Bio:               draft.Bio,
+			ImageURL:          draft.ImageURL,
+			ImageCropPosition: draft.ImageCropPosition,
+		})
+		if err != nil {
+			return domain.StaffProfileDraft{}, errors.New("ライブデータへの反映に失敗しました: " + err.Error())
+		}
+	}
+
+	return reviewed, nil
+}
+
+// ReviewScheduleDraft は管理者がスケジュール下書きをレビューする。
+// 承認時はライブの staff_schedules テーブルに反映する。
+func (u *adminReviewUsecase) ReviewScheduleDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error) {
+	if input.Status != domain.DraftStatusApproved && input.Status != domain.DraftStatusRejected {
+		return domain.StaffScheduleDraft{}, errors.New("ステータスは approved または rejected を指定してください")
+	}
+
+	draft, err := u.draftRepo.GetScheduleDraftByID(ctx, draftID)
+	if err != nil {
+		return domain.StaffScheduleDraft{}, err
+	}
+
+	if draft.Status != domain.DraftStatusPending {
+		return domain.StaffScheduleDraft{}, errors.New("pending 状態の下書きのみレビューできます")
+	}
+
+	reviewed, err := u.draftRepo.ReviewScheduleDraft(ctx, draftID, input)
+	if err != nil {
+		return domain.StaffScheduleDraft{}, err
+	}
+
+	// 承認の場合、ライブスケジュールに反映
+	if input.Status == domain.DraftStatusApproved {
+		scheduleInputs := make([]domain.ScheduleInput, len(draft.Items))
+		for i, item := range draft.Items {
+			scheduleInputs[i] = domain.ScheduleInput{
+				DayOfWeek: item.DayOfWeek,
+				StartTime: item.StartTime.Format("15:04"),
+				EndTime:   item.EndTime.Format("15:04"),
+			}
+		}
+		_, err := u.staffRepo.ReplaceSchedules(ctx, draft.StaffID.String(), scheduleInputs)
+		if err != nil {
+			return domain.StaffScheduleDraft{}, errors.New("ライブスケジュールへの反映に失敗しました: " + err.Error())
+		}
+	}
+
+	return reviewed, nil
+}
+
+// --- Admin Account Management Usecase ---
+
+// AdminAccountUsecase は管理者によるスタッフアカウント管理のビジネスロジック。
+type AdminAccountUsecase interface {
+	ListStaffAccounts(ctx context.Context) ([]domain.StaffAccount, error)
+	GetStaffAccountByStaffID(ctx context.Context, staffID uuid.UUID) (domain.StaffAccount, error)
+	CreateStaffAccount(ctx context.Context, staffID uuid.UUID, username, password string) (domain.StaffAccount, error)
+	UpdateStaffAccount(ctx context.Context, id uuid.UUID, username, password string) (domain.StaffAccount, error)
+	DeleteStaffAccount(ctx context.Context, id uuid.UUID) error
+}
+
+type adminAccountUsecase struct {
+	accountRepo StaffAccountRepository
+}
+
+// NewAdminAccountUsecase は新しいAdminAccountUsecaseのインスタンスを作成する。
+func NewAdminAccountUsecase(repo StaffAccountRepository) AdminAccountUsecase {
+	return &adminAccountUsecase{accountRepo: repo}
+}
+
+// ListStaffAccounts は全スタッフアカウント一覧を返す。
+func (u *adminAccountUsecase) ListStaffAccounts(ctx context.Context) ([]domain.StaffAccount, error) {
+	return u.accountRepo.ListStaffAccounts(ctx)
+}
+
+// GetStaffAccountByStaffID はスタッフIDでアカウントを返す。
+func (u *adminAccountUsecase) GetStaffAccountByStaffID(ctx context.Context, staffID uuid.UUID) (domain.StaffAccount, error) {
+	return u.accountRepo.GetStaffAccountByStaffID(ctx, staffID)
+}
+
+// CreateStaffAccount は新しいスタッフアカウントを作成する（パスワードをbcryptハッシュ化）。
+func (u *adminAccountUsecase) CreateStaffAccount(ctx context.Context, staffID uuid.UUID, username, password string) (domain.StaffAccount, error) {
+	if username == "" || password == "" {
+		return domain.StaffAccount{}, errors.New("ユーザー名とパスワードは必須です")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return domain.StaffAccount{}, errors.New("パスワードのハッシュ化に失敗しました")
+	}
+
+	return u.accountRepo.CreateStaffAccount(ctx, staffID, username, string(hash))
+}
+
+// UpdateStaffAccount はスタッフアカウントのユーザー名とパスワードを更新する。
+// password が空の場合はパスワードを変更せず、現在のハッシュを維持する。
+func (u *adminAccountUsecase) UpdateStaffAccount(ctx context.Context, id uuid.UUID, username, password string) (domain.StaffAccount, error) {
+	if username == "" {
+		return domain.StaffAccount{}, errors.New("ユーザー名は必須です")
+	}
+
+	var passwordHash string
+	if password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return domain.StaffAccount{}, errors.New("パスワードのハッシュ化に失敗しました")
+		}
+		passwordHash = string(hash)
+	} else {
+		// パスワード未変更 — 既存のハッシュを取得して維持する
+		accounts, err := u.accountRepo.ListStaffAccounts(ctx)
+		if err != nil {
+			return domain.StaffAccount{}, err
+		}
+		for _, a := range accounts {
+			if a.ID == id {
+				passwordHash = a.PasswordHash
+				break
+			}
+		}
+		if passwordHash == "" {
+			return domain.StaffAccount{}, errors.New("アカウントが見つかりません")
+		}
+	}
+
+	return u.accountRepo.UpdateStaffAccount(ctx, id, username, passwordHash)
+}
+
+// DeleteStaffAccount はスタッフアカウントを削除する。
+func (u *adminAccountUsecase) DeleteStaffAccount(ctx context.Context, id uuid.UUID) error {
+	return u.accountRepo.DeleteStaffAccount(ctx, id)
+}

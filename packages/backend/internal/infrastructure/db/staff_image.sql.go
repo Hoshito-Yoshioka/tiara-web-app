@@ -11,36 +11,62 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const listImagesByStaffID = `-- name: ListImagesByStaffID :many
-SELECT id, staff_id, image_url, is_main, sort_order, created_at, updated_at FROM staff_images WHERE staff_id = $1 ORDER BY is_main DESC, sort_order ASC
+const clearMainFlagByStaffID = `-- name: ClearMainFlagByStaffID :exec
+UPDATE staff_images SET is_main = false WHERE staff_id = $1
 `
 
-func (q *Queries) ListImagesByStaffID(ctx context.Context, staffID pgtype.UUID) ([]StaffImage, error) {
-	rows, err := q.db.Query(ctx, listImagesByStaffID, staffID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []StaffImage
-	for rows.Next() {
-		var i StaffImage
-		if err := rows.Scan(
-			&i.ID,
-			&i.StaffID,
-			&i.ImageUrl,
-			&i.IsMain,
-			&i.SortOrder,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) ClearMainFlagByStaffID(ctx context.Context, staffID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, clearMainFlagByStaffID, staffID)
+	return err
+}
+
+const createStaffImage = `-- name: CreateStaffImage :one
+INSERT INTO staff_images (staff_id, image_url, is_main, sort_order) VALUES ($1, $2, $3, $4) RETURNING id, staff_id, image_url, is_main, sort_order, created_at, updated_at
+`
+
+type CreateStaffImageParams struct {
+	StaffID   pgtype.UUID
+	ImageUrl  string
+	IsMain    bool
+	SortOrder int32
+}
+
+func (q *Queries) CreateStaffImage(ctx context.Context, arg CreateStaffImageParams) (StaffImage, error) {
+	row := q.db.QueryRow(ctx, createStaffImage,
+		arg.StaffID,
+		arg.ImageUrl,
+		arg.IsMain,
+		arg.SortOrder,
+	)
+	var i StaffImage
+	err := row.Scan(
+		&i.ID,
+		&i.StaffID,
+		&i.ImageUrl,
+		&i.IsMain,
+		&i.SortOrder,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteImagesByStaffID = `-- name: DeleteImagesByStaffID :exec
+DELETE FROM staff_images WHERE staff_id = $1
+`
+
+func (q *Queries) DeleteImagesByStaffID(ctx context.Context, staffID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteImagesByStaffID, staffID)
+	return err
+}
+
+const deleteStaffImage = `-- name: DeleteStaffImage :exec
+DELETE FROM staff_images WHERE id = $1
+`
+
+func (q *Queries) DeleteStaffImage(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteStaffImage, id)
+	return err
 }
 
 const listAllStaffImages = `-- name: ListAllStaffImages :many
@@ -75,93 +101,36 @@ func (q *Queries) ListAllStaffImages(ctx context.Context) ([]StaffImage, error) 
 	return items, nil
 }
 
-type CreateStaffImageParams struct {
-	StaffID   pgtype.UUID
-	ImageUrl  string
-	IsMain    bool
-	SortOrder int32
-}
-
-const createStaffImage = `-- name: CreateStaffImage :one
-INSERT INTO staff_images (staff_id, image_url, is_main, sort_order) VALUES ($1, $2, $3, $4) RETURNING id, staff_id, image_url, is_main, sort_order, created_at, updated_at
+const listImagesByStaffID = `-- name: ListImagesByStaffID :many
+SELECT id, staff_id, image_url, is_main, sort_order, created_at, updated_at FROM staff_images WHERE staff_id = $1 ORDER BY is_main DESC, sort_order ASC
 `
 
-func (q *Queries) CreateStaffImage(ctx context.Context, arg CreateStaffImageParams) (StaffImage, error) {
-	row := q.db.QueryRow(ctx, createStaffImage,
-		arg.StaffID,
-		arg.ImageUrl,
-		arg.IsMain,
-		arg.SortOrder,
-	)
-	var i StaffImage
-	err := row.Scan(
-		&i.ID,
-		&i.StaffID,
-		&i.ImageUrl,
-		&i.IsMain,
-		&i.SortOrder,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-type UpdateStaffImageParams struct {
-	ID        pgtype.UUID
-	ImageUrl  string
-	IsMain    bool
-	SortOrder int32
-}
-
-const updateStaffImage = `-- name: UpdateStaffImage :one
-UPDATE staff_images SET image_url = $2, is_main = $3, sort_order = $4 WHERE id = $1 RETURNING id, staff_id, image_url, is_main, sort_order, created_at, updated_at
-`
-
-func (q *Queries) UpdateStaffImage(ctx context.Context, arg UpdateStaffImageParams) (StaffImage, error) {
-	row := q.db.QueryRow(ctx, updateStaffImage,
-		arg.ID,
-		arg.ImageUrl,
-		arg.IsMain,
-		arg.SortOrder,
-	)
-	var i StaffImage
-	err := row.Scan(
-		&i.ID,
-		&i.StaffID,
-		&i.ImageUrl,
-		&i.IsMain,
-		&i.SortOrder,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const deleteStaffImage = `-- name: DeleteStaffImage :exec
-DELETE FROM staff_images WHERE id = $1
-`
-
-func (q *Queries) DeleteStaffImage(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteStaffImage, id)
-	return err
-}
-
-const deleteImagesByStaffID = `-- name: DeleteImagesByStaffID :exec
-DELETE FROM staff_images WHERE staff_id = $1
-`
-
-func (q *Queries) DeleteImagesByStaffID(ctx context.Context, staffID pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteImagesByStaffID, staffID)
-	return err
-}
-
-const clearMainFlagByStaffID = `-- name: ClearMainFlagByStaffID :exec
-UPDATE staff_images SET is_main = false WHERE staff_id = $1
-`
-
-func (q *Queries) ClearMainFlagByStaffID(ctx context.Context, staffID pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, clearMainFlagByStaffID, staffID)
-	return err
+func (q *Queries) ListImagesByStaffID(ctx context.Context, staffID pgtype.UUID) ([]StaffImage, error) {
+	rows, err := q.db.Query(ctx, listImagesByStaffID, staffID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []StaffImage
+	for rows.Next() {
+		var i StaffImage
+		if err := rows.Scan(
+			&i.ID,
+			&i.StaffID,
+			&i.ImageUrl,
+			&i.IsMain,
+			&i.SortOrder,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const setMainImage = `-- name: SetMainImage :one
@@ -170,6 +139,37 @@ UPDATE staff_images SET is_main = true WHERE id = $1 RETURNING id, staff_id, ima
 
 func (q *Queries) SetMainImage(ctx context.Context, id pgtype.UUID) (StaffImage, error) {
 	row := q.db.QueryRow(ctx, setMainImage, id)
+	var i StaffImage
+	err := row.Scan(
+		&i.ID,
+		&i.StaffID,
+		&i.ImageUrl,
+		&i.IsMain,
+		&i.SortOrder,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateStaffImage = `-- name: UpdateStaffImage :one
+UPDATE staff_images SET image_url = $2, is_main = $3, sort_order = $4 WHERE id = $1 RETURNING id, staff_id, image_url, is_main, sort_order, created_at, updated_at
+`
+
+type UpdateStaffImageParams struct {
+	ID        pgtype.UUID
+	ImageUrl  string
+	IsMain    bool
+	SortOrder int32
+}
+
+func (q *Queries) UpdateStaffImage(ctx context.Context, arg UpdateStaffImageParams) (StaffImage, error) {
+	row := q.db.QueryRow(ctx, updateStaffImage,
+		arg.ID,
+		arg.ImageUrl,
+		arg.IsMain,
+		arg.SortOrder,
+	)
 	var i StaffImage
 	err := row.Scan(
 		&i.ID,

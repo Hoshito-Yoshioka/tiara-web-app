@@ -9,7 +9,7 @@
 <template>
   <div class="min-h-screen flex flex-col bg-background">
     <!-- Admin ルートでは専用レイアウトを使用（各ビュー内で AdminLayout を使用） -->
-    <template v-if="route.meta.layout === 'admin'">
+    <template v-if="route.meta.layout === 'admin' || route.meta.layout === 'portal'">
       <RouterView />
     </template>
     <!-- 公開ページでは通常のヘッダー/フッターレイアウト -->

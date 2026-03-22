@@ -5,7 +5,8 @@
   import { useStaffApi } from '@/composables/useStaffApi'
   import { useShopApi } from '@/composables/useShopApi'
   import { useAdminApi } from '@/composables/useAdminApi'
-  import { Save, ArrowLeft, Plus, X, Move, Upload, Star, Trash2 } from 'lucide-vue-next'
+  import { useAdminAccountApi } from '@/composables/useAdminAccountApi'
+  import { Save, ArrowLeft, Plus, X, Move, Upload, Star, Trash2, KeyRound } from 'lucide-vue-next'
   import type { StaffImage } from '@/types/staff'
 
   const route = useRoute()
@@ -47,6 +48,23 @@
   const schedules = ref<ScheduleForm[]>([])
   const isLoading = ref(false)
   const successMessage = ref<string | null>(null)
+
+  // --- Staff Account Management ---
+  const {
+    account: staffAccount,
+    error: accountError,
+    fetchAccountByStaffId,
+    createAccount,
+    updateAccount,
+    deleteAccount,
+  } = useAdminAccountApi()
+
+  const accountForm = ref({
+    username: '',
+    password: '',
+  })
+  const accountSuccess = ref<string | null>(null)
+  const isAccountSaving = ref(false)
 
   /** スタッフ画像一覧（リアクティブ） */
   const images = ref<StaffImage[]>([])
@@ -228,6 +246,11 @@
         }))
         images.value = staffImages ?? []
       }
+      // スタッフアカウント情報を取得
+      await fetchAccountByStaffId(route.params.id as string)
+      if (staffAccount.value) {
+        accountForm.value.username = staffAccount.value.username
+      }
     } else {
       // 新規作成モード: デフォルト店舗を設定
       if (shops.value.length > 0) {
@@ -281,6 +304,60 @@
       if (result) {
         router.push({ name: 'admin-staff-list' })
       }
+    }
+  }
+
+  // --- Staff Account Handlers ---
+
+  /** スタッフアカウントを保存（作成 or 更新） */
+  async function handleSaveAccount() {
+    isAccountSaving.value = true
+    accountSuccess.value = null
+
+    if (staffAccount.value) {
+      // 更新
+      const result = await updateAccount(
+        staffAccount.value.id,
+        accountForm.value.username,
+        accountForm.value.password
+      )
+      if (result) {
+        accountSuccess.value = 'アカウント情報を更新しました'
+        accountForm.value.password = '' // パスワード欄をクリア
+        setTimeout(() => (accountSuccess.value = null), 3000)
+      }
+    } else {
+      // 作成
+      const staffId = route.params.id as string
+      const result = await createAccount(
+        staffId,
+        accountForm.value.username,
+        accountForm.value.password
+      )
+      if (result) {
+        accountSuccess.value = 'ポータルアカウントを作成しました'
+        accountForm.value.password = '' // パスワード欄をクリア
+        setTimeout(() => (accountSuccess.value = null), 3000)
+      }
+    }
+    isAccountSaving.value = false
+  }
+
+  /** スタッフアカウントを削除 */
+  async function handleDeleteAccount() {
+    if (!staffAccount.value) return
+    if (
+      !confirm(
+        'このスタッフのポータルアカウントを削除しますか？\nスタッフはマイページにログインできなくなります。'
+      )
+    )
+      return
+
+    const success = await deleteAccount(staffAccount.value.id)
+    if (success) {
+      accountForm.value = { username: '', password: '' }
+      accountSuccess.value = 'アカウントを削除しました'
+      setTimeout(() => (accountSuccess.value = null), 3000)
     }
   }
 </script>
@@ -579,6 +656,87 @@
           <p v-if="schedules.length === 0" class="text-xs text-muted-foreground">
             出勤スケジュールが設定されていません
           </p>
+        </div>
+
+        <!-- ポータルアカウント管理（編集モードのみ） -->
+        <div v-if="isEditMode" class="space-y-4 border-t border-white/10 pt-6">
+          <div class="flex items-center gap-2">
+            <KeyRound :size="16" class="text-muted-foreground" />
+            <label class="text-xs text-muted-foreground tracking-wider uppercase">
+              ポータルアカウント
+            </label>
+            <span
+              v-if="staffAccount"
+              class="text-[10px] bg-green-500/20 text-green-400 rounded-full px-2 py-0.5"
+            >
+              登録済み
+            </span>
+            <span v-else class="text-[10px] bg-zinc-500/20 text-zinc-400 rounded-full px-2 py-0.5">
+              未登録
+            </span>
+          </div>
+
+          <!-- アカウント成功メッセージ -->
+          <div
+            v-if="accountSuccess"
+            class="bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-3 text-sm text-green-400"
+          >
+            {{ accountSuccess }}
+          </div>
+
+          <!-- アカウントエラーメッセージ -->
+          <div
+            v-if="accountError"
+            class="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400"
+          >
+            {{ accountError }}
+          </div>
+
+          <div class="space-y-3">
+            <div class="space-y-2">
+              <label class="text-xs text-muted-foreground/80">ユーザー名</label>
+              <input
+                v-model="accountForm.username"
+                type="text"
+                placeholder="ログインID"
+                class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder-white/30 focus:outline-none focus:border-white/30 transition-colors"
+              />
+            </div>
+            <div class="space-y-2">
+              <label class="text-xs text-muted-foreground/80">パスワード</label>
+              <input
+                v-model="accountForm.password"
+                type="password"
+                :placeholder="staffAccount ? '変更する場合のみ入力' : 'パスワードを設定'"
+                class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder-white/30 focus:outline-none focus:border-white/30 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              :disabled="
+                isAccountSaving || !accountForm.username || (!staffAccount && !accountForm.password)
+              "
+              @click="handleSaveAccount"
+              class="flex items-center gap-2 bg-white/10 text-foreground rounded-lg px-4 py-2.5 text-xs font-medium tracking-wider uppercase hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Save :size="14" />
+              {{
+                isAccountSaving ? '保存中...' : staffAccount ? 'アカウント更新' : 'アカウント作成'
+              }}
+            </button>
+            <button
+              v-if="staffAccount"
+              type="button"
+              @click="handleDeleteAccount"
+              class="flex items-center gap-2 bg-red-500/10 text-red-400 rounded-lg px-4 py-2.5 text-xs font-medium tracking-wider uppercase hover:bg-red-500/20 transition-colors"
+            >
+              <Trash2 :size="14" />
+              アカウント削除
+            </button>
+          </div>
         </div>
 
         <!-- 保存ボタン -->

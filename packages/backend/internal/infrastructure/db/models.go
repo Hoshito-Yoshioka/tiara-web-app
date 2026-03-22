@@ -16,6 +16,26 @@ type Admin struct {
 	UpdatedAt    pgtype.Timestamptz
 }
 
+type MenuCategory struct {
+	ID          pgtype.UUID
+	Name        string
+	Description string
+	SortOrder   int32
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type MenuItem struct {
+	ID          pgtype.UUID
+	CategoryID  pgtype.UUID
+	Name        string
+	Price       string
+	Description string
+	SortOrder   int32
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
 type Shop struct {
 	ID          pgtype.UUID
 	Name        string
@@ -39,34 +59,13 @@ type Staff struct {
 	UpdatedAt         pgtype.Timestamptz
 }
 
-type StaffSchedule struct {
-	ID        pgtype.UUID
-	StaffID   pgtype.UUID
-	DayOfWeek int32
-	StartTime pgtype.Time
-	EndTime   pgtype.Time
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
-}
-
-type MenuCategory struct {
-	ID          pgtype.UUID
-	Name        string
-	Description string
-	SortOrder   int32
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-}
-
-type MenuItem struct {
-	ID          pgtype.UUID
-	CategoryID  pgtype.UUID
-	Name        string
-	Price       string
-	Description string
-	SortOrder   int32
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+type StaffAccount struct {
+	ID           pgtype.UUID
+	StaffID      pgtype.UUID
+	Username     string
+	PasswordHash string
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
 }
 
 type StaffImage struct {
@@ -77,4 +76,49 @@ type StaffImage struct {
 	SortOrder int32
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
+}
+
+type StaffProfileDraft struct {
+	ID                pgtype.UUID
+	StaffID           pgtype.UUID
+	Name              string
+	Role              string
+	Bio               string
+	ImageUrl          string
+	ImageCropPosition string
+	Status            string
+	AdminComment      string
+	SubmittedAt       pgtype.Timestamptz
+	ReviewedAt        pgtype.Timestamptz
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type StaffSchedule struct {
+	ID        pgtype.UUID
+	StaffID   pgtype.UUID
+	DayOfWeek int32
+	StartTime pgtype.Time
+	EndTime   pgtype.Time
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type StaffScheduleDraft struct {
+	ID           pgtype.UUID
+	StaffID      pgtype.UUID
+	Status       string
+	AdminComment string
+	SubmittedAt  pgtype.Timestamptz
+	ReviewedAt   pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+}
+
+type StaffScheduleDraftItem struct {
+	ID        pgtype.UUID
+	DraftID   pgtype.UUID
+	DayOfWeek int32
+	StartTime pgtype.Time
+	EndTime   pgtype.Time
 }

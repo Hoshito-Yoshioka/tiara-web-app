@@ -66,6 +66,85 @@ FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 
 -- ==============================
+-- staff_accounts テーブル
+-- スタッフ専用ログインアカウント（admin とは別系統）
+-- staff_id は staffs テーブルへの参照（1:1）
+-- ==============================
+CREATE TABLE staff_accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    staff_id UUID NOT NULL UNIQUE REFERENCES staffs(id) ON DELETE CASCADE,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_staff_accounts_updated_at
+BEFORE UPDATE ON staff_accounts
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- ==============================
+-- staff_profile_drafts テーブル
+-- スタッフが提出するプロフィール変更の下書き/承認待ち
+-- status: draft / pending / approved / rejected
+-- ==============================
+CREATE TABLE staff_profile_drafts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    staff_id UUID NOT NULL REFERENCES staffs(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(100) NOT NULL DEFAULT '',
+    bio TEXT NOT NULL DEFAULT '',
+    image_url TEXT NOT NULL DEFAULT '',
+    image_crop_position VARCHAR(20) NOT NULL DEFAULT '50 50',
+    status VARCHAR(20) NOT NULL DEFAULT 'draft',
+    admin_comment TEXT NOT NULL DEFAULT '',
+    submitted_at TIMESTAMP WITH TIME ZONE,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_staff_profile_drafts_updated_at
+BEFORE UPDATE ON staff_profile_drafts
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- ==============================
+-- staff_schedule_drafts テーブル
+-- スタッフが提出するシフト変更の下書き/承認待ち
+-- status: draft / pending / approved / rejected
+-- 承認時に staff_schedules へ反映される
+-- ==============================
+CREATE TABLE staff_schedule_drafts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    staff_id UUID NOT NULL REFERENCES staffs(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'draft',
+    admin_comment TEXT NOT NULL DEFAULT '',
+    submitted_at TIMESTAMP WITH TIME ZONE,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_staff_schedule_drafts_updated_at
+BEFORE UPDATE ON staff_schedule_drafts
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- ==============================
+-- staff_schedule_draft_items テーブル
+-- シフト下書きの各曜日データ
+-- ==============================
+CREATE TABLE staff_schedule_draft_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    draft_id UUID NOT NULL REFERENCES staff_schedule_drafts(id) ON DELETE CASCADE,
+    day_of_week INT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL
+);
+
+-- ==============================
 -- staff_images テーブル
 -- スタッフの画像（メイン1枚+サブ複数枚）
 -- is_main: メイン画像フラグ（スタッフ一覧等で使用）
