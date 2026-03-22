@@ -24,6 +24,7 @@ export interface CreateStaffRequest {
   role: string
   bio: string
   imageUrl: string
+  imageCropPosition: string
   sortOrder: number
   schedules: ScheduleInput[]
 }
@@ -34,6 +35,7 @@ export interface UpdateStaffRequest {
   role: string
   bio: string
   imageUrl: string
+  imageCropPosition: string
   sortOrder: number
   schedules: ScheduleInput[]
 }

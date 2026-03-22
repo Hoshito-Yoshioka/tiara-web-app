@@ -16,6 +16,29 @@
   }
 
   /**
+   * 今日(JST)を基準に、今週（日〜土）の各曜日の日付を返す。
+   * index: 0=日, 1=月, … 6=土
+   */
+  const weekDates = computed(() => {
+    const now = new Date()
+    // JSTオフセット (+9h)
+    const jstNow = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60 * 1000)
+    const todayDay = jstNow.getUTCDay() // 0=日
+    const dates: Date[] = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(jstNow)
+      d.setUTCDate(d.getUTCDate() - todayDay + i)
+      dates.push(d)
+    }
+    return dates
+  })
+
+  /** Date を "M/D" 形式にフォーマット */
+  function formatDate(d: Date): string {
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`
+  }
+
+  /**
    * スタッフごとに出勤曜日を Set で持つマップを生成。
    * key: staffId, value: Set<dayOfWeek>
    */
@@ -44,6 +67,13 @@
     const item = scheduleData.value.find((d) => d.staff.id === staffId)
     return item?.schedules.find((s) => s.dayOfWeek === dayOfWeek)
   }
+
+  /** 今日(JST)の曜日 */
+  const todayDayOfWeek = computed(() => {
+    const now = new Date()
+    const jstNow = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60 * 1000)
+    return jstNow.getUTCDay()
+  })
 
   onMounted(() => {
     fetchSchedules()
@@ -100,7 +130,7 @@
       >
         <!-- テーブル（横スクロール対応） -->
         <div class="border border-border bg-card overflow-x-auto">
-          <table class="w-full min-w-[600px]">
+          <table class="w-full min-w-[640px]">
             <thead>
               <tr class="border-b border-border">
                 <!-- スタッフ名ヘッダー -->
@@ -111,18 +141,24 @@
                     Staff
                   </span>
                 </th>
-                <!-- 曜日ヘッダー -->
+                <!-- 曜日＋日付ヘッダー -->
                 <th
                   v-for="(label, idx) in DAY_LABELS"
                   :key="idx"
                   class="px-3 md:px-4 py-4 text-center"
+                  :class="idx === todayDayOfWeek ? 'bg-primary/5' : ''"
                 >
-                  <span
-                    class="text-[11px] tracking-[0.15em] font-normal"
-                    :class="dayColorClass(idx)"
-                  >
-                    {{ label }}
-                  </span>
+                  <div class="flex flex-col items-center gap-0.5">
+                    <span
+                      class="text-[11px] tracking-[0.15em] font-normal"
+                      :class="dayColorClass(idx)"
+                    >
+                      {{ label }}
+                    </span>
+                    <span class="text-[10px] text-muted-foreground">
+                      {{ formatDate(weekDates[idx]) }}
+                    </span>
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -132,19 +168,46 @@
                 :key="item.staff.id"
                 class="border-b border-border last:border-b-0 transition-colors duration-300 hover:bg-secondary/50"
               >
-                <!-- スタッフ名 -->
+                <!-- スタッフ名＋画像 -->
                 <td class="px-4 md:px-6 py-4 sticky left-0 bg-card z-10">
-                  <router-link :to="`/staff/${item.staff.id}`" class="group flex flex-col">
-                    <span
-                      class="text-sm font-light tracking-[0.05em] text-foreground group-hover:text-primary transition-colors duration-300"
+                  <router-link
+                    :to="`/staff/${item.staff.id}`"
+                    class="group flex items-center gap-3"
+                  >
+                    <img
+                      v-if="item.staff.imageUrl"
+                      :src="item.staff.imageUrl"
+                      :alt="item.staff.name"
+                      class="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-border"
+                      :style="{
+                        objectPosition: item.staff.imageCropPosition
+                          ? item.staff.imageCropPosition
+                              .split(' ')
+                              .map((v: string) => v + '%')
+                              .join(' ')
+                          : '50% 50%',
+                      }"
+                    />
+                    <div
+                      v-else
+                      class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 border border-border"
                     >
-                      {{ item.staff.name }}
-                    </span>
-                    <span
-                      class="text-[10px] tracking-[0.15em] uppercase text-muted-foreground mt-0.5"
-                    >
-                      {{ item.staff.role }}
-                    </span>
+                      <span class="text-[10px] text-muted-foreground">{{
+                        item.staff.name.charAt(0)
+                      }}</span>
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                      <span
+                        class="text-sm font-light tracking-[0.05em] text-foreground group-hover:text-primary transition-colors duration-300"
+                      >
+                        {{ item.staff.name }}
+                      </span>
+                      <span
+                        class="text-[10px] tracking-[0.15em] uppercase text-muted-foreground mt-0.5"
+                      >
+                        {{ item.staff.role }}
+                      </span>
+                    </div>
                   </router-link>
                 </td>
                 <!-- 各曜日のセル -->
@@ -152,6 +215,7 @@
                   v-for="(_, dayIdx) in DAY_LABELS"
                   :key="dayIdx"
                   class="px-3 md:px-4 py-4 text-center"
+                  :class="dayIdx === todayDayOfWeek ? 'bg-primary/5' : ''"
                 >
                   <template v-if="scheduleMap.get(item.staff.id)?.has(dayIdx)">
                     <div class="flex flex-col items-center gap-0.5">

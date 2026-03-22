@@ -6,6 +6,7 @@ export interface Staff {
   role: string
   bio: string
   imageUrl: string
+  imageCropPosition: string
   sortOrder: number
 }
 

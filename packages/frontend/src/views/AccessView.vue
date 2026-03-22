@@ -7,11 +7,14 @@
     postalCode: '〒040-0011',
     address: '北海道函館市本町１−２８ 第５大栄ビル',
     mapEmbedUrl:
-      'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2956.05!2d140.7367!3d41.7732!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x5f9f59328b2e0f0d%3A0x0!2z5YyX5rW36YGT5Ye95aSn5biC5pys55S677yR4oCS77yS77yYIOesrDXlpKfmoITjg5Pjg6s!5e0!3m2!1sja!2sjp!4v1709000000000',
+      'https://maps.google.com/maps?q=%E5%8C%97%E6%B5%B7%E9%81%93%E5%87%BD%E9%A4%A8%E5%B8%82%E6%9C%AC%E7%94%BA1-28+%E7%AC%AC5%E5%A4%A7%E6%A0%84%E3%83%93%E3%83%AB&t=m&z=17&output=embed&iwloc=',
     mapLinkUrl:
       'https://www.google.com/maps/search/?api=1&query=北海道函館市本町１−２８+第５大栄ビル',
     hours: '20:00 – 02:00',
-    access: ['函館市電「五稜郭公園前」電停より徒歩約5分', '函館市電「杉並町」電停より徒歩約3分'],
+    access: [
+      '函館市電「中央病院前」電停より徒歩約3分',
+      '函館市電「五稜郭公園前」電停より徒歩約4分',
+    ],
   } as const
 </script>
 

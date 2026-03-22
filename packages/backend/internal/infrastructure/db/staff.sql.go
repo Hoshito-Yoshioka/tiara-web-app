@@ -12,7 +12,7 @@ import (
 )
 
 const getStaffByID = `-- name: GetStaffByID :one
-SELECT id, shop_id, name, role, bio, image_url, sort_order, created_at, updated_at FROM staffs WHERE id = $1
+SELECT id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at FROM staffs WHERE id = $1
 `
 
 func (q *Queries) GetStaffByID(ctx context.Context, id pgtype.UUID) (Staff, error) {
@@ -25,6 +25,7 @@ func (q *Queries) GetStaffByID(ctx context.Context, id pgtype.UUID) (Staff, erro
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ImageCropPosition,
 		&i.SortOrder,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -97,7 +98,7 @@ func (q *Queries) ListSchedulesByStaffID(ctx context.Context, staffID pgtype.UUI
 }
 
 const listStaffs = `-- name: ListStaffs :many
-SELECT id, shop_id, name, role, bio, image_url, sort_order, created_at, updated_at FROM staffs ORDER BY sort_order ASC
+SELECT id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at FROM staffs ORDER BY sort_order ASC
 `
 
 func (q *Queries) ListStaffs(ctx context.Context) ([]Staff, error) {
@@ -116,6 +117,7 @@ func (q *Queries) ListStaffs(ctx context.Context) ([]Staff, error) {
 			&i.Role,
 			&i.Bio,
 			&i.ImageUrl,
+			&i.ImageCropPosition,
 			&i.SortOrder,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -131,7 +133,7 @@ func (q *Queries) ListStaffs(ctx context.Context) ([]Staff, error) {
 }
 
 const listStaffsByShopID = `-- name: ListStaffsByShopID :many
-SELECT id, shop_id, name, role, bio, image_url, sort_order, created_at, updated_at FROM staffs WHERE shop_id = $1 ORDER BY sort_order ASC
+SELECT id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at FROM staffs WHERE shop_id = $1 ORDER BY sort_order ASC
 `
 
 func (q *Queries) ListStaffsByShopID(ctx context.Context, shopID pgtype.UUID) ([]Staff, error) {
@@ -150,6 +152,7 @@ func (q *Queries) ListStaffsByShopID(ctx context.Context, shopID pgtype.UUID) ([
 			&i.Role,
 			&i.Bio,
 			&i.ImageUrl,
+			&i.ImageCropPosition,
 			&i.SortOrder,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -165,16 +168,17 @@ func (q *Queries) ListStaffsByShopID(ctx context.Context, shopID pgtype.UUID) ([
 }
 
 type CreateStaffParams struct {
-	ShopID    pgtype.UUID
-	Name      string
-	Role      string
-	Bio       string
-	ImageUrl  string
-	SortOrder int32
+	ShopID            pgtype.UUID
+	Name              string
+	Role              string
+	Bio               string
+	ImageUrl          string
+	ImageCropPosition string
+	SortOrder         int32
 }
 
 const createStaff = `-- name: CreateStaff :one
-INSERT INTO staffs (shop_id, name, role, bio, image_url, sort_order) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, shop_id, name, role, bio, image_url, sort_order, created_at, updated_at
+INSERT INTO staffs (shop_id, name, role, bio, image_url, image_crop_position, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at
 `
 
 func (q *Queries) CreateStaff(ctx context.Context, arg CreateStaffParams) (Staff, error) {
@@ -184,6 +188,7 @@ func (q *Queries) CreateStaff(ctx context.Context, arg CreateStaffParams) (Staff
 		arg.Role,
 		arg.Bio,
 		arg.ImageUrl,
+		arg.ImageCropPosition,
 		arg.SortOrder,
 	)
 	var i Staff
@@ -194,6 +199,7 @@ func (q *Queries) CreateStaff(ctx context.Context, arg CreateStaffParams) (Staff
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ImageCropPosition,
 		&i.SortOrder,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -202,16 +208,17 @@ func (q *Queries) CreateStaff(ctx context.Context, arg CreateStaffParams) (Staff
 }
 
 type UpdateStaffParams struct {
-	ID        pgtype.UUID
-	Name      string
-	Role      string
-	Bio       string
-	ImageUrl  string
-	SortOrder int32
+	ID                pgtype.UUID
+	Name              string
+	Role              string
+	Bio               string
+	ImageUrl          string
+	ImageCropPosition string
+	SortOrder         int32
 }
 
 const updateStaff = `-- name: UpdateStaff :one
-UPDATE staffs SET name = $2, role = $3, bio = $4, image_url = $5, sort_order = $6 WHERE id = $1 RETURNING id, shop_id, name, role, bio, image_url, sort_order, created_at, updated_at
+UPDATE staffs SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6, sort_order = $7 WHERE id = $1 RETURNING id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at
 `
 
 func (q *Queries) UpdateStaff(ctx context.Context, arg UpdateStaffParams) (Staff, error) {
@@ -221,6 +228,7 @@ func (q *Queries) UpdateStaff(ctx context.Context, arg UpdateStaffParams) (Staff
 		arg.Role,
 		arg.Bio,
 		arg.ImageUrl,
+		arg.ImageCropPosition,
 		arg.SortOrder,
 	)
 	var i Staff
@@ -231,6 +239,7 @@ func (q *Queries) UpdateStaff(ctx context.Context, arg UpdateStaffParams) (Staff
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ImageCropPosition,
 		&i.SortOrder,
 		&i.CreatedAt,
 		&i.UpdatedAt,

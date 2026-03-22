@@ -21,6 +21,7 @@ function toStaff(raw: StaffResponse): Staff {
     role: raw.Role,
     bio: raw.Bio,
     imageUrl: raw.ImageURL,
+    imageCropPosition: raw.ImageCropPosition,
     sortOrder: raw.SortOrder,
   }
 }

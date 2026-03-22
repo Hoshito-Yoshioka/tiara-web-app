@@ -49,8 +49,8 @@
         </p>
       </div>
 
-      <!-- スタッフカードグリッド -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- スタッフカード一覧（縦一列・横長カード） -->
+      <div v-else class="max-w-4xl mx-auto space-y-6">
         <router-link
           v-for="(staff, index) in staffList"
           :key="staff.id"
@@ -61,17 +61,27 @@
           class="group block"
         >
           <div
-            class="border border-border bg-card overflow-hidden transition-all duration-500 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+            class="border border-border bg-card overflow-hidden transition-all duration-500 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 flex flex-col sm:flex-row sm:h-52"
           >
             <!-- スタッフ画像 -->
-            <div class="aspect-[3/4] overflow-hidden bg-secondary">
+            <div
+              class="sm:w-48 md:w-56 flex-shrink-0 aspect-[4/3] sm:aspect-auto overflow-hidden bg-secondary"
+            >
               <img
                 v-if="staff.imageUrl"
                 :src="staff.imageUrl"
                 :alt="staff.name"
                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                :style="{
+                  objectPosition: staff.imageCropPosition
+                    ? staff.imageCropPosition
+                        .split(' ')
+                        .map((v: string) => v + '%')
+                        .join(' ')
+                    : '50% 50%',
+                }"
               />
-              <div v-else class="w-full h-full flex items-center justify-center">
+              <div v-else class="w-full h-full flex items-center justify-center min-h-[160px]">
                 <span class="text-muted-foreground text-sm tracking-widest uppercase"
                   >No Photo</span
                 >
@@ -79,7 +89,7 @@
             </div>
 
             <!-- スタッフ情報 -->
-            <div class="p-6">
+            <div class="p-6 flex flex-col justify-center flex-1 min-w-0">
               <p class="text-[11px] tracking-[0.2em] uppercase text-primary mb-2">
                 {{ staff.role }}
               </p>
@@ -88,7 +98,7 @@
               >
                 {{ staff.name }}
               </h2>
-              <p class="mt-3 text-xs text-muted-foreground leading-relaxed line-clamp-2">
+              <p class="mt-3 text-xs text-muted-foreground leading-relaxed line-clamp-3">
                 {{ staff.bio }}
               </p>
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue'
+  import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import AdminLayout from '@/components/layout/AdminLayout.vue'
   import { useStaffApi } from '@/composables/useStaffApi'
   import { useShopApi } from '@/composables/useShopApi'
   import { useAdminApi } from '@/composables/useAdminApi'
-  import { Save, ArrowLeft, Plus, X } from 'lucide-vue-next'
+  import { Save, ArrowLeft, Plus, X, Move } from 'lucide-vue-next'
 
   const route = useRoute()
   const router = useRouter()
@@ -24,6 +24,7 @@
     role: '',
     bio: '',
     imageUrl: '',
+    imageCropPosition: '50 50',
     sortOrder: 0,
     shopId: '',
   })
@@ -37,6 +38,80 @@
   const schedules = ref<ScheduleForm[]>([])
   const isLoading = ref(false)
   const successMessage = ref<string | null>(null)
+
+  // --- 画像クロップ位置のドラッグ操作 ---
+  /** object-position を "X% Y%" 形式の CSS 文字列に変換 */
+  const cropPositionStyle = computed(() => {
+    const [x, y] = form.value.imageCropPosition.split(' ').map(Number)
+    return `${x}% ${y}%`
+  })
+
+  /** ドラッグ中フラグ */
+  const isDragging = ref(false)
+  /** ドラッグ開始位置 */
+  let dragStartX = 0
+  let dragStartY = 0
+  /** ドラッグ開始時の cropPosition */
+  let dragStartPosX = 50
+  let dragStartPosY = 50
+
+  function parseCropPosition(): { x: number; y: number } {
+    const parts = form.value.imageCropPosition.split(' ').map(Number)
+    return { x: parts[0] ?? 50, y: parts[1] ?? 50 }
+  }
+
+  function clamp(val: number, min: number, max: number): number {
+    return Math.min(Math.max(val, min), max)
+  }
+
+  function onDragStart(e: MouseEvent | TouchEvent) {
+    e.preventDefault()
+    isDragging.value = true
+    const point = 'touches' in e ? e.touches[0] : e
+    dragStartX = point.clientX
+    dragStartY = point.clientY
+    const pos = parseCropPosition()
+    dragStartPosX = pos.x
+    dragStartPosY = pos.y
+    document.addEventListener('mousemove', onDragMove)
+    document.addEventListener('mouseup', onDragEnd)
+    document.addEventListener('touchmove', onDragMove, { passive: false })
+    document.addEventListener('touchend', onDragEnd)
+  }
+
+  function onDragMove(e: MouseEvent | TouchEvent) {
+    if (!isDragging.value) return
+    e.preventDefault()
+    const point = 'touches' in e ? e.touches[0] : e
+    const deltaX = point.clientX - dragStartX
+    const deltaY = point.clientY - dragStartY
+    // 感度: プレビュー枠幅(192px)分のドラッグで 0→100% 移動
+    const sensitivity = 100 / 192
+    const newX = clamp(Math.round(dragStartPosX - deltaX * sensitivity), 0, 100)
+    const newY = clamp(Math.round(dragStartPosY - deltaY * sensitivity), 0, 100)
+    form.value.imageCropPosition = `${newX} ${newY}`
+  }
+
+  function onDragEnd() {
+    isDragging.value = false
+    document.removeEventListener('mousemove', onDragMove)
+    document.removeEventListener('mouseup', onDragEnd)
+    document.removeEventListener('touchmove', onDragMove)
+    document.removeEventListener('touchend', onDragEnd)
+  }
+
+  /** クロップ位置をセンターにリセット */
+  function resetCropPosition() {
+    form.value.imageCropPosition = '50 50'
+  }
+
+  onBeforeUnmount(() => {
+    // クリーンアップ
+    document.removeEventListener('mousemove', onDragMove)
+    document.removeEventListener('mouseup', onDragEnd)
+    document.removeEventListener('touchmove', onDragMove)
+    document.removeEventListener('touchend', onDragEnd)
+  })
 
   /**
    * Backend から返る時刻文字列を "HH:MM" 形式に変換する。
@@ -64,6 +139,7 @@
           role: staff.role,
           bio: staff.bio,
           imageUrl: staff.imageUrl,
+          imageCropPosition: staff.imageCropPosition || '50 50',
           sortOrder: staff.sortOrder,
           shopId: staff.shopId,
         }
@@ -215,6 +291,80 @@
             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors"
             placeholder="https://..."
           />
+
+          <!-- 画像プレビュー（ドラッグで切り抜き位置を調整） -->
+          <div v-if="form.imageUrl" class="mt-4 space-y-4">
+            <div class="flex items-center gap-3">
+              <p class="text-[11px] tracking-wider uppercase text-muted-foreground">
+                表示プレビュー — ドラッグで表示位置を調整できます
+              </p>
+              <button
+                type="button"
+                @click="resetCropPosition"
+                class="text-[10px] tracking-wider text-muted-foreground/60 hover:text-foreground underline transition-colors"
+              >
+                中央にリセット
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-6">
+              <!-- カード表示プレビュー（ドラッグ対応） -->
+              <div class="space-y-2">
+                <p class="text-[10px] tracking-wider uppercase text-muted-foreground/70">
+                  スタッフ一覧（カード）
+                </p>
+                <div
+                  class="relative w-48 h-52 overflow-hidden rounded-lg border-2 bg-secondary transition-colors select-none"
+                  :class="
+                    isDragging ? 'border-primary cursor-grabbing' : 'border-primary/40 cursor-grab'
+                  "
+                  @mousedown="onDragStart"
+                  @touchstart="onDragStart"
+                >
+                  <img
+                    :src="form.imageUrl"
+                    :alt="form.name || 'プレビュー'"
+                    class="w-full h-full object-cover pointer-events-none"
+                    :style="{ objectPosition: cropPositionStyle }"
+                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                  />
+                  <div
+                    class="absolute inset-0 border-2 border-dashed border-primary/30 pointer-events-none"
+                  />
+                  <div
+                    class="absolute top-2 right-2 bg-black/60 rounded-full p-1.5 pointer-events-none"
+                  >
+                    <Move class="w-3 h-3 text-white/80" />
+                  </div>
+                </div>
+              </div>
+              <!-- 詳細ページプレビュー（連動表示） -->
+              <div class="space-y-2">
+                <p class="text-[10px] tracking-wider uppercase text-muted-foreground/70">
+                  スタッフ詳細ページ
+                </p>
+                <div
+                  class="relative w-36 overflow-hidden rounded-lg border-2 border-primary/40 bg-secondary"
+                  style="aspect-ratio: 3/4"
+                >
+                  <img
+                    :src="form.imageUrl"
+                    :alt="form.name || 'プレビュー'"
+                    class="w-full h-full object-cover"
+                    :style="{ objectPosition: cropPositionStyle }"
+                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                  />
+                  <div
+                    class="absolute inset-0 border-2 border-dashed border-primary/30 pointer-events-none"
+                  />
+                </div>
+              </div>
+            </div>
+            <!-- 座標表示 -->
+            <p class="text-[10px] text-muted-foreground/50 tracking-wider">
+              位置: {{ form.imageCropPosition.split(' ')[0] }}% /
+              {{ form.imageCropPosition.split(' ')[1] }}%
+            </p>
+          </div>
         </div>
 
         <div class="space-y-2">
