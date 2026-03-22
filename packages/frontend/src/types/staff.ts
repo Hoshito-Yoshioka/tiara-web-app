@@ -19,8 +19,18 @@ export interface StaffSchedule {
   endTime: string
 }
 
+/** BFF から受け取る StaffImage 型 */
+export interface StaffImage {
+  id: string
+  staffId: string
+  imageUrl: string
+  isMain: boolean
+  sortOrder: number
+}
+
 /** BFF から受け取る StaffWithSchedules 型 */
 export interface StaffWithSchedules {
   staff: Staff
   schedules: StaffSchedule[]
+  images: StaffImage[]
 }

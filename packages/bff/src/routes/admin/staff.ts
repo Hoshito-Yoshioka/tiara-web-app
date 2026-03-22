@@ -3,6 +3,8 @@ import { authMiddleware, type AuthEnv } from '../../middleware/auth'
 import type {
   Staff,
   StaffResponse,
+  StaffImage,
+  StaffImageResponse,
   StaffSchedule,
   StaffScheduleResponse,
   StaffWithSchedules,
@@ -42,11 +44,23 @@ function toSchedule(raw: StaffScheduleResponse): StaffSchedule {
   }
 }
 
+/** Backend の StaffImageResponse を Frontend 向けに変換 */
+function toImage(raw: StaffImageResponse): StaffImage {
+  return {
+    id: raw.ID,
+    staffId: raw.StaffID,
+    imageUrl: raw.ImageURL,
+    isMain: raw.IsMain,
+    sortOrder: raw.SortOrder,
+  }
+}
+
 /** Backend の StaffWithSchedulesResponse を Frontend 向けに変換 */
 function toStaffWithSchedules(data: StaffWithSchedulesResponse): StaffWithSchedules {
   return {
     staff: toStaff(data.Staff),
     schedules: data.Schedules ? data.Schedules.map(toSchedule) : [],
+    images: data.Images ? data.Images.map(toImage) : [],
   }
 }
 
@@ -115,6 +129,81 @@ adminStaffRoutes.delete('/:id', async (c) => {
   }
 
   return new Response(null, { status: 204 })
+})
+
+// ============================================================
+// Staff Image Management
+// ============================================================
+
+/** POST /api/admin/staffs/:id/images — 画像アップロード（multipart/form-data をそのまま Backend へ転送） */
+adminStaffRoutes.post('/:id/images', async (c) => {
+  const id = c.req.param('id')
+  const authHeader = c.get('authHeader') as string
+
+  // multipart body をそのまま Backend へ転送
+  const body = await c.req.raw.arrayBuffer()
+  const contentType = c.req.header('content-type') || ''
+
+  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': contentType,
+      Authorization: authHeader,
+    },
+    body,
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to upload image' }))
+    return c.json(error, res.status as 500)
+  }
+
+  const data: StaffImageResponse = await res.json()
+  return c.json(toImage(data))
+})
+
+/** DELETE /api/admin/staffs/:id/images/:imageId — 画像を削除 */
+adminStaffRoutes.delete('/:id/images/:imageId', async (c) => {
+  const id = c.req.param('id')
+  const imageId = c.req.param('imageId')
+  const authHeader = c.get('authHeader') as string
+
+  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images/${imageId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: authHeader,
+    },
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to delete image' }))
+    return c.json(error, res.status as 500)
+  }
+
+  return new Response(null, { status: 204 })
+})
+
+/** PUT /api/admin/staffs/:id/images/main — メイン画像を設定 */
+adminStaffRoutes.put('/:id/images/main', async (c) => {
+  const id = c.req.param('id')
+  const body = await c.req.json()
+  const authHeader = c.get('authHeader') as string
+
+  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images/main`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authHeader,
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to set main image' }))
+    return c.json(error, res.status as 500)
+  }
+
+  return c.json({ message: 'ok' })
 })
 
 export { adminStaffRoutes }

@@ -1,8 +1,8 @@
 import { ref, type Ref } from 'vue'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, apiUpload } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import type { Shop } from '@/types/shop'
-import type { StaffWithSchedules } from '@/types/staff'
+import type { StaffWithSchedules, StaffImage } from '@/types/staff'
 import type { MenuCategory, MenuItem } from '@/types/menu'
 import type {
   UpdateShopInput,
@@ -225,6 +225,65 @@ export function useAdminApi() {
     }
   }
 
+  // ============================================================
+  // Staff Image Management
+  // ============================================================
+
+  /** スタッフ画像をアップロード */
+  async function uploadStaffImage(staffId: string, file: File): Promise<StaffImage | null> {
+    isLoading.value = true
+    error.value = null
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+      return await apiUpload<StaffImage>(`/api/admin/staffs/${staffId}/images`, formData, {
+        headers: authHeaders(),
+      })
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '画像のアップロードに失敗しました'
+      return null
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /** スタッフ画像を削除 */
+  async function deleteStaffImage(staffId: string, imageId: string): Promise<boolean> {
+    isLoading.value = true
+    error.value = null
+    try {
+      await apiFetch(`/api/admin/staffs/${staffId}/images/${imageId}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      return true
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '画像の削除に失敗しました'
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /** メイン画像を設定 */
+  async function setMainImage(staffId: string, imageId: string): Promise<boolean> {
+    isLoading.value = true
+    error.value = null
+    try {
+      await apiFetch(`/api/admin/staffs/${staffId}/images/main`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ imageId }),
+      })
+      return true
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : 'メイン画像の設定に失敗しました'
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     isLoading,
     error,
@@ -232,6 +291,9 @@ export function useAdminApi() {
     createStaff,
     updateStaff,
     deleteStaff,
+    uploadStaffImage,
+    deleteStaffImage,
+    setMainImage,
     createMenuCategory,
     updateMenuCategory,
     deleteMenuCategory,

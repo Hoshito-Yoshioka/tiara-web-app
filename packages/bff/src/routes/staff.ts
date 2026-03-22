@@ -2,6 +2,8 @@ import { Hono } from 'hono'
 import type {
   Staff,
   StaffResponse,
+  StaffImage,
+  StaffImageResponse,
   StaffSchedule,
   StaffScheduleResponse,
   StaffWithSchedules,
@@ -37,6 +39,17 @@ function toSchedule(raw: StaffScheduleResponse): StaffSchedule {
   }
 }
 
+/** Backend の StaffImageResponse を Frontend 向けに変換 */
+function toImage(raw: StaffImageResponse): StaffImage {
+  return {
+    id: raw.ID,
+    staffId: raw.StaffID,
+    imageUrl: raw.ImageURL,
+    isMain: raw.IsMain,
+    sortOrder: raw.SortOrder,
+  }
+}
+
 /** GET /api/staffs — スタッフ一覧を取得 */
 staffRoutes.get('/', async (c) => {
   const res = await fetch(`${BACKEND_URL}/staffs`)
@@ -65,6 +78,7 @@ staffRoutes.get('/:id', async (c) => {
   const result: StaffWithSchedules = {
     staff: toStaff(data.Staff),
     schedules: data.Schedules ? data.Schedules.map(toSchedule) : [],
+    images: data.Images ? data.Images.map(toImage) : [],
   }
 
   return c.json(result)

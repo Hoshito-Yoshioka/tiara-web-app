@@ -23,10 +23,22 @@ export interface StaffScheduleResponse {
   UpdatedAt: string
 }
 
+/** Backend の StaffImage レスポンス型（PascalCase） */
+export interface StaffImageResponse {
+  ID: string
+  StaffID: string
+  ImageURL: string
+  IsMain: boolean
+  SortOrder: number
+  CreatedAt: string
+  UpdatedAt: string
+}
+
 /** Backend の StaffWithSchedules レスポンス型 */
 export interface StaffWithSchedulesResponse {
   Staff: StaffResponse
   Schedules: StaffScheduleResponse[]
+  Images: StaffImageResponse[] | null
 }
 
 /** BFF → Frontend 向け Staff 型（camelCase） */
@@ -50,8 +62,18 @@ export interface StaffSchedule {
   endTime: string
 }
 
+/** BFF → Frontend 向け StaffImage 型 */
+export interface StaffImage {
+  id: string
+  staffId: string
+  imageUrl: string
+  isMain: boolean
+  sortOrder: number
+}
+
 /** BFF → Frontend 向け StaffWithSchedules 型 */
 export interface StaffWithSchedules {
   staff: Staff
   schedules: StaffSchedule[]
+  images: StaffImage[]
 }

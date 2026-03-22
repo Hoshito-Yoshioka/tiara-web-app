@@ -1,18 +1,27 @@
 <script setup lang="ts">
-  import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+  import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import AdminLayout from '@/components/layout/AdminLayout.vue'
   import { useStaffApi } from '@/composables/useStaffApi'
   import { useShopApi } from '@/composables/useShopApi'
   import { useAdminApi } from '@/composables/useAdminApi'
-  import { Save, ArrowLeft, Plus, X, Move } from 'lucide-vue-next'
+  import { Save, ArrowLeft, Plus, X, Move, Upload, Star, Trash2 } from 'lucide-vue-next'
+  import type { StaffImage } from '@/types/staff'
 
   const route = useRoute()
   const router = useRouter()
 
   const { staffDetail, fetchStaffById } = useStaffApi()
   const { shops, fetchShops } = useShopApi()
-  const { createStaff, updateStaff, isLoading: isSaving, error: saveError } = useAdminApi()
+  const {
+    createStaff,
+    updateStaff,
+    uploadStaffImage,
+    deleteStaffImage,
+    setMainImage,
+    isLoading: isSaving,
+    error: saveError,
+  } = useAdminApi()
 
   const isEditMode = computed(() => !!route.params.id)
   const pageTitle = computed(() => (isEditMode.value ? 'スタッフ編集' : 'スタッフ新規作成'))
@@ -38,6 +47,26 @@
   const schedules = ref<ScheduleForm[]>([])
   const isLoading = ref(false)
   const successMessage = ref<string | null>(null)
+
+  /** スタッフ画像一覧（リアクティブ） */
+  const images = ref<StaffImage[]>([])
+  /** 画像アップロード中フラグ */
+  const isUploading = ref(false)
+  /** ファイル入力の ref */
+  const fileInputRef = ref<HTMLInputElement | null>(null)
+
+  /** メイン画像の URL（プレビュー用） */
+  const mainImageUrl = computed(() => {
+    const main = images.value.find((img) => img.isMain)
+    return main?.imageUrl ?? images.value[0]?.imageUrl ?? ''
+  })
+
+  /** エラー表示時にページトップへ自動スクロール */
+  watch(saveError, (newVal) => {
+    if (newVal) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 
   // --- 画像クロップ位置のドラッグ操作 ---
   /** object-position を "X% Y%" 形式の CSS 文字列に変換 */
@@ -105,6 +134,55 @@
     form.value.imageCropPosition = '50 50'
   }
 
+  // --- 画像管理 ---
+  /** ファイル選択ダイアログを開く */
+  function triggerFileInput() {
+    fileInputRef.value?.click()
+  }
+
+  /** 画像ファイルをアップロード */
+  async function handleImageUpload(event: Event) {
+    const target = event.target as HTMLInputElement
+    const file = target.files?.[0]
+    if (!file || !isEditMode.value) return
+
+    isUploading.value = true
+    const staffId = route.params.id as string
+    const result = await uploadStaffImage(staffId, file)
+    if (result) {
+      images.value.push(result)
+      // アップロード後に imageUrl を同期（最初の画像は自動でメインに）
+      if (images.value.length === 1) {
+        form.value.imageUrl = result.imageUrl
+      }
+    }
+    isUploading.value = false
+    // input をリセット
+    target.value = ''
+  }
+
+  /** 画像を削除 */
+  async function handleDeleteImage(imageId: string) {
+    if (!confirm('この画像を削除しますか？')) return
+    const staffId = route.params.id as string
+    const success = await deleteStaffImage(staffId, imageId)
+    if (success) {
+      images.value = images.value.filter((img) => img.id !== imageId)
+    }
+  }
+
+  /** メイン画像を設定 */
+  async function handleSetMain(imageId: string) {
+    const staffId = route.params.id as string
+    const success = await setMainImage(staffId, imageId)
+    if (success) {
+      images.value = images.value.map((img) => ({
+        ...img,
+        isMain: img.id === imageId,
+      }))
+    }
+  }
+
   onBeforeUnmount(() => {
     // クリーンアップ
     document.removeEventListener('mousemove', onDragMove)
@@ -133,7 +211,7 @@
       // 編集モード: 既存データでフォームを初期化
       await fetchStaffById(route.params.id as string)
       if (staffDetail.value) {
-        const { staff, schedules: staffSchedules } = staffDetail.value
+        const { staff, schedules: staffSchedules, images: staffImages } = staffDetail.value
         form.value = {
           name: staff.name,
           role: staff.role,
@@ -148,6 +226,7 @@
           startTime: formatTimeForInput(s.startTime),
           endTime: formatTimeForInput(s.endTime),
         }))
+        images.value = staffImages ?? []
       }
     } else {
       // 新規作成モード: デフォルト店舗を設定
@@ -291,80 +370,149 @@
             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors"
             placeholder="https://..."
           />
+        </div>
 
-          <!-- 画像プレビュー（ドラッグで切り抜き位置を調整） -->
-          <div v-if="form.imageUrl" class="mt-4 space-y-4">
-            <div class="flex items-center gap-3">
-              <p class="text-[11px] tracking-wider uppercase text-muted-foreground">
-                表示プレビュー — ドラッグで表示位置を調整できます
-              </p>
-              <button
-                type="button"
-                @click="resetCropPosition"
-                class="text-[10px] tracking-wider text-muted-foreground/60 hover:text-foreground underline transition-colors"
-              >
-                中央にリセット
-              </button>
-            </div>
-            <div class="flex flex-wrap gap-6">
-              <!-- カード表示プレビュー（ドラッグ対応） -->
-              <div class="space-y-2">
-                <p class="text-[10px] tracking-wider uppercase text-muted-foreground/70">
-                  スタッフ一覧（カード）
-                </p>
-                <div
-                  class="relative w-48 h-52 overflow-hidden rounded-lg border-2 bg-secondary transition-colors select-none"
-                  :class="
-                    isDragging ? 'border-primary cursor-grabbing' : 'border-primary/40 cursor-grab'
-                  "
-                  @mousedown="onDragStart"
-                  @touchstart="onDragStart"
-                >
-                  <img
-                    :src="form.imageUrl"
-                    :alt="form.name || 'プレビュー'"
-                    class="w-full h-full object-cover pointer-events-none"
-                    :style="{ objectPosition: cropPositionStyle }"
-                    @error="($event.target as HTMLImageElement).style.display = 'none'"
-                  />
-                  <div
-                    class="absolute inset-0 border-2 border-dashed border-primary/30 pointer-events-none"
-                  />
-                  <div
-                    class="absolute top-2 right-2 bg-black/60 rounded-full p-1.5 pointer-events-none"
-                  >
-                    <Move class="w-3 h-3 text-white/80" />
-                  </div>
-                </div>
-              </div>
-              <!-- 詳細ページプレビュー（連動表示） -->
-              <div class="space-y-2">
-                <p class="text-[10px] tracking-wider uppercase text-muted-foreground/70">
-                  スタッフ詳細ページ
-                </p>
-                <div
-                  class="relative w-36 overflow-hidden rounded-lg border-2 border-primary/40 bg-secondary"
-                  style="aspect-ratio: 3/4"
-                >
-                  <img
-                    :src="form.imageUrl"
-                    :alt="form.name || 'プレビュー'"
-                    class="w-full h-full object-cover"
-                    :style="{ objectPosition: cropPositionStyle }"
-                    @error="($event.target as HTMLImageElement).style.display = 'none'"
-                  />
-                  <div
-                    class="absolute inset-0 border-2 border-dashed border-primary/30 pointer-events-none"
-                  />
-                </div>
-              </div>
-            </div>
-            <!-- 座標表示 -->
-            <p class="text-[10px] text-muted-foreground/50 tracking-wider">
-              位置: {{ form.imageCropPosition.split(' ')[0] }}% /
-              {{ form.imageCropPosition.split(' ')[1] }}%
-            </p>
+        <!-- 画像管理セクション（編集モードのみ） -->
+        <div v-if="isEditMode" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <label class="text-xs text-muted-foreground tracking-wider uppercase">画像管理</label>
+            <button
+              type="button"
+              @click="triggerFileInput"
+              :disabled="isUploading"
+              class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            >
+              <Upload :size="14" />
+              {{ isUploading ? 'アップロード中...' : '画像を追加' }}
+            </button>
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleImageUpload"
+            />
           </div>
+
+          <!-- アップロード済み画像一覧 -->
+          <div v-if="images.length > 0" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            <div
+              v-for="img in images"
+              :key="img.id"
+              class="relative group rounded-lg overflow-hidden border-2 transition-colors"
+              :class="img.isMain ? 'border-primary' : 'border-white/10 hover:border-white/20'"
+            >
+              <div class="aspect-square overflow-hidden bg-secondary">
+                <img :src="img.imageUrl" :alt="'staff image'" class="w-full h-full object-cover" />
+              </div>
+              <!-- メインバッジ -->
+              <div
+                v-if="img.isMain"
+                class="absolute top-1.5 left-1.5 bg-primary text-primary-foreground text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-full"
+              >
+                メイン
+              </div>
+              <!-- 操作ボタン（ホバーで表示） -->
+              <div
+                class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
+              >
+                <button
+                  v-if="!img.isMain"
+                  type="button"
+                  @click="handleSetMain(img.id)"
+                  class="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                  title="メイン画像に設定"
+                >
+                  <Star :size="14" class="text-white" />
+                </button>
+                <button
+                  type="button"
+                  @click="handleDeleteImage(img.id)"
+                  class="p-2 bg-red-500/40 rounded-full hover:bg-red-500/60 transition-colors"
+                  title="削除"
+                >
+                  <Trash2 :size="14" class="text-white" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <p v-else class="text-xs text-muted-foreground">
+            画像がアップロードされていません。「画像を追加」から画像をアップロードしてください。
+          </p>
+        </div>
+
+        <!-- 画像表示位置プレビュー（ドラッグで切り抜き位置を調整） -->
+        <div v-if="mainImageUrl || form.imageUrl" class="space-y-4">
+          <div class="flex items-center gap-3">
+            <p class="text-[11px] tracking-wider uppercase text-muted-foreground">
+              表示プレビュー — ドラッグで表示位置を調整できます
+            </p>
+            <button
+              type="button"
+              @click="resetCropPosition"
+              class="text-[10px] tracking-wider text-muted-foreground/60 hover:text-foreground underline transition-colors"
+            >
+              中央にリセット
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-6">
+            <!-- カード表示プレビュー（ドラッグ対応） -->
+            <div class="space-y-2">
+              <p class="text-[10px] tracking-wider uppercase text-muted-foreground/70">
+                スタッフ一覧（カード）
+              </p>
+              <div
+                class="relative w-48 h-52 overflow-hidden rounded-lg border-2 bg-secondary transition-colors select-none"
+                :class="
+                  isDragging ? 'border-primary cursor-grabbing' : 'border-primary/40 cursor-grab'
+                "
+                @mousedown="onDragStart"
+                @touchstart="onDragStart"
+              >
+                <img
+                  :src="mainImageUrl || form.imageUrl"
+                  :alt="form.name || 'プレビュー'"
+                  class="w-full h-full object-cover pointer-events-none"
+                  :style="{ objectPosition: cropPositionStyle }"
+                  @error="($event.target as HTMLImageElement).style.display = 'none'"
+                />
+                <div
+                  class="absolute inset-0 border-2 border-dashed border-primary/30 pointer-events-none"
+                />
+                <div
+                  class="absolute top-2 right-2 bg-black/60 rounded-full p-1.5 pointer-events-none"
+                >
+                  <Move class="w-3 h-3 text-white/80" />
+                </div>
+              </div>
+            </div>
+            <!-- 詳細ページプレビュー（連動表示） -->
+            <div class="space-y-2">
+              <p class="text-[10px] tracking-wider uppercase text-muted-foreground/70">
+                スタッフ詳細ページ
+              </p>
+              <div
+                class="relative w-36 overflow-hidden rounded-lg border-2 border-primary/40 bg-secondary"
+                style="aspect-ratio: 3/4"
+              >
+                <img
+                  :src="mainImageUrl || form.imageUrl"
+                  :alt="form.name || 'プレビュー'"
+                  class="w-full h-full object-cover"
+                  :style="{ objectPosition: cropPositionStyle }"
+                  @error="($event.target as HTMLImageElement).style.display = 'none'"
+                />
+                <div
+                  class="absolute inset-0 border-2 border-dashed border-primary/30 pointer-events-none"
+                />
+              </div>
+            </div>
+          </div>
+          <!-- 座標表示 -->
+          <p class="text-[10px] text-muted-foreground/50 tracking-wider">
+            位置: {{ form.imageCropPosition.split(' ')[0] }}% /
+            {{ form.imageCropPosition.split(' ')[1] }}%
+          </p>
         </div>
 
         <div class="space-y-2">

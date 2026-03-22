@@ -68,3 +68,13 @@ type MenuItem struct {
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
 }
+
+type StaffImage struct {
+	ID        pgtype.UUID
+	StaffID   pgtype.UUID
+	ImageUrl  string
+	IsMain    bool
+	SortOrder int32
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}

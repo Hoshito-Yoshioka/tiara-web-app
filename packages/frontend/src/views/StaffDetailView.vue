@@ -1,9 +1,9 @@
 <script setup lang="ts">
-  import { onMounted, computed } from 'vue'
+  import { onMounted, computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useStaffApi } from '@/composables/useStaffApi'
-  import { ArrowLeft, Calendar, Clock } from 'lucide-vue-next'
-  import type { StaffSchedule } from '@/types/staff'
+  import { ArrowLeft, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+  import type { StaffSchedule, StaffImage } from '@/types/staff'
 
   const route = useRoute()
   const router = useRouter()
@@ -11,6 +11,52 @@
 
   /** 曜日ラベル（0=日 … 6=土） */
   const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'] as const
+
+  /** カルーセル: 現在表示中の画像インデックス */
+  const currentImageIndex = ref(0)
+
+  /** ソート済み画像一覧（メイン画像を先頭に配置） */
+  const sortedImages = computed<StaffImage[]>(() => {
+    if (!staffDetail.value?.images?.length) return []
+    const imgs = [...staffDetail.value.images]
+    // メイン画像を先頭、残りは sortOrder 順
+    imgs.sort((a, b) => {
+      if (a.isMain && !b.isMain) return -1
+      if (!a.isMain && b.isMain) return 1
+      return a.sortOrder - b.sortOrder
+    })
+    return imgs
+  })
+
+  /** 現在表示中の画像 URL */
+  const currentImageUrl = computed(() => {
+    if (sortedImages.value.length > 0) {
+      return sortedImages.value[currentImageIndex.value]?.imageUrl ?? ''
+    }
+    // images が無い場合は fallback
+    return staffDetail.value?.staff.imageUrl ?? ''
+  })
+
+  /** 画像が複数あるか */
+  const hasMultipleImages = computed(() => sortedImages.value.length > 1)
+
+  /** 前の画像へ */
+  function prevImage() {
+    if (sortedImages.value.length === 0) return
+    currentImageIndex.value =
+      (currentImageIndex.value - 1 + sortedImages.value.length) % sortedImages.value.length
+  }
+
+  /** 次の画像へ */
+  function nextImage() {
+    if (sortedImages.value.length === 0) return
+    currentImageIndex.value = (currentImageIndex.value + 1) % sortedImages.value.length
+  }
+
+  /** サムネイルクリックで画像を切り替え */
+  function selectImage(index: number) {
+    currentImageIndex.value = index
+  }
 
   onMounted(() => {
     const id = route.params.id as string
@@ -103,24 +149,84 @@
           :enter="{ opacity: 1, y: 0, transition: { duration: 700 } }"
           class="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14 mb-20"
         >
-          <!-- 写真 -->
-          <div class="aspect-[3/4] overflow-hidden border border-border bg-secondary">
-            <img
-              v-if="staffDetail.staff.imageUrl"
-              :src="staffDetail.staff.imageUrl"
-              :alt="staffDetail.staff.name"
-              class="w-full h-full object-cover"
-              :style="{
-                objectPosition: staffDetail.staff.imageCropPosition
-                  ? staffDetail.staff.imageCropPosition
-                      .split(' ')
-                      .map((v: string) => v + '%')
-                      .join(' ')
-                  : '50% 50%',
-              }"
-            />
-            <div v-else class="w-full h-full flex items-center justify-center">
-              <span class="text-muted-foreground text-sm tracking-widest uppercase">No Photo</span>
+          <!-- 写真（カルーセル対応） -->
+          <div class="space-y-3">
+            <!-- メイン画像表示エリア -->
+            <div
+              class="relative aspect-[3/4] overflow-hidden border border-border bg-secondary group"
+            >
+              <img
+                v-if="currentImageUrl"
+                :src="currentImageUrl"
+                :alt="staffDetail.staff.name"
+                class="w-full h-full object-cover transition-opacity duration-300"
+                :style="{
+                  objectPosition: staffDetail.staff.imageCropPosition
+                    ? staffDetail.staff.imageCropPosition
+                        .split(' ')
+                        .map((v: string) => v + '%')
+                        .join(' ')
+                    : '50% 50%',
+                }"
+              />
+              <div v-else class="w-full h-full flex items-center justify-center">
+                <span class="text-muted-foreground text-sm tracking-widest uppercase"
+                  >No Photo</span
+                >
+              </div>
+
+              <!-- 前後ナビゲーションボタン（複数画像時のみ） -->
+              <template v-if="hasMultipleImages">
+                <button
+                  @click="prevImage"
+                  class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/60"
+                >
+                  <ChevronLeft class="w-5 h-5" />
+                </button>
+                <button
+                  @click="nextImage"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/60"
+                >
+                  <ChevronRight class="w-5 h-5" />
+                </button>
+              </template>
+
+              <!-- インジケーター（複数画像時のみ） -->
+              <div
+                v-if="hasMultipleImages"
+                class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5"
+              >
+                <span
+                  v-for="(_, idx) in sortedImages"
+                  :key="idx"
+                  class="w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer"
+                  :class="
+                    idx === currentImageIndex ? 'bg-primary w-4' : 'bg-white/40 hover:bg-white/60'
+                  "
+                  @click="selectImage(idx)"
+                />
+              </div>
+            </div>
+
+            <!-- サムネイルナビゲーション（複数画像時のみ） -->
+            <div v-if="hasMultipleImages" class="flex gap-2 overflow-x-auto pb-1">
+              <button
+                v-for="(img, idx) in sortedImages"
+                :key="img.id"
+                @click="selectImage(idx)"
+                class="flex-shrink-0 w-16 h-16 overflow-hidden border-2 transition-all duration-300"
+                :class="
+                  idx === currentImageIndex
+                    ? 'border-primary opacity-100'
+                    : 'border-transparent opacity-50 hover:opacity-80'
+                "
+              >
+                <img
+                  :src="img.imageUrl"
+                  :alt="`${staffDetail.staff.name} ${idx + 1}`"
+                  class="w-full h-full object-cover"
+                />
+              </button>
             </div>
           </div>
 

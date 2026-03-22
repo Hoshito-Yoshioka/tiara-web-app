@@ -41,6 +41,25 @@ app.route('/api/admin/shops', adminShopRoutes)
 app.route('/api/admin/staffs', adminStaffRoutes)
 app.route('/api/admin/menu', adminMenuRoutes)
 
+// Static file proxy: アップロード画像を Backend から配信
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
+app.get('/uploads/*', async (c) => {
+  const path = c.req.path
+  const res = await fetch(`${BACKEND_URL}${path}`)
+  if (!res.ok) {
+    return c.notFound()
+  }
+  const contentType = res.headers.get('content-type') || 'application/octet-stream'
+  const body = await res.arrayBuffer()
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'Content-Type': contentType,
+      'Cache-Control': 'public, max-age=86400',
+    },
+  })
+})
+
 // Node.js HTTP サーバーとして起動
 const port = Number(process.env.PORT) || 3001
 
