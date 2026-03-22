@@ -19,7 +19,11 @@
       await staffAuthStore.login(username.value, password.value)
       router.push({ name: 'portal-dashboard' })
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'ログインに失敗しました'
+      if (e instanceof Error && e.message.includes('401')) {
+        error.value = '入力されたアカウントのIDまたはパスワードに誤りがあります。'
+      } else {
+        error.value = e instanceof Error ? e.message : 'ログインに失敗しました'
+      }
     } finally {
       isLoading.value = false
     }
