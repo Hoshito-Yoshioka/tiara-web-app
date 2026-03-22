@@ -32,11 +32,23 @@ type StaffSchedule struct {
 	UpdatedAt time.Time
 }
 
-// StaffWithSchedules はスタッフ情報に出勤スケジュールを含めた集約モデル。
+// StaffWithSchedules はスタッフ情報に出勤スケジュールと画像を含めた集約モデル。
 // StaffDetailView用に使用する。
 type StaffWithSchedules struct {
 	Staff     Staff
 	Schedules []StaffSchedule
+	Images    []StaffImage
+}
+
+// StaffImage はスタッフ画像のドメインモデル。
+type StaffImage struct {
+	ID        uuid.UUID
+	StaffID   uuid.UUID
+	ImageURL  string
+	IsMain    bool
+	SortOrder int
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // CreateStaffInput はスタッフ作成時の入力構造体。

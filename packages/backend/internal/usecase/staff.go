@@ -15,6 +15,12 @@ type StaffRepository interface {
 	UpdateStaff(ctx context.Context, id string, input domain.UpdateStaffInput) (domain.Staff, error)
 	DeleteStaff(ctx context.Context, id string) error
 	ReplaceSchedules(ctx context.Context, staffID string, schedules []domain.ScheduleInput) ([]domain.StaffSchedule, error)
+	// Image methods
+	ListImagesByStaffID(ctx context.Context, staffID string) ([]domain.StaffImage, error)
+	ListAllStaffImages(ctx context.Context) ([]domain.StaffImage, error)
+	CreateStaffImage(ctx context.Context, staffID string, imageURL string, isMain bool, sortOrder int) (domain.StaffImage, error)
+	DeleteStaffImage(ctx context.Context, id string) error
+	SetMainImage(ctx context.Context, staffID string, imageID string) (domain.StaffImage, error)
 }
 
 // StaffUsecase はスタッフに関するビジネスロジックを定義するインターフェース。
@@ -25,6 +31,10 @@ type StaffUsecase interface {
 	CreateStaff(ctx context.Context, input domain.CreateStaffInput) (domain.StaffWithSchedules, error)
 	UpdateStaff(ctx context.Context, id string, input domain.UpdateStaffInput) (domain.StaffWithSchedules, error)
 	DeleteStaff(ctx context.Context, id string) error
+	// Image methods
+	UploadStaffImage(ctx context.Context, staffID string, imageURL string, isMain bool, sortOrder int) (domain.StaffImage, error)
+	DeleteStaffImage(ctx context.Context, id string) error
+	SetMainImage(ctx context.Context, staffID string, imageID string) (domain.StaffImage, error)
 }
 
 type staffUsecase struct {
@@ -41,8 +51,7 @@ func (u *staffUsecase) ListStaffs(ctx context.Context) ([]domain.Staff, error) {
 	return u.staffRepo.ListStaffs(ctx)
 }
 
-// GetStaffWithSchedules はスタッフ詳細と出勤スケジュールを合わせて取得する。
-// ドメイン集約 StaffWithSchedules を構成するのが Usecase 層の責務。
+// GetStaffWithSchedules はスタッフ詳細と出勤スケジュール、画像を合わせて取得する。
 func (u *staffUsecase) GetStaffWithSchedules(ctx context.Context, id string) (domain.StaffWithSchedules, error) {
 	staff, err := u.staffRepo.GetStaffByID(ctx, id)
 	if err != nil {
@@ -54,9 +63,15 @@ func (u *staffUsecase) GetStaffWithSchedules(ctx context.Context, id string) (do
 		return domain.StaffWithSchedules{}, err
 	}
 
+	images, err := u.staffRepo.ListImagesByStaffID(ctx, id)
+	if err != nil {
+		return domain.StaffWithSchedules{}, err
+	}
+
 	return domain.StaffWithSchedules{
 		Staff:     staff,
 		Schedules: schedules,
+		Images:    images,
 	}, nil
 }
 
@@ -80,11 +95,23 @@ func (u *staffUsecase) ListAllStaffsWithSchedules(ctx context.Context) ([]domain
 		scheduleMap[key] = append(scheduleMap[key], s)
 	}
 
+	// 全画像を取得してグルーピング
+	allImages, err := u.staffRepo.ListAllStaffImages(ctx)
+	if err != nil {
+		return nil, err
+	}
+	imageMap := make(map[string][]domain.StaffImage)
+	for _, img := range allImages {
+		key := img.StaffID.String()
+		imageMap[key] = append(imageMap[key], img)
+	}
+
 	result := make([]domain.StaffWithSchedules, len(staffs))
 	for i, staff := range staffs {
 		result[i] = domain.StaffWithSchedules{
 			Staff:     staff,
 			Schedules: scheduleMap[staff.ID.String()],
+			Images:    imageMap[staff.ID.String()],
 		}
 	}
 
@@ -106,9 +133,12 @@ func (u *staffUsecase) CreateStaff(ctx context.Context, input domain.CreateStaff
 		}
 	}
 
+	images, _ := u.staffRepo.ListImagesByStaffID(ctx, staff.ID.String())
+
 	return domain.StaffWithSchedules{
 		Staff:     staff,
 		Schedules: schedules,
+		Images:    images,
 	}, nil
 }
 
@@ -124,13 +154,31 @@ func (u *staffUsecase) UpdateStaff(ctx context.Context, id string, input domain.
 		return domain.StaffWithSchedules{}, err
 	}
 
+	images, _ := u.staffRepo.ListImagesByStaffID(ctx, id)
+
 	return domain.StaffWithSchedules{
 		Staff:     staff,
 		Schedules: schedules,
+		Images:    images,
 	}, nil
 }
 
 // DeleteStaff は指定されたIDのスタッフを削除する。
 func (u *staffUsecase) DeleteStaff(ctx context.Context, id string) error {
 	return u.staffRepo.DeleteStaff(ctx, id)
+}
+
+// UploadStaffImage はスタッフ画像を登録する。
+func (u *staffUsecase) UploadStaffImage(ctx context.Context, staffID string, imageURL string, isMain bool, sortOrder int) (domain.StaffImage, error) {
+	return u.staffRepo.CreateStaffImage(ctx, staffID, imageURL, isMain, sortOrder)
+}
+
+// DeleteStaffImage はスタッフ画像を削除する。
+func (u *staffUsecase) DeleteStaffImage(ctx context.Context, id string) error {
+	return u.staffRepo.DeleteStaffImage(ctx, id)
+}
+
+// SetMainImage は指定された画像をメイン画像に設定する。
+func (u *staffUsecase) SetMainImage(ctx context.Context, staffID string, imageID string) (domain.StaffImage, error) {
+	return u.staffRepo.SetMainImage(ctx, staffID, imageID)
 }

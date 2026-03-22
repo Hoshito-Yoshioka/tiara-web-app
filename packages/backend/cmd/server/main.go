@@ -70,6 +70,9 @@ func main() {
 	menuUsecase := usecase.NewMenuUsecase(menuRepo)
 	menuHandler := handler.NewMenuHandler(menuUsecase)
 
+	// Static file serving for uploaded images
+	e.Static("/uploads", "uploads")
+
 	// Public Routes
 	e.GET("/", healthCheck)
 	e.GET("/shops", shopHandler.ListShops)
@@ -89,6 +92,9 @@ func main() {
 	admin.POST("/staffs", staffHandler.CreateStaff)
 	admin.PUT("/staffs/:id", staffHandler.UpdateStaff)
 	admin.DELETE("/staffs/:id", staffHandler.DeleteStaff)
+	admin.POST("/staffs/:id/images", staffHandler.UploadStaffImage)
+	admin.DELETE("/staffs/:id/images/:imageId", staffHandler.DeleteStaffImage)
+	admin.PUT("/staffs/:id/images/main", staffHandler.SetMainImage)
 	admin.POST("/menu/categories", menuHandler.CreateMenuCategory)
 	admin.PUT("/menu/categories/:id", menuHandler.UpdateMenuCategory)
 	admin.DELETE("/menu/categories/:id", menuHandler.DeleteMenuCategory)

@@ -1,10 +1,15 @@
 package handler
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"tiara-web-app/backend/internal/domain"
 	"tiara-web-app/backend/internal/usecase"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -159,4 +164,101 @@ func (h *StaffHandler) DeleteStaff(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 	return c.NoContent(http.StatusNoContent)
+}
+
+// UploadStaffImage はスタッフ画像をアップロードするハンドラー。
+// multipart/form-data で受け取り、ファイルを uploads/ に保存する。
+func (h *StaffHandler) UploadStaffImage(c echo.Context) error {
+	staffID := c.Param("id")
+	if staffID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "staff id is required"})
+	}
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image file is required"})
+	}
+
+	// ファイルサイズ制限 (10MB)
+	if file.Size > 10*1024*1024 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "file size must be less than 10MB"})
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to read file"})
+	}
+	defer src.Close()
+
+	// uploads ディレクトリ作成
+	uploadDir := "uploads/staff"
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create upload directory"})
+	}
+
+	// ユニークファイル名生成
+	ext := filepath.Ext(file.Filename)
+	filename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+	dstPath := filepath.Join(uploadDir, filename)
+
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save file"})
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to write file"})
+	}
+
+	// DB に画像レコードを作成
+	isMain := c.FormValue("isMain") == "true"
+	imageURL := fmt.Sprintf("/uploads/staff/%s", filename)
+
+	image, err := h.staffUsecase.UploadStaffImage(c.Request().Context(), staffID, imageURL, isMain, 0)
+	if err != nil {
+		// ファイルを削除
+		os.Remove(dstPath)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, image)
+}
+
+// DeleteStaffImage はスタッフ画像を削除するハンドラー。
+func (h *StaffHandler) DeleteStaffImage(c echo.Context) error {
+	imageID := c.Param("imageId")
+	if imageID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image id is required"})
+	}
+
+	err := h.staffUsecase.DeleteStaffImage(c.Request().Context(), imageID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+// SetMainImageRequest はメイン画像設定リクエストのボディ型。
+type SetMainImageRequest struct {
+	ImageID string `json:"imageId"`
+}
+
+// SetMainImage はスタッフのメイン画像を設定するハンドラー。
+func (h *StaffHandler) SetMainImage(c echo.Context) error {
+	staffID := c.Param("id")
+	if staffID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "staff id is required"})
+	}
+
+	var req SetMainImageRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	image, err := h.staffUsecase.SetMainImage(c.Request().Context(), staffID, req.ImageID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, image)
 }

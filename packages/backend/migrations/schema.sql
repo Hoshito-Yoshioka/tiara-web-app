@@ -66,6 +66,26 @@ FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 
 -- ==============================
+-- staff_images テーブル
+-- スタッフの画像（メイン1枚+サブ複数枚）
+-- is_main: メイン画像フラグ（スタッフ一覧等で使用）
+-- ==============================
+CREATE TABLE staff_images (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    staff_id UUID NOT NULL REFERENCES staffs(id) ON DELETE CASCADE,
+    image_url TEXT NOT NULL,
+    is_main BOOLEAN NOT NULL DEFAULT false,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_staff_images_updated_at
+BEFORE UPDATE ON staff_images
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- ==============================
 -- staff_schedules テーブル
 -- スタッフの出勤スケジュール（曜日ベース）
 -- day_of_week: 0=日, 1=月, 2=火, ..., 6=土
