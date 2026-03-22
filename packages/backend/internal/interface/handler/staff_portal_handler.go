@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"os"
 	"time"
 
 	"tiara-web-app/backend/internal/domain"
@@ -15,13 +14,15 @@ import (
 
 // StaffPortalHandler はスタッフポータル関連のHTTPハンドラー。
 type StaffPortalHandler struct {
-	authUsecase   usecase.StaffAuthUsecase
-	portalUsecase usecase.StaffPortalUsecase
+	authUsecase    usecase.StaffAuthUsecase
+	portalUsecase  usecase.StaffPortalUsecase
+	jwtSecret      string
+	jwtExpiryHours int
 }
 
 // NewStaffPortalHandler は新しいStaffPortalHandlerのインスタンスを作成する。
-func NewStaffPortalHandler(auth usecase.StaffAuthUsecase, portal usecase.StaffPortalUsecase) *StaffPortalHandler {
-	return &StaffPortalHandler{authUsecase: auth, portalUsecase: portal}
+func NewStaffPortalHandler(auth usecase.StaffAuthUsecase, portal usecase.StaffPortalUsecase, jwtSecret string, jwtExpiryHours int) *StaffPortalHandler {
+	return &StaffPortalHandler{authUsecase: auth, portalUsecase: portal, jwtSecret: jwtSecret, jwtExpiryHours: jwtExpiryHours}
 }
 
 // --- Helper ---
@@ -66,21 +67,16 @@ func (h *StaffPortalHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
 	}
 
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "tiara-dev-secret-key"
-	}
-
-	claims := jwt.MapClaims{
+	jwtClaims := jwt.MapClaims{
 		"sub":      account.StaffID.String(),
 		"username": account.Username,
 		"type":     "staff", // 管理者トークンと区別するためのクレーム
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"exp":      time.Now().Add(time.Duration(h.jwtExpiryHours) * time.Hour).Unix(),
 		"iat":      time.Now().Unix(),
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(jwtSecret))
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaims)
+	tokenString, err := token.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate token"})
 	}

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"os"
 	"time"
 
 	"tiara-web-app/backend/internal/usecase"
@@ -13,12 +12,14 @@ import (
 
 // AuthHandler は認証関連のHTTPハンドラー。
 type AuthHandler struct {
-	authUsecase usecase.AuthUsecase
+	authUsecase    usecase.AuthUsecase
+	jwtSecret      string
+	jwtExpiryHours int
 }
 
 // NewAuthHandler は新しいAuthHandlerのインスタンスを作成する。
-func NewAuthHandler(us usecase.AuthUsecase) *AuthHandler {
-	return &AuthHandler{authUsecase: us}
+func NewAuthHandler(us usecase.AuthUsecase, jwtSecret string, jwtExpiryHours int) *AuthHandler {
+	return &AuthHandler{authUsecase: us, jwtSecret: jwtSecret, jwtExpiryHours: jwtExpiryHours}
 }
 
 // LoginRequest はログインリクエストのボディ型。
@@ -49,20 +50,15 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	}
 
 	// JWT トークンを生成
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "tiara-dev-secret-key"
-	}
-
 	claims := jwt.MapClaims{
 		"sub":      admin.ID.String(),
 		"username": admin.Username,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"exp":      time.Now().Add(time.Duration(h.jwtExpiryHours) * time.Hour).Unix(),
 		"iat":      time.Now().Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(jwtSecret))
+	tokenString, err := token.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate token"})
 	}
