@@ -30,6 +30,28 @@
     if (!staffDetail.value?.schedules) return []
     return [...staffDetail.value.schedules].sort((a, b) => a.dayOfWeek - b.dayOfWeek)
   })
+
+  /**
+   * 今日(JST)を基準に、今週（日〜土）の各曜日の日付を返す。
+   * index: 0=日, 1=月, … 6=土
+   */
+  const weekDates = computed(() => {
+    const now = new Date()
+    const jstNow = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60 * 1000)
+    const todayDay = jstNow.getUTCDay()
+    const dates: Date[] = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(jstNow)
+      d.setUTCDate(d.getUTCDate() - todayDay + i)
+      dates.push(d)
+    }
+    return dates
+  })
+
+  /** Date を "M/D" 形式にフォーマット */
+  function formatDateShort(d: Date): string {
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`
+  }
 </script>
 
 <template>
@@ -157,18 +179,23 @@
                   class="border-b border-border last:border-b-0 transition-colors duration-300 hover:bg-secondary/50"
                 >
                   <td class="px-6 py-4">
-                    <span
-                      class="text-sm tracking-[0.1em] font-light"
-                      :class="
-                        schedule.dayOfWeek === 0
-                          ? 'text-red-400'
-                          : schedule.dayOfWeek === 6
-                            ? 'text-blue-400'
-                            : 'text-foreground'
-                      "
-                    >
-                      {{ DAY_LABELS[schedule.dayOfWeek] }}曜日
-                    </span>
+                    <div class="flex items-baseline gap-2">
+                      <span
+                        class="text-sm tracking-[0.1em] font-light"
+                        :class="
+                          schedule.dayOfWeek === 0
+                            ? 'text-red-400'
+                            : schedule.dayOfWeek === 6
+                              ? 'text-blue-400'
+                              : 'text-foreground'
+                        "
+                      >
+                        {{ DAY_LABELS[schedule.dayOfWeek] }}曜日
+                      </span>
+                      <span class="text-xs text-muted-foreground/60">
+                        {{ formatDateShort(weekDates[schedule.dayOfWeek]) }}
+                      </span>
+                    </div>
                   </td>
                   <td class="px-6 py-4">
                     <span class="text-sm text-muted-foreground tracking-wider">
