@@ -179,6 +179,14 @@
                       :src="item.staff.imageUrl"
                       :alt="item.staff.name"
                       class="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-border"
+                      :style="{
+                        objectPosition: item.staff.imageCropPosition
+                          ? item.staff.imageCropPosition
+                              .split(' ')
+                              .map((v: string) => v + '%')
+                              .join(' ')
+                          : '50% 50%',
+                      }"
                     />
                     <div
                       v-else

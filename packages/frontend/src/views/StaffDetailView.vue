@@ -110,6 +110,14 @@
               :src="staffDetail.staff.imageUrl"
               :alt="staffDetail.staff.name"
               class="w-full h-full object-cover"
+              :style="{
+                objectPosition: staffDetail.staff.imageCropPosition
+                  ? staffDetail.staff.imageCropPosition
+                      .split(' ')
+                      .map((v: string) => v + '%')
+                      .join(' ')
+                  : '50% 50%',
+              }"
             />
             <div v-else class="w-full h-full flex items-center justify-center">
               <span class="text-muted-foreground text-sm tracking-widest uppercase">No Photo</span>

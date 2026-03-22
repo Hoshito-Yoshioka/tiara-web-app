@@ -30,8 +30,9 @@ func convertToStaffDomain(row Staff) domain.Staff {
 		Name:      row.Name,
 		Role:      row.Role,
 		Bio:       row.Bio,
-		ImageURL:  row.ImageUrl,
-		SortOrder: int(row.SortOrder),
+		ImageURL:          row.ImageUrl,
+		ImageCropPosition: row.ImageCropPosition,
+		SortOrder:         int(row.SortOrder),
 		CreatedAt: row.CreatedAt.Time,
 		UpdatedAt: row.UpdatedAt.Time,
 	}
@@ -124,12 +125,13 @@ func (r *staffRepository) CreateStaff(ctx context.Context, input domain.CreateSt
 	}
 
 	row, err := r.q.CreateStaff(ctx, CreateStaffParams{
-		ShopID:    pgtype.UUID{Bytes: shopUID, Valid: true},
-		Name:      input.Name,
-		Role:      input.Role,
-		Bio:       input.Bio,
-		ImageUrl:  input.ImageURL,
-		SortOrder: int32(input.SortOrder),
+		ShopID:            pgtype.UUID{Bytes: shopUID, Valid: true},
+		Name:              input.Name,
+		Role:              input.Role,
+		Bio:               input.Bio,
+		ImageUrl:          input.ImageURL,
+		ImageCropPosition: input.ImageCropPosition,
+		SortOrder:         int32(input.SortOrder),
 	})
 	if err != nil {
 		return domain.Staff{}, err
@@ -146,12 +148,13 @@ func (r *staffRepository) UpdateStaff(ctx context.Context, id string, input doma
 	}
 
 	row, err := r.q.UpdateStaff(ctx, UpdateStaffParams{
-		ID:        pgtype.UUID{Bytes: uid, Valid: true},
-		Name:      input.Name,
-		Role:      input.Role,
-		Bio:       input.Bio,
-		ImageUrl:  input.ImageURL,
-		SortOrder: int32(input.SortOrder),
+		ID:                pgtype.UUID{Bytes: uid, Valid: true},
+		Name:              input.Name,
+		Role:              input.Role,
+		Bio:               input.Bio,
+		ImageUrl:          input.ImageURL,
+		ImageCropPosition: input.ImageCropPosition,
+		SortOrder:         int32(input.SortOrder),
 	})
 	if err != nil {
 		return domain.Staff{}, err

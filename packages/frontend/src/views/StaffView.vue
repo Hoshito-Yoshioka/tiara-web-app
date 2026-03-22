@@ -61,7 +61,7 @@
           class="group block"
         >
           <div
-            class="border border-border bg-card overflow-hidden transition-all duration-500 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 flex flex-col sm:flex-row"
+            class="border border-border bg-card overflow-hidden transition-all duration-500 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 flex flex-col sm:flex-row sm:h-52"
           >
             <!-- スタッフ画像 -->
             <div
@@ -72,6 +72,14 @@
                 :src="staff.imageUrl"
                 :alt="staff.name"
                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                :style="{
+                  objectPosition: staff.imageCropPosition
+                    ? staff.imageCropPosition
+                        .split(' ')
+                        .map((v: string) => v + '%')
+                        .join(' ')
+                    : '50% 50%',
+                }"
               />
               <div v-else class="w-full h-full flex items-center justify-center min-h-[160px]">
                 <span class="text-muted-foreground text-sm tracking-widest uppercase"

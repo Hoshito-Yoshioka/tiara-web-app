@@ -60,23 +60,25 @@ type ScheduleInput struct {
 
 // CreateStaffRequest はスタッフ作成リクエストのボディ型。
 type CreateStaffRequest struct {
-	ShopID    string          `json:"shopId"`
-	Name      string          `json:"name"`
-	Role      string          `json:"role"`
-	Bio       string          `json:"bio"`
-	ImageURL  string          `json:"imageUrl"`
-	SortOrder int             `json:"sortOrder"`
-	Schedules []ScheduleInput `json:"schedules"`
+	ShopID            string          `json:"shopId"`
+	Name              string          `json:"name"`
+	Role              string          `json:"role"`
+	Bio               string          `json:"bio"`
+	ImageURL          string          `json:"imageUrl"`
+	ImageCropPosition string          `json:"imageCropPosition"`
+	SortOrder         int             `json:"sortOrder"`
+	Schedules         []ScheduleInput `json:"schedules"`
 }
 
 // UpdateStaffRequest はスタッフ更新リクエストのボディ型。
 type UpdateStaffRequest struct {
-	Name      string          `json:"name"`
-	Role      string          `json:"role"`
-	Bio       string          `json:"bio"`
-	ImageURL  string          `json:"imageUrl"`
-	SortOrder int             `json:"sortOrder"`
-	Schedules []ScheduleInput `json:"schedules"`
+	Name              string          `json:"name"`
+	Role              string          `json:"role"`
+	Bio               string          `json:"bio"`
+	ImageURL          string          `json:"imageUrl"`
+	ImageCropPosition string          `json:"imageCropPosition"`
+	SortOrder         int             `json:"sortOrder"`
+	Schedules         []ScheduleInput `json:"schedules"`
 }
 
 func toScheduleInputs(inputs []ScheduleInput) []domain.ScheduleInput {
@@ -99,13 +101,14 @@ func (h *StaffHandler) CreateStaff(c echo.Context) error {
 	}
 
 	input := domain.CreateStaffInput{
-		ShopID:    req.ShopID,
-		Name:      req.Name,
-		Role:      req.Role,
-		Bio:       req.Bio,
-		ImageURL:  req.ImageURL,
-		SortOrder: req.SortOrder,
-		Schedules: toScheduleInputs(req.Schedules),
+		ShopID:            req.ShopID,
+		Name:              req.Name,
+		Role:              req.Role,
+		Bio:               req.Bio,
+		ImageURL:          req.ImageURL,
+		ImageCropPosition: req.ImageCropPosition,
+		SortOrder:         req.SortOrder,
+		Schedules:         toScheduleInputs(req.Schedules),
 	}
 
 	result, err := h.staffUsecase.CreateStaff(c.Request().Context(), input)
@@ -128,12 +131,13 @@ func (h *StaffHandler) UpdateStaff(c echo.Context) error {
 	}
 
 	input := domain.UpdateStaffInput{
-		Name:      req.Name,
-		Role:      req.Role,
-		Bio:       req.Bio,
-		ImageURL:  req.ImageURL,
-		SortOrder: req.SortOrder,
-		Schedules: toScheduleInputs(req.Schedules),
+		Name:              req.Name,
+		Role:              req.Role,
+		Bio:               req.Bio,
+		ImageURL:          req.ImageURL,
+		ImageCropPosition: req.ImageCropPosition,
+		SortOrder:         req.SortOrder,
+		Schedules:         toScheduleInputs(req.Schedules),
 	}
 
 	result, err := h.staffUsecase.UpdateStaff(c.Request().Context(), id, input)

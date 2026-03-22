@@ -27,15 +27,16 @@ type Shop struct {
 }
 
 type Staff struct {
-	ID        pgtype.UUID
-	ShopID    pgtype.UUID
-	Name      string
-	Role      string
-	Bio       string
-	ImageUrl  string
-	SortOrder int32
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
+	ID                pgtype.UUID
+	ShopID            pgtype.UUID
+	Name              string
+	Role              string
+	Bio               string
+	ImageUrl          string
+	ImageCropPosition string
+	SortOrder         int32
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
 }
 
 type StaffSchedule struct {
