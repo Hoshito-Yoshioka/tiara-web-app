@@ -2,7 +2,7 @@
 SELECT * FROM staff_schedule_drafts WHERE id = $1;
 
 -- name: GetScheduleDraftByStaffID :one
-SELECT * FROM staff_schedule_drafts WHERE staff_id = $1 AND status IN ('draft', 'pending') ORDER BY created_at DESC LIMIT 1;
+SELECT * FROM staff_schedule_drafts WHERE staff_id = $1 AND status IN ('draft', 'pending', 'rejected') ORDER BY created_at DESC LIMIT 1;
 
 -- name: ListPendingScheduleDrafts :many
 SELECT * FROM staff_schedule_drafts WHERE status = 'pending' ORDER BY submitted_at ASC;

@@ -60,7 +60,7 @@
 
   /** 承認申請 */
   async function handleSubmit() {
-    if (!confirm('この内容で承認申請しますか？申請後は管理者が承認するまで編集できません。')) return
+    if (!confirm('この内容で承認申請しますか？')) return
 
     isSaving.value = true
     successMessage.value = null
@@ -76,12 +76,21 @@
     isSaving.value = false
   }
 
-  /** 編集可能かどうか */
+  /** 編集可能かどうか（approved 以外は全て編集可能） */
   function isEditable(): boolean {
     return (
       !scheduleDraft.value?.status ||
       scheduleDraft.value.status === 'draft' ||
-      scheduleDraft.value.status === 'rejected'
+      scheduleDraft.value.status === 'rejected' ||
+      scheduleDraft.value.status === 'pending'
+    )
+  }
+
+  /** 提出可能かどうか（draft / rejected のみ） */
+  function isSubmittable(): boolean {
+    return (
+      !!scheduleDraft.value?.id &&
+      (scheduleDraft.value.status === 'draft' || scheduleDraft.value.status === 'rejected')
     )
   }
 </script>
@@ -119,7 +128,9 @@
         v-if="scheduleDraft?.status === 'pending'"
         class="bg-blue-500/10 border border-blue-500/20 rounded-lg px-4 py-3 mb-4"
       >
-        <p class="text-sm text-blue-400">承認待ちです。管理者が確認するまでお待ちください。</p>
+        <p class="text-sm text-blue-400">
+          承認待ちです。編集して保存すると申請が取り下げられ、再提出が必要になります。
+        </p>
       </div>
 
       <div
@@ -200,11 +211,11 @@
 
           <button
             type="button"
-            :disabled="isSaving || !scheduleDraft?.id"
+            :disabled="isSaving || !isSubmittable()"
             @click="handleSubmit"
             class="bg-white text-black rounded-lg px-6 py-3 text-sm font-medium tracking-wider hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            承認申請
+            {{ scheduleDraft?.status === 'pending' ? '提出済み' : '承認申請' }}
           </button>
         </div>
       </div>

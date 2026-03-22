@@ -1,7 +1,15 @@
 <script setup lang="ts">
   import { RouterLink, useRouter } from 'vue-router'
   import { useAuthStore } from '@/stores/auth'
-  import { LogOut, Store, Users, Home, UtensilsCrossed } from 'lucide-vue-next'
+  import {
+    LogOut,
+    Store,
+    Users,
+    Home,
+    UtensilsCrossed,
+    UserCheck,
+    CalendarCheck,
+  } from 'lucide-vue-next'
 
   const authStore = useAuthStore()
   const router = useRouter()
@@ -50,6 +58,22 @@
               <UtensilsCrossed :size="14" />
               メニュー管理
             </RouterLink>
+            <RouterLink
+              to="/admin/profile-reviews"
+              class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              active-class="text-foreground"
+            >
+              <UserCheck :size="14" />
+              プロフィール承認
+            </RouterLink>
+            <RouterLink
+              to="/admin/schedule-reviews"
+              class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              active-class="text-foreground"
+            >
+              <CalendarCheck :size="14" />
+              シフト承認
+            </RouterLink>
           </nav>
         </div>
 
@@ -96,6 +120,22 @@
         >
           <UtensilsCrossed :size="14" />
           メニュー管理
+        </RouterLink>
+        <RouterLink
+          to="/admin/profile-reviews"
+          class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          active-class="text-foreground"
+        >
+          <UserCheck :size="14" />
+          プロフィール承認
+        </RouterLink>
+        <RouterLink
+          to="/admin/schedule-reviews"
+          class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          active-class="text-foreground"
+        >
+          <CalendarCheck :size="14" />
+          シフト承認
         </RouterLink>
       </nav>
     </header>

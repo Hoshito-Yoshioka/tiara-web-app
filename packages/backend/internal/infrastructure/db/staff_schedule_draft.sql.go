@@ -106,7 +106,7 @@ func (q *Queries) GetScheduleDraftByID(ctx context.Context, id pgtype.UUID) (Sta
 }
 
 const getScheduleDraftByStaffID = `-- name: GetScheduleDraftByStaffID :one
-SELECT id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_schedule_drafts WHERE staff_id = $1 AND status IN ('draft', 'pending') ORDER BY created_at DESC LIMIT 1
+SELECT id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_schedule_drafts WHERE staff_id = $1 AND status IN ('draft', 'pending', 'rejected') ORDER BY created_at DESC LIMIT 1
 `
 
 func (q *Queries) GetScheduleDraftByStaffID(ctx context.Context, staffID pgtype.UUID) (StaffScheduleDraft, error) {

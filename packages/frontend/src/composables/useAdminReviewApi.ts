@@ -1,11 +1,11 @@
 import { ref, type Ref } from 'vue'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
-import type { ProfileDraft, ScheduleDraft } from '@/types/staffPortal'
+import type { ProfileDraft, ScheduleDraft, ScheduleDraftItem } from '@/types/staffPortal'
 
 /**
  * 管理者用レビュー API を呼び出す Composable。
- * 承認待ち下書きの一覧取得・承認・却下を担う。
+ * 承認待ち下書きの一覧取得・承認・却下・内容修正を担う。
  */
 export function useAdminReviewApi() {
   const pendingProfiles: Ref<ProfileDraft[]> = ref([])
@@ -48,6 +48,64 @@ export function useAdminReviewApi() {
       error.value = e instanceof Error ? e.message : '取得に失敗しました'
     } finally {
       isLoading.value = false
+    }
+  }
+
+  /** プロフィール下書き単体取得 */
+  async function fetchProfileDraft(draftId: string): Promise<ProfileDraft | null> {
+    try {
+      return await apiFetch<ProfileDraft>(`/api/admin/reviews/profiles/${draftId}`, {
+        headers: authHeaders(),
+      })
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '取得に失敗しました'
+      return null
+    }
+  }
+
+  /** スケジュール下書き単体取得 */
+  async function fetchScheduleDraft(draftId: string): Promise<ScheduleDraft | null> {
+    try {
+      return await apiFetch<ScheduleDraft>(`/api/admin/reviews/schedules/${draftId}`, {
+        headers: authHeaders(),
+      })
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '取得に失敗しました'
+      return null
+    }
+  }
+
+  /** プロフィール下書きの内容を修正（ステータス変更なし） */
+  async function updateProfileDraftContent(
+    draftId: string,
+    data: { name: string; role: string; bio: string; imageUrl: string; imageCropPosition: string }
+  ): Promise<ProfileDraft | null> {
+    try {
+      return await apiFetch<ProfileDraft>(`/api/admin/reviews/profiles/${draftId}/content`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(data),
+      })
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '修正に失敗しました'
+      return null
+    }
+  }
+
+  /** スケジュール下書きの内容を修正（ステータス変更なし） */
+  async function updateScheduleDraftContent(
+    draftId: string,
+    items: ScheduleDraftItem[]
+  ): Promise<ScheduleDraft | null> {
+    try {
+      return await apiFetch<ScheduleDraft>(`/api/admin/reviews/schedules/${draftId}/content`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ items }),
+      })
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '修正に失敗しました'
+      return null
     }
   }
 
@@ -99,6 +157,10 @@ export function useAdminReviewApi() {
     error,
     fetchPendingProfiles,
     fetchPendingSchedules,
+    fetchProfileDraft,
+    fetchScheduleDraft,
+    updateProfileDraftContent,
+    updateScheduleDraftContent,
     reviewProfileDraft,
     reviewScheduleDraft,
   }

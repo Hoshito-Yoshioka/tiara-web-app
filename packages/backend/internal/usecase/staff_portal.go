@@ -41,6 +41,9 @@ type StaffDraftRepository interface {
 	SubmitScheduleDraft(ctx context.Context, id uuid.UUID) (domain.StaffScheduleDraft, error)
 	ReviewScheduleDraft(ctx context.Context, id uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error)
 	DeleteScheduleDraft(ctx context.Context, id uuid.UUID) error
+	// Admin用（ステータス変更なし）
+	UpdateProfileDraftContent(ctx context.Context, id uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error)
+	ReplaceScheduleDraftItems(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error)
 }
 
 // --- Staff Auth Usecase ---
@@ -131,12 +134,7 @@ func (u *staffPortalUsecase) SaveProfileDraft(ctx context.Context, staffID uuid.
 		return u.draftRepo.CreateProfileDraft(ctx, staffID, input)
 	}
 
-	// pending 状態の場合は編集不可
-	if existing.Status == domain.DraftStatusPending {
-		return domain.StaffProfileDraft{}, errors.New("承認待ちの下書きは編集できません")
-	}
-
-	// 既存の下書きを更新
+	// 既存の下書きを更新（pending でも更新可能 → ステータスは draft に戻る）
 	return u.draftRepo.UpdateProfileDraft(ctx, existing.ID, input)
 }
 
@@ -153,8 +151,8 @@ func (u *staffPortalUsecase) SubmitProfileDraft(ctx context.Context, staffID uui
 		return domain.StaffProfileDraft{}, errors.New("他のスタッフの下書きは操作できません")
 	}
 
-	if draft.Status != domain.DraftStatusDraft {
-		return domain.StaffProfileDraft{}, errors.New("draft状態の下書きのみ申請できます")
+	if draft.Status != domain.DraftStatusDraft && draft.Status != domain.DraftStatusRejected {
+		return domain.StaffProfileDraft{}, errors.New("draft または rejected 状態の下書きのみ申請できます")
 	}
 
 	return u.draftRepo.SubmitProfileDraft(ctx, draftID)
@@ -194,10 +192,7 @@ func (u *staffPortalUsecase) SaveScheduleDraft(ctx context.Context, staffID uuid
 		return u.draftRepo.CreateScheduleDraft(ctx, staffID, items)
 	}
 
-	if existing.Status == domain.DraftStatusPending {
-		return domain.StaffScheduleDraft{}, errors.New("承認待ちの下書きは編集できません")
-	}
-
+	// 既存の下書きを更新（pending でも更新可能 → ステータスは draft に戻る）
 	return u.draftRepo.UpdateScheduleDraftItems(ctx, existing.ID, items)
 }
 
@@ -212,8 +207,8 @@ func (u *staffPortalUsecase) SubmitScheduleDraft(ctx context.Context, staffID uu
 		return domain.StaffScheduleDraft{}, errors.New("他のスタッフの下書きは操作できません")
 	}
 
-	if draft.Status != domain.DraftStatusDraft {
-		return domain.StaffScheduleDraft{}, errors.New("draft状態の下書きのみ申請できます")
+	if draft.Status != domain.DraftStatusDraft && draft.Status != domain.DraftStatusRejected {
+		return domain.StaffScheduleDraft{}, errors.New("draft または rejected 状態の下書きのみ申請できます")
 	}
 
 	return u.draftRepo.SubmitScheduleDraft(ctx, draftID)
@@ -228,6 +223,14 @@ type AdminReviewUsecase interface {
 	ListPendingScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error)
 	ReviewProfileDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffProfileDraft, error)
 	ReviewScheduleDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error)
+	// 単体取得
+	GetProfileDraft(ctx context.Context, draftID uuid.UUID) (domain.StaffProfileDraft, error)
+	GetScheduleDraft(ctx context.Context, draftID uuid.UUID) (domain.StaffScheduleDraft, error)
+	// Admin内容修正（ステータス変更なし）
+	UpdateProfileDraftContent(ctx context.Context, draftID uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error)
+	UpdateScheduleDraftContent(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error)
+	// スタッフ名取得
+	GetStaffName(ctx context.Context, staffID uuid.UUID) (string, error)
 }
 
 type adminReviewUsecase struct {
@@ -327,6 +330,35 @@ func (u *adminReviewUsecase) ReviewScheduleDraft(ctx context.Context, draftID uu
 	}
 
 	return reviewed, nil
+}
+
+// GetProfileDraft は管理者がプロフィール下書きを単体で取得する。
+func (u *adminReviewUsecase) GetProfileDraft(ctx context.Context, draftID uuid.UUID) (domain.StaffProfileDraft, error) {
+	return u.draftRepo.GetProfileDraftByID(ctx, draftID)
+}
+
+// GetScheduleDraft は管理者がスケジュール下書きを単体で取得する。
+func (u *adminReviewUsecase) GetScheduleDraft(ctx context.Context, draftID uuid.UUID) (domain.StaffScheduleDraft, error) {
+	return u.draftRepo.GetScheduleDraftByID(ctx, draftID)
+}
+
+// UpdateProfileDraftContent は管理者がプロフィール下書きの内容のみ更新する（ステータス変更なし）。
+func (u *adminReviewUsecase) UpdateProfileDraftContent(ctx context.Context, draftID uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
+	return u.draftRepo.UpdateProfileDraftContent(ctx, draftID, input)
+}
+
+// UpdateScheduleDraftContent は管理者がスケジュール下書きの内容のみ更新する（ステータス変更なし）。
+func (u *adminReviewUsecase) UpdateScheduleDraftContent(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error) {
+	return u.draftRepo.ReplaceScheduleDraftItems(ctx, draftID, items)
+}
+
+// GetStaffName はスタッフIDからスタッフ名を取得する。
+func (u *adminReviewUsecase) GetStaffName(ctx context.Context, staffID uuid.UUID) (string, error) {
+	staff, err := u.staffRepo.GetStaffByID(ctx, staffID.String())
+	if err != nil {
+		return "", err
+	}
+	return staff.Name, nil
 }
 
 // --- Admin Account Management Usecase ---

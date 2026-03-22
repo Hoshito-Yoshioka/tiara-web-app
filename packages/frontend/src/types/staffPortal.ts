@@ -4,6 +4,7 @@
 export interface ProfileDraft {
   id?: string
   staffId: string
+  staffName?: string
   name: string
   role: string
   bio: string
@@ -29,6 +30,7 @@ export interface ScheduleDraftItem {
 export interface ScheduleDraft {
   id?: string
   staffId: string
+  staffName?: string
   status: string
   adminComment: string
   submittedAt?: string

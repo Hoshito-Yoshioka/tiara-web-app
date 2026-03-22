@@ -372,3 +372,66 @@ func (r *staffDraftRepository) ReviewScheduleDraft(ctx context.Context, id uuid.
 func (r *staffDraftRepository) DeleteScheduleDraft(ctx context.Context, id uuid.UUID) error {
 	return r.q.DeleteScheduleDraft(ctx, uuidToPgtype(id))
 }
+
+// --- Admin用メソッド（ステータスを変更せずに内容のみ更新） ---
+
+// UpdateProfileDraftContent はプロフィール下書きの内容のみ更新する（ステータス変更なし）。
+// 管理者がレビュー時に内容を修正する際に使用する。
+func (r *staffDraftRepository) UpdateProfileDraftContent(ctx context.Context, id uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
+	row, err := r.q.UpdateProfileDraftContent(ctx, UpdateProfileDraftContentParams{
+		ID:                uuidToPgtype(id),
+		Name:              input.Name,
+		Role:              input.Role,
+		Bio:               input.Bio,
+		ImageUrl:          input.ImageURL,
+		ImageCropPosition: input.ImageCropPosition,
+	})
+	if err != nil {
+		return domain.StaffProfileDraft{}, err
+	}
+	return convertToProfileDraftDomain(row), nil
+}
+
+// ReplaceScheduleDraftItems はスケジュール下書きのアイテムのみ全置換する（ステータス変更なし）。
+// 管理者がレビュー時にスケジュールを修正する際に使用する。
+func (r *staffDraftRepository) ReplaceScheduleDraftItems(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return domain.StaffScheduleDraft{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := r.q.WithTx(tx)
+
+	// 既存アイテム削除
+	if err := qtx.DeleteScheduleDraftItems(ctx, uuidToPgtype(draftID)); err != nil {
+		return domain.StaffScheduleDraft{}, err
+	}
+
+	// ドラフト本体を取得
+	row, err := qtx.GetScheduleDraftByID(ctx, uuidToPgtype(draftID))
+	if err != nil {
+		return domain.StaffScheduleDraft{}, err
+	}
+	draft := convertToScheduleDraftDomain(row)
+	draft.Items = make([]domain.ScheduleDraftItem, 0, len(items))
+
+	// 新しいアイテム挿入
+	for _, item := range items {
+		createdItem, err := qtx.CreateScheduleDraftItem(ctx, CreateScheduleDraftItemParams{
+			DraftID:   uuidToPgtype(draftID),
+			DayOfWeek: int32(item.DayOfWeek),
+			StartTime: pgtype.Time{Microseconds: item.StartTime.Sub(time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC)).Microseconds(), Valid: true},
+			EndTime:   pgtype.Time{Microseconds: item.EndTime.Sub(time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC)).Microseconds(), Valid: true},
+		})
+		if err != nil {
+			return domain.StaffScheduleDraft{}, err
+		}
+		draft.Items = append(draft.Items, convertToScheduleDraftItemDomain(createdItem))
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return domain.StaffScheduleDraft{}, err
+	}
+	return draft, nil
+}

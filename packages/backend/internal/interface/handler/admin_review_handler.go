@@ -27,6 +27,7 @@ func NewAdminReviewHandler(us usecase.AdminReviewUsecase) *AdminReviewHandler {
 type PendingProfileDraftResponse struct {
 	ID                string  `json:"id"`
 	StaffID           string  `json:"staffId"`
+	StaffName         string  `json:"staffName"`
 	Name              string  `json:"name"`
 	Role              string  `json:"role"`
 	Bio               string  `json:"bio"`
@@ -69,6 +70,9 @@ func (h *AdminReviewHandler) ListPendingProfileDrafts(c echo.Context) error {
 	resp := make([]PendingProfileDraftResponse, len(drafts))
 	for i, d := range drafts {
 		resp[i] = toPendingProfileDraftResponse(d)
+		// スタッフ名を取得して設定
+		staffName, _ := h.reviewUsecase.GetStaffName(c.Request().Context(), d.StaffID)
+		resp[i].StaffName = staffName
 	}
 	return c.JSON(http.StatusOK, resp)
 }
@@ -111,6 +115,7 @@ func (h *AdminReviewHandler) ReviewProfileDraft(c echo.Context) error {
 type PendingScheduleDraftResponse struct {
 	ID           string                      `json:"id"`
 	StaffID      string                      `json:"staffId"`
+	StaffName    string                      `json:"staffName"`
 	Status       string                      `json:"status"`
 	AdminComment string                      `json:"adminComment"`
 	SubmittedAt  *string                     `json:"submittedAt,omitempty"`
@@ -155,6 +160,9 @@ func (h *AdminReviewHandler) ListPendingScheduleDrafts(c echo.Context) error {
 	resp := make([]PendingScheduleDraftResponse, len(drafts))
 	for i, d := range drafts {
 		resp[i] = toPendingScheduleDraftResponse(d)
+		// スタッフ名を取得して設定
+		staffName, _ := h.reviewUsecase.GetStaffName(c.Request().Context(), d.StaffID)
+		resp[i].StaffName = staffName
 	}
 	return c.JSON(http.StatusOK, resp)
 }
@@ -178,6 +186,112 @@ func (h *AdminReviewHandler) ReviewScheduleDraft(c echo.Context) error {
 	}
 
 	draft, err := h.reviewUsecase.ReviewScheduleDraft(c.Request().Context(), draftID, input)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))
+}
+
+// --- 単体取得・内容修正 ---
+
+// GetProfileDraft は管理者がプロフィール下書きを単体で取得する。
+func (h *AdminReviewHandler) GetProfileDraft(c echo.Context) error {
+	draftIDStr := c.Param("id")
+	draftID, err := uuid.Parse(draftIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid draft ID"})
+	}
+
+	draft, err := h.reviewUsecase.GetProfileDraft(c.Request().Context(), draftID)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "draft not found"})
+	}
+
+	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
+}
+
+// UpdateProfileDraftContent は管理者がプロフィール下書きの内容を修正する（ステータス変更なし）。
+func (h *AdminReviewHandler) UpdateProfileDraftContent(c echo.Context) error {
+	draftIDStr := c.Param("id")
+	draftID, err := uuid.Parse(draftIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid draft ID"})
+	}
+
+	var req SaveProfileDraftRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	input := domain.SaveProfileDraftInput{
+		Name:              req.Name,
+		Role:              req.Role,
+		Bio:               req.Bio,
+		ImageURL:          req.ImageURL,
+		ImageCropPosition: req.ImageCropPosition,
+	}
+
+	draft, err := h.reviewUsecase.UpdateProfileDraftContent(c.Request().Context(), draftID, input)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
+}
+
+// GetScheduleDraft は管理者がスケジュール下書きを単体で取得する。
+func (h *AdminReviewHandler) GetScheduleDraft(c echo.Context) error {
+	draftIDStr := c.Param("id")
+	draftID, err := uuid.Parse(draftIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid draft ID"})
+	}
+
+	draft, err := h.reviewUsecase.GetScheduleDraft(c.Request().Context(), draftID)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "draft not found"})
+	}
+
+	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))
+}
+
+// UpdateScheduleDraftContentRequest はスケジュール下書き内容修正リクエストのボディ型。
+type UpdateScheduleDraftContentRequest struct {
+	Items []ScheduleDraftItemRequest `json:"items"`
+}
+
+// UpdateScheduleDraftContent は管理者がスケジュール下書きの内容を修正する（ステータス変更なし）。
+func (h *AdminReviewHandler) UpdateScheduleDraftContent(c echo.Context) error {
+	draftIDStr := c.Param("id")
+	draftID, err := uuid.Parse(draftIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid draft ID"})
+	}
+
+	var req UpdateScheduleDraftContentRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	items := make([]domain.ScheduleDraftItem, len(req.Items))
+	for i, item := range req.Items {
+		startTime, err := time.Parse("15:04", item.StartTime)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid startTime format, use HH:MM"})
+		}
+		endTime, err := time.Parse("15:04", item.EndTime)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid endTime format, use HH:MM"})
+		}
+		items[i] = domain.ScheduleDraftItem{
+			DayOfWeek: item.DayOfWeek,
+			StartTime: startTime,
+			EndTime:   endTime,
+		}
+	}
+
+	draft, err := h.reviewUsecase.UpdateScheduleDraftContent(c.Request().Context(), draftID, items)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}

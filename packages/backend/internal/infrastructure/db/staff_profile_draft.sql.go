@@ -90,7 +90,7 @@ func (q *Queries) GetProfileDraftByID(ctx context.Context, id pgtype.UUID) (Staf
 }
 
 const getProfileDraftByStaffID = `-- name: GetProfileDraftByStaffID :one
-SELECT id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_profile_drafts WHERE staff_id = $1 AND status IN ('draft', 'pending') ORDER BY created_at DESC LIMIT 1
+SELECT id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_profile_drafts WHERE staff_id = $1 AND status IN ('draft', 'pending', 'rejected') ORDER BY created_at DESC LIMIT 1
 `
 
 func (q *Queries) GetProfileDraftByStaffID(ctx context.Context, staffID pgtype.UUID) (StaffProfileDraft, error) {
@@ -233,6 +233,49 @@ func (q *Queries) UpdateProfileDraft(ctx context.Context, arg UpdateProfileDraft
 		arg.ImageUrl,
 		arg.ImageCropPosition,
 		arg.Status,
+	)
+	var i StaffProfileDraft
+	err := row.Scan(
+		&i.ID,
+		&i.StaffID,
+		&i.Name,
+		&i.Role,
+		&i.Bio,
+		&i.ImageUrl,
+		&i.ImageCropPosition,
+		&i.Status,
+		&i.AdminComment,
+		&i.SubmittedAt,
+		&i.ReviewedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateProfileDraftContent = `-- name: UpdateProfileDraftContent :one
+UPDATE staff_profile_drafts
+SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6
+WHERE id = $1 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+`
+
+type UpdateProfileDraftContentParams struct {
+	ID                pgtype.UUID
+	Name              string
+	Role              string
+	Bio               string
+	ImageUrl          string
+	ImageCropPosition string
+}
+
+func (q *Queries) UpdateProfileDraftContent(ctx context.Context, arg UpdateProfileDraftContentParams) (StaffProfileDraft, error) {
+	row := q.db.QueryRow(ctx, updateProfileDraftContent,
+		arg.ID,
+		arg.Name,
+		arg.Role,
+		arg.Bio,
+		arg.ImageUrl,
+		arg.ImageCropPosition,
 	)
 	var i StaffProfileDraft
 	err := row.Scan(

@@ -37,6 +37,28 @@ adminReviewRoutes.get('/profiles', async (c) => {
   return c.json(data)
 })
 
+/** GET /api/admin/reviews/profiles/:id — プロフィール下書き単体取得 */
+adminReviewRoutes.get('/profiles/:id', async (c) => {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader) {
+    return c.json({ error: 'Authorization header is required' }, 401)
+  }
+
+  const id = c.req.param('id')
+
+  const res = await fetch(`${BACKEND_URL}/admin/reviews/profiles/${id}`, {
+    headers: { Authorization: authHeader },
+  })
+
+  if (!res.ok) {
+    const error = await res.json()
+    return c.json(error, res.status as 400 | 401 | 404)
+  }
+
+  const data: ProfileDraftResponse = await res.json()
+  return c.json(data)
+})
+
 /** PUT /api/admin/reviews/profiles/:id — プロフィール下書きをレビュー */
 adminReviewRoutes.put('/profiles/:id', async (c) => {
   const authHeader = c.req.header('Authorization')
@@ -48,6 +70,34 @@ adminReviewRoutes.put('/profiles/:id', async (c) => {
   const body = await c.req.json<ReviewDraftRequest>()
 
   const res = await fetch(`${BACKEND_URL}/admin/reviews/profiles/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authHeader,
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    const error = await res.json()
+    return c.json(error, res.status as 400 | 401)
+  }
+
+  const data: ProfileDraftResponse = await res.json()
+  return c.json(data)
+})
+
+/** PUT /api/admin/reviews/profiles/:id/content — プロフィール下書きの内容を修正 */
+adminReviewRoutes.put('/profiles/:id/content', async (c) => {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader) {
+    return c.json({ error: 'Authorization header is required' }, 401)
+  }
+
+  const id = c.req.param('id')
+  const body = await c.req.json()
+
+  const res = await fetch(`${BACKEND_URL}/admin/reviews/profiles/${id}/content`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -87,6 +137,28 @@ adminReviewRoutes.get('/schedules', async (c) => {
   return c.json(data)
 })
 
+/** GET /api/admin/reviews/schedules/:id — スケジュール下書き単体取得 */
+adminReviewRoutes.get('/schedules/:id', async (c) => {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader) {
+    return c.json({ error: 'Authorization header is required' }, 401)
+  }
+
+  const id = c.req.param('id')
+
+  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/${id}`, {
+    headers: { Authorization: authHeader },
+  })
+
+  if (!res.ok) {
+    const error = await res.json()
+    return c.json(error, res.status as 400 | 401 | 404)
+  }
+
+  const data: ScheduleDraftResponse = await res.json()
+  return c.json(data)
+})
+
 /** PUT /api/admin/reviews/schedules/:id — スケジュール下書きをレビュー */
 adminReviewRoutes.put('/schedules/:id', async (c) => {
   const authHeader = c.req.header('Authorization')
@@ -98,6 +170,34 @@ adminReviewRoutes.put('/schedules/:id', async (c) => {
   const body = await c.req.json<ReviewDraftRequest>()
 
   const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authHeader,
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    const error = await res.json()
+    return c.json(error, res.status as 400 | 401)
+  }
+
+  const data: ScheduleDraftResponse = await res.json()
+  return c.json(data)
+})
+
+/** PUT /api/admin/reviews/schedules/:id/content — スケジュール下書きの内容を修正 */
+adminReviewRoutes.put('/schedules/:id/content', async (c) => {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader) {
+    return c.json({ error: 'Authorization header is required' }, 401)
+  }
+
+  const id = c.req.param('id')
+  const body = await c.req.json()
+
+  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/${id}/content`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

@@ -86,9 +86,15 @@ const router = createRouter({
       meta: { layout: 'admin', requiresAuth: true },
     },
     {
-      path: '/admin/reviews',
-      name: 'admin-reviews',
-      component: () => import('@/views/admin/AdminReviewView.vue'),
+      path: '/admin/profile-reviews',
+      name: 'admin-profile-reviews',
+      component: () => import('@/views/admin/AdminProfileReviewView.vue'),
+      meta: { layout: 'admin', requiresAuth: true },
+    },
+    {
+      path: '/admin/schedule-reviews',
+      name: 'admin-schedule-reviews',
+      component: () => import('@/views/admin/AdminScheduleReviewView.vue'),
       meta: { layout: 'admin', requiresAuth: true },
     },
     // ==============================
