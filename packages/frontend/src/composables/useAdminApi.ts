@@ -292,14 +292,11 @@ export function useAdminApi() {
   ): Promise<StaffImage | null> {
     error.value = null
     try {
-      return await apiFetch<StaffImage>(
-        `/api/admin/staffs/${staffId}/images/${imageId}/crop`,
-        {
-          method: 'PUT',
-          headers: authHeaders(),
-          body: JSON.stringify({ cropPosition }),
-        }
-      )
+      return await apiFetch<StaffImage>(`/api/admin/staffs/${staffId}/images/${imageId}/crop`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ cropPosition }),
+      })
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'クロップ位置の更新に失敗しました'
       return null

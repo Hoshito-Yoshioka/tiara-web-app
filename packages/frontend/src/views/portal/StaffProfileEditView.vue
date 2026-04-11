@@ -424,7 +424,12 @@
                   :src="img.imageUrl"
                   alt="staff image"
                   class="w-full h-full object-cover"
-                  :style="{ objectPosition: (img.cropPosition ?? '50 50').split(' ').map((v: string) => v + '%').join(' ') }"
+                  :style="{
+                    objectPosition: (img.cropPosition ?? '50 50')
+                      .split(' ')
+                      .map((v: string) => v + '%')
+                      .join(' '),
+                  }"
                 />
               </div>
               <!-- メインバッジ -->
@@ -495,7 +500,11 @@
               <div
                 class="relative w-48 h-52 overflow-hidden rounded-lg border-2 bg-secondary transition-colors select-none"
                 :class="[
-                  isDragging ? 'border-primary cursor-grabbing' : selectedImageId ? 'border-primary/40 cursor-grab' : 'border-white/20',
+                  isDragging
+                    ? 'border-primary cursor-grabbing'
+                    : selectedImageId
+                      ? 'border-primary/40 cursor-grab'
+                      : 'border-white/20',
                   !isEditable() && 'pointer-events-none opacity-70',
                 ]"
                 @mousedown="onDragStart"
@@ -543,7 +552,8 @@
           </div>
           <!-- 座標表示 -->
           <p class="text-[10px] text-muted-foreground/50 tracking-wider">
-            位置: {{ selectedCropPosition.split(' ')[0] }}% / {{ selectedCropPosition.split(' ')[1] }}%
+            位置: {{ selectedCropPosition.split(' ')[0] }}% /
+            {{ selectedCropPosition.split(' ')[1] }}%
           </p>
         </div>
 

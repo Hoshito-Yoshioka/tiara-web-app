@@ -310,10 +310,7 @@
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors"
                     @input="imageLoadError = false"
                   />
-                  <p
-                    v-if="editForm.imageCropPosition"
-                    class="text-[11px] text-muted-foreground/50"
-                  >
+                  <p v-if="editForm.imageCropPosition" class="text-[11px] text-muted-foreground/50">
                     トリミング位置: {{ editForm.imageCropPosition }}
                   </p>
                 </div>

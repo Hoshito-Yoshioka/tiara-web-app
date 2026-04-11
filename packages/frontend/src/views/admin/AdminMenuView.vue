@@ -422,7 +422,11 @@
                     class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30 [color-scheme:dark]"
                   >
                     <option
-                      v-for="opt in itemSortOrderOptions(entry.category.id, itemForm.sortOrder, item.id)"
+                      v-for="opt in itemSortOrderOptions(
+                        entry.category.id,
+                        itemForm.sortOrder,
+                        item.id
+                      )"
                       :key="opt.value"
                       :value="opt.value"
                     >

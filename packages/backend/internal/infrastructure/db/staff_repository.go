@@ -25,16 +25,16 @@ func NewStaffRepository(q *Queries, pool *pgxpool.Pool) usecase.StaffRepository 
 // convertToStaffDomain は sqlc 生成の Staff モデルを domain.Staff に変換する。
 func convertToStaffDomain(row Staff) domain.Staff {
 	return domain.Staff{
-		ID:        uuid.UUID(row.ID.Bytes),
-		ShopID:    uuid.UUID(row.ShopID.Bytes),
-		Name:      row.Name,
-		Role:      row.Role,
-		Bio:       row.Bio,
+		ID:                uuid.UUID(row.ID.Bytes),
+		ShopID:            uuid.UUID(row.ShopID.Bytes),
+		Name:              row.Name,
+		Role:              row.Role,
+		Bio:               row.Bio,
 		ImageURL:          row.ImageUrl,
 		ImageCropPosition: row.ImageCropPosition,
 		SortOrder:         int(row.SortOrder),
-		CreatedAt: row.CreatedAt.Time,
-		UpdatedAt: row.UpdatedAt.Time,
+		CreatedAt:         row.CreatedAt.Time,
+		UpdatedAt:         row.UpdatedAt.Time,
 	}
 }
 

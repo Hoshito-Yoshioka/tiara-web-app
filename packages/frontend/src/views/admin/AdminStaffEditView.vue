@@ -574,7 +574,12 @@
                   :src="img.imageUrl"
                   :alt="'staff image'"
                   class="w-full h-full object-cover"
-                  :style="{ objectPosition: (img.cropPosition ?? '50 50').split(' ').map((v: string) => v + '%').join(' ') }"
+                  :style="{
+                    objectPosition: (img.cropPosition ?? '50 50')
+                      .split(' ')
+                      .map((v: string) => v + '%')
+                      .join(' '),
+                  }"
                 />
               </div>
               <!-- メインバッジ -->
@@ -643,7 +648,11 @@
               <div
                 class="relative w-48 h-52 overflow-hidden rounded-lg border-2 bg-secondary transition-colors select-none"
                 :class="
-                  isDragging ? 'border-primary cursor-grabbing' : selectedImageId ? 'border-primary/40 cursor-grab' : 'border-white/20'
+                  isDragging
+                    ? 'border-primary cursor-grabbing'
+                    : selectedImageId
+                      ? 'border-primary/40 cursor-grab'
+                      : 'border-white/20'
                 "
                 @mousedown="onDragStart"
                 @touchstart="onDragStart"
