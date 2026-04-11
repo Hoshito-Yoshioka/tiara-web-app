@@ -97,7 +97,7 @@ func buildHandlers(pool *pgxpool.Pool, cfg *config.Config) *handlers {
 	authUsecase := usecase.NewAuthUsecase(adminRepo)
 	authHandler := handler.NewAuthHandler(authUsecase, cfg.JWTSecret, cfg.JWTExpiryHours)
 
-	menuRepo := db.NewMenuRepository(queries)
+	menuRepo := db.NewMenuRepository(queries, pool)
 	menuUsecase := usecase.NewMenuUsecase(menuRepo)
 	menuHandler := handler.NewMenuHandler(menuUsecase)
 
@@ -105,7 +105,7 @@ func buildHandlers(pool *pgxpool.Pool, cfg *config.Config) *handlers {
 	staffAuthUsecase := usecase.NewStaffAuthUsecase(staffAccountRepo)
 	staffDraftRepo := db.NewStaffDraftRepository(queries, pool)
 	staffPortalUsecase := usecase.NewStaffPortalUsecase(staffDraftRepo, staffRepo)
-	staffPortalHandler := handler.NewStaffPortalHandler(staffAuthUsecase, staffPortalUsecase, cfg.JWTSecret, cfg.JWTExpiryHours)
+	staffPortalHandler := handler.NewStaffPortalHandler(staffAuthUsecase, staffPortalUsecase, staffUsecase, cfg.JWTSecret, cfg.JWTExpiryHours, cfg.UploadDir)
 	adminReviewUsecase := usecase.NewAdminReviewUsecase(staffDraftRepo, staffRepo)
 	adminReviewHandler := handler.NewAdminReviewHandler(adminReviewUsecase)
 	adminAccountUsecase := usecase.NewAdminAccountUsecase(staffAccountRepo)

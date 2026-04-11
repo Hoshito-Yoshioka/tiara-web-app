@@ -11,13 +11,14 @@ import (
 // convertToStaffImageDomain は sqlc 生成の StaffImage モデルを domain.StaffImage に変換する。
 func convertToStaffImageDomain(row StaffImage) domain.StaffImage {
 	return domain.StaffImage{
-		ID:        uuid.UUID(row.ID.Bytes),
-		StaffID:   uuid.UUID(row.StaffID.Bytes),
-		ImageURL:  row.ImageUrl,
-		IsMain:    row.IsMain,
-		SortOrder: int(row.SortOrder),
-		CreatedAt: row.CreatedAt.Time,
-		UpdatedAt: row.UpdatedAt.Time,
+		ID:           uuid.UUID(row.ID.Bytes),
+		StaffID:      uuid.UUID(row.StaffID.Bytes),
+		ImageURL:     row.ImageUrl,
+		IsMain:       row.IsMain,
+		SortOrder:    int(row.SortOrder),
+		CropPosition: row.CropPosition,
+		CreatedAt:    row.CreatedAt.Time,
+		UpdatedAt:    row.UpdatedAt.Time,
 	}
 }
 
@@ -62,10 +63,11 @@ func (r *staffRepository) CreateStaffImage(ctx context.Context, staffID string, 
 	}
 
 	row, err := r.q.CreateStaffImage(ctx, CreateStaffImageParams{
-		StaffID:   pgtype.UUID{Bytes: uid, Valid: true},
-		ImageUrl:  imageURL,
-		IsMain:    isMain,
-		SortOrder: int32(sortOrder),
+		StaffID:      pgtype.UUID{Bytes: uid, Valid: true},
+		ImageUrl:     imageURL,
+		IsMain:       isMain,
+		SortOrder:    int32(sortOrder),
+		CropPosition: "50 50",
 	})
 	if err != nil {
 		return domain.StaffImage{}, err
@@ -81,6 +83,24 @@ func (r *staffRepository) DeleteStaffImage(ctx context.Context, id string) error
 		return err
 	}
 	return r.q.DeleteStaffImage(ctx, pgtype.UUID{Bytes: uid, Valid: true})
+}
+
+// UpdateImageCropPosition は指定された画像のクロップ位置を更新する。
+func (r *staffRepository) UpdateImageCropPosition(ctx context.Context, id string, cropPosition string) (domain.StaffImage, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return domain.StaffImage{}, err
+	}
+
+	row, err := r.q.UpdateImageCropPosition(ctx, UpdateImageCropPositionParams{
+		ID:           pgtype.UUID{Bytes: uid, Valid: true},
+		CropPosition: cropPosition,
+	})
+	if err != nil {
+		return domain.StaffImage{}, err
+	}
+
+	return convertToStaffImageDomain(row), nil
 }
 
 // SetMainImage は指定された画像をメイン画像に設定する（他のメインフラグをクリアしてから）。

@@ -10,6 +10,7 @@ import type { ProfileDraft, ScheduleDraft, ScheduleDraftItem } from '@/types/sta
 export function useAdminReviewApi() {
   const pendingProfiles: Ref<ProfileDraft[]> = ref([])
   const pendingSchedules: Ref<ScheduleDraft[]> = ref([])
+  const approvedSchedules: Ref<ScheduleDraft[]> = ref([])
   const isLoading = ref(false)
   const error: Ref<string | null> = ref(null)
 
@@ -150,18 +151,50 @@ export function useAdminReviewApi() {
     }
   }
 
+  /** 承認済み（未反映）スケジュール下書き一覧を取得 */
+  async function fetchApprovedSchedules(): Promise<void> {
+    try {
+      approvedSchedules.value = await apiFetch<ScheduleDraft[]>(
+        '/api/admin/reviews/schedules/approved',
+        {
+          headers: authHeaders(),
+        }
+      )
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '取得に失敗しました'
+    }
+  }
+
+  /** 承認済みスケジュールを店舗ページに反映 */
+  async function publishScheduleDraft(draftId: string): Promise<boolean> {
+    try {
+      await apiFetch(`/api/admin/reviews/schedules/${draftId}/publish`, {
+        method: 'POST',
+        headers: authHeaders(),
+      })
+      approvedSchedules.value = approvedSchedules.value.filter((d) => d.id !== draftId)
+      return true
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '反映に失敗しました'
+      return false
+    }
+  }
+
   return {
     pendingProfiles,
     pendingSchedules,
+    approvedSchedules,
     isLoading,
     error,
     fetchPendingProfiles,
     fetchPendingSchedules,
+    fetchApprovedSchedules,
     fetchProfileDraft,
     fetchScheduleDraft,
     updateProfileDraftContent,
     updateScheduleDraftContent,
     reviewProfileDraft,
     reviewScheduleDraft,
+    publishScheduleDraft,
   }
 }

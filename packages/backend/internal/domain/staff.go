@@ -42,13 +42,14 @@ type StaffWithSchedules struct {
 
 // StaffImage はスタッフ画像のドメインモデル。
 type StaffImage struct {
-	ID        uuid.UUID
-	StaffID   uuid.UUID
-	ImageURL  string
-	IsMain    bool
-	SortOrder int
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           uuid.UUID
+	StaffID      uuid.UUID
+	ImageURL     string
+	IsMain       bool
+	SortOrder    int
+	CropPosition string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // CreateStaffInput はスタッフ作成時の入力構造体。

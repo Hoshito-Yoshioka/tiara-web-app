@@ -1,7 +1,8 @@
 import { ref, type Ref } from 'vue'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, apiUpload } from '@/lib/api'
 import { useStaffAuthStore } from '@/stores/staffAuth'
 import type { ProfileDraft, ScheduleDraft, ScheduleDraftItem } from '@/types/staffPortal'
+import type { StaffImage } from '@/types/staff'
 
 /**
  * スタッフポータル API を呼び出す Composable。
@@ -132,6 +133,84 @@ export function useStaffPortalApi() {
     }
   }
 
+  // --- Image Management ---
+
+  /** 自分の画像一覧を取得 */
+  async function fetchMyImages(): Promise<StaffImage[]> {
+    try {
+      return await apiFetch<StaffImage[]>('/api/portal/images', {
+        headers: authHeaders(),
+      })
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '画像一覧の取得に失敗しました'
+      return []
+    }
+  }
+
+  /** 画像をアップロード */
+  async function uploadMyImage(file: File): Promise<StaffImage | null> {
+    saveError.value = null
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+      return await apiUpload<StaffImage>('/api/portal/images', formData, {
+        headers: authHeaders(),
+      })
+    } catch (e) {
+      saveError.value = e instanceof Error ? e.message : '画像のアップロードに失敗しました'
+      return null
+    }
+  }
+
+  /** 画像を削除 */
+  async function deleteMyImage(imageId: string): Promise<boolean> {
+    saveError.value = null
+    try {
+      await apiFetch(`/api/portal/images/${imageId}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      return true
+    } catch (e) {
+      saveError.value = e instanceof Error ? e.message : '画像の削除に失敗しました'
+      return false
+    }
+  }
+
+  /** メイン画像を設定 */
+  async function setMyMainImage(imageId: string): Promise<boolean> {
+    saveError.value = null
+    try {
+      await apiFetch('/api/portal/images/main', {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ imageId }),
+      })
+      return true
+    } catch (e) {
+      saveError.value = e instanceof Error ? e.message : 'メイン画像の設定に失敗しました'
+      return false
+    }
+  }
+
+  /** 画像のクロップ位置を更新 */
+  async function updateMyImageCropPosition(
+    imageId: string,
+    cropPosition: string
+  ): Promise<StaffImage | null> {
+    saveError.value = null
+    try {
+      return await apiFetch<StaffImage>(`/api/portal/images/${imageId}/crop`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ cropPosition }),
+      })
+    } catch (e) {
+      saveError.value = e instanceof Error ? e.message : 'クロップ位置の更新に失敗しました'
+      return null
+    }
+  }
+
   return {
     profileDraft,
     scheduleDraft,
@@ -144,5 +223,10 @@ export function useStaffPortalApi() {
     fetchMyScheduleDraft,
     saveScheduleDraft,
     submitScheduleDraft,
+    fetchMyImages,
+    uploadMyImage,
+    deleteMyImage,
+    setMyMainImage,
+    updateMyImageCropPosition,
   }
 }

@@ -40,3 +40,9 @@ DELETE FROM menu_items WHERE id = $1;
 
 -- name: DeleteMenuItemsByCategoryID :exec
 DELETE FROM menu_items WHERE category_id = $1;
+
+-- name: SwapMenuCategorySortOrder :exec
+UPDATE menu_categories SET sort_order = $2 WHERE sort_order = $1 AND id != $3;
+
+-- name: SwapMenuItemSortOrder :exec
+UPDATE menu_items SET sort_order = $3 WHERE category_id = $1 AND sort_order = $2 AND id != $4;

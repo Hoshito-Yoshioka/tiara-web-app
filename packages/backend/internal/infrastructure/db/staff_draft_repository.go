@@ -2,9 +2,9 @@ package db
 
 import (
 	"context"
-	"time"
 	"tiara-web-app/backend/internal/domain"
 	"tiara-web-app/backend/internal/usecase"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -228,6 +228,27 @@ func (r *staffDraftRepository) ListPendingScheduleDrafts(ctx context.Context) ([
 	for i, row := range rows {
 		drafts[i] = convertToScheduleDraftDomain(row)
 		// 各ドラフトのアイテムも取得
+		items, err := r.q.ListScheduleDraftItems(ctx, row.ID)
+		if err != nil {
+			return nil, err
+		}
+		drafts[i].Items = make([]domain.ScheduleDraftItem, len(items))
+		for j, item := range items {
+			drafts[i].Items[j] = convertToScheduleDraftItemDomain(item)
+		}
+	}
+	return drafts, nil
+}
+
+// ListApprovedScheduleDrafts は承認済みのスケジュール下書き一覧を取得する（アイテム含む）。
+func (r *staffDraftRepository) ListApprovedScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error) {
+	rows, err := r.q.ListApprovedScheduleDrafts(ctx)
+	if err != nil {
+		return nil, err
+	}
+	drafts := make([]domain.StaffScheduleDraft, len(rows))
+	for i, row := range rows {
+		drafts[i] = convertToScheduleDraftDomain(row)
 		items, err := r.q.ListScheduleDraftItems(ctx, row.ID)
 		if err != nil {
 			return nil, err

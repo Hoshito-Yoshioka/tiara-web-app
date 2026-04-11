@@ -262,3 +262,27 @@ func (h *StaffHandler) SetMainImage(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, image)
 }
+
+// UpdateImageCropPositionRequest はクロップ位置更新リクエストのボディ型。
+type UpdateImageCropPositionRequest struct {
+	CropPosition string `json:"cropPosition"`
+}
+
+// UpdateImageCropPosition は画像のクロップ位置を更新するハンドラー。
+func (h *StaffHandler) UpdateImageCropPosition(c echo.Context) error {
+	imageID := c.Param("imageId")
+	if imageID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image id is required"})
+	}
+
+	var req UpdateImageCropPositionRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	image, err := h.staffUsecase.UpdateImageCropPosition(c.Request().Context(), imageID, req.CropPosition)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, image)
+}

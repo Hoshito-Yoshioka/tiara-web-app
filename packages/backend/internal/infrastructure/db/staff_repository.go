@@ -141,14 +141,42 @@ func (r *staffRepository) CreateStaff(ctx context.Context, input domain.CreateSt
 }
 
 // UpdateStaff は指定されたIDのスタッフ情報を更新する。
+// sort_order が変更された場合、同一店舗内で重複する sort_order を持つスタッフと入れ替える。
 func (r *staffRepository) UpdateStaff(ctx context.Context, id string, input domain.UpdateStaffInput) (domain.Staff, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		return domain.Staff{}, err
 	}
 
-	row, err := r.q.UpdateStaff(ctx, UpdateStaffParams{
-		ID:                pgtype.UUID{Bytes: uid, Valid: true},
+	pgtypeUID := pgtype.UUID{Bytes: uid, Valid: true}
+
+	// トランザクション開始（sort_order スワップ対応）
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return domain.Staff{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := r.q.WithTx(tx)
+
+	// 現在のスタッフを取得して旧 sort_order と shop_id を確認
+	current, err := qtx.GetStaffByID(ctx, pgtypeUID)
+	if err != nil {
+		return domain.Staff{}, err
+	}
+
+	// sort_order が変更された場合、同一店舗内の他のスタッフと入れ替え
+	if current.SortOrder != int32(input.SortOrder) {
+		_ = qtx.SwapStaffSortOrder(ctx, SwapStaffSortOrderParams{
+			ShopID:      current.ShopID,
+			SortOrder:   int32(input.SortOrder),
+			SortOrder_2: current.SortOrder,
+			ID:          pgtypeUID,
+		})
+	}
+
+	row, err := qtx.UpdateStaff(ctx, UpdateStaffParams{
+		ID:                pgtypeUID,
 		Name:              input.Name,
 		Role:              input.Role,
 		Bio:               input.Bio,
@@ -156,6 +184,11 @@ func (r *staffRepository) UpdateStaff(ctx context.Context, id string, input doma
 		ImageCropPosition: input.ImageCropPosition,
 		SortOrder:         int32(input.SortOrder),
 	})
+	if err != nil {
+		return domain.Staff{}, err
+	}
+
+	err = tx.Commit(ctx)
 	if err != nil {
 		return domain.Staff{}, err
 	}

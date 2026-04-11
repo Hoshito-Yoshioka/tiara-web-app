@@ -1,7 +1,9 @@
 <script setup lang="ts">
-  import { ref, onMounted, watch } from 'vue'
+  import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
   import StaffPortalLayout from '@/components/layout/StaffPortalLayout.vue'
   import { useStaffPortalApi } from '@/composables/useStaffPortalApi'
+  import { Upload, Star, Trash2, Move } from 'lucide-vue-next'
+  import type { StaffImage } from '@/types/staff'
 
   const {
     profileDraft,
@@ -11,6 +13,11 @@
     fetchMyProfileDraft,
     saveProfileDraft,
     submitProfileDraft,
+    fetchMyImages,
+    uploadMyImage,
+    deleteMyImage,
+    setMyMainImage,
+    updateMyImageCropPosition,
   } = useStaffPortalApi()
 
   // フォーム
@@ -18,9 +25,42 @@
   const role = ref('')
   const bio = ref('')
   const imageUrl = ref('')
-  const imageCropPosition = ref('center')
+  const imageCropPosition = ref('50 50')
   const isSaving = ref(false)
   const successMessage = ref<string | null>(null)
+
+  /** スタッフ画像一覧（リアクティブ） */
+  const images = ref<StaffImage[]>([])
+  /** 画像一覧の初回読み込み完了フラグ */
+  const imagesLoaded = ref(false)
+  /** 画像アップロード中フラグ */
+  const isUploading = ref(false)
+  /** ファイル入力の ref */
+  const fileInputRef = ref<HTMLInputElement | null>(null)
+  /** 選択中の画像ID（クロップ編集対象） */
+  const selectedImageId = ref<string | null>(null)
+
+  /** メイン画像の URL（プレビュー用） */
+  const mainImageUrl = computed(() => {
+    const main = images.value.find((img) => img.isMain)
+    return main?.imageUrl ?? images.value[0]?.imageUrl ?? ''
+  })
+
+  /** 選択中の画像オブジェクト */
+  const selectedImage = computed(() => {
+    if (!selectedImageId.value) return null
+    return images.value.find((img) => img.id === selectedImageId.value) ?? null
+  })
+
+  /** 選択中画像のURL */
+  const selectedImageUrl = computed(() => {
+    return selectedImage.value?.imageUrl ?? mainImageUrl.value
+  })
+
+  /** 選択中画像のクロップ位置 */
+  const selectedCropPosition = computed(() => {
+    return selectedImage.value?.cropPosition ?? '50 50'
+  })
 
   onMounted(async () => {
     await fetchMyProfileDraft()
@@ -29,7 +69,15 @@
       role.value = profileDraft.value.role
       bio.value = profileDraft.value.bio
       imageUrl.value = profileDraft.value.imageUrl
-      imageCropPosition.value = profileDraft.value.imageCropPosition || 'center'
+      imageCropPosition.value = profileDraft.value.imageCropPosition || '50 50'
+    }
+    // 画像一覧を取得
+    images.value = await fetchMyImages()
+    imagesLoaded.value = true
+    // メイン画像を初期選択
+    const mainImg = images.value.find((img) => img.isMain) ?? images.value[0]
+    if (mainImg) {
+      selectedImageId.value = mainImg.id
     }
   })
 
@@ -38,20 +86,160 @@
     if (v) window.scrollTo({ top: 0, behavior: 'smooth' })
   })
 
-  /** 下書き保存 */
+  // --- 画像クロップ位置のドラッグ操作（選択中画像に対して） ---
+  /** object-position を "X% Y%" 形式の CSS 文字列に変換 */
+  const cropPositionStyle = computed(() => {
+    const [x, y] = selectedCropPosition.value.split(' ').map(Number)
+    return `${x}% ${y}%`
+  })
+
+  /** ドラッグ中フラグ */
+  const isDragging = ref(false)
+  let dragStartX = 0
+  let dragStartY = 0
+  let dragStartPosX = 50
+  let dragStartPosY = 50
+
+  function parseCropPosition(): { x: number; y: number } {
+    const parts = selectedCropPosition.value.split(' ').map(Number)
+    return { x: parts[0] ?? 50, y: parts[1] ?? 50 }
+  }
+
+  function clamp(val: number, min: number, max: number): number {
+    return Math.min(Math.max(val, min), max)
+  }
+
+  /** 選択中の画像の cropPosition を更新するヘルパー */
+  function updateSelectedCropPosition(newPos: string) {
+    if (!selectedImageId.value) return
+    const idx = images.value.findIndex((img) => img.id === selectedImageId.value)
+    if (idx >= 0) {
+      images.value[idx] = { ...images.value[idx], cropPosition: newPos }
+    }
+    // メイン画像の場合は imageCropPosition も同期
+    const img = images.value[idx]
+    if (img?.isMain) {
+      imageCropPosition.value = newPos
+    }
+  }
+
+  function onDragStart(e: MouseEvent | TouchEvent) {
+    if (!isEditable() || !selectedImageId.value) return
+    e.preventDefault()
+    isDragging.value = true
+    const point = 'touches' in e ? e.touches[0] : e
+    dragStartX = point.clientX
+    dragStartY = point.clientY
+    const pos = parseCropPosition()
+    dragStartPosX = pos.x
+    dragStartPosY = pos.y
+    document.addEventListener('mousemove', onDragMove)
+    document.addEventListener('mouseup', onDragEnd)
+    document.addEventListener('touchmove', onDragMove, { passive: false })
+    document.addEventListener('touchend', onDragEnd)
+  }
+
+  function onDragMove(e: MouseEvent | TouchEvent) {
+    if (!isDragging.value) return
+    e.preventDefault()
+    const point = 'touches' in e ? e.touches[0] : e
+    const deltaX = point.clientX - dragStartX
+    const deltaY = point.clientY - dragStartY
+    const sensitivity = 100 / 192
+    const newX = clamp(Math.round(dragStartPosX - deltaX * sensitivity), 0, 100)
+    const newY = clamp(Math.round(dragStartPosY - deltaY * sensitivity), 0, 100)
+    updateSelectedCropPosition(`${newX} ${newY}`)
+  }
+
+  async function onDragEnd() {
+    isDragging.value = false
+    document.removeEventListener('mousemove', onDragMove)
+    document.removeEventListener('mouseup', onDragEnd)
+    document.removeEventListener('touchmove', onDragMove)
+    document.removeEventListener('touchend', onDragEnd)
+    // ドラッグ終了時に自動保存
+    if (selectedImageId.value) {
+      await updateMyImageCropPosition(selectedImageId.value, selectedCropPosition.value)
+    }
+  }
+
+  async function resetCropPosition() {
+    updateSelectedCropPosition('50 50')
+    if (selectedImageId.value) {
+      await updateMyImageCropPosition(selectedImageId.value, '50 50')
+    }
+  }
+
+  onBeforeUnmount(() => {
+    document.removeEventListener('mousemove', onDragMove)
+    document.removeEventListener('mouseup', onDragEnd)
+    document.removeEventListener('touchmove', onDragMove)
+    document.removeEventListener('touchend', onDragEnd)
+  })
+
+  // --- 画像管理 ---
+  function triggerFileInput() {
+    fileInputRef.value?.click()
+  }
+
+  async function handleImageUpload(event: Event) {
+    const target = event.target as HTMLInputElement
+    const file = target.files?.[0]
+    if (!file) return
+
+    isUploading.value = true
+    const result = await uploadMyImage(file)
+    if (result) {
+      images.value.push(result)
+      // 最初の画像はメインとして imageUrl にセット
+      if (images.value.length === 1) {
+        imageUrl.value = result.imageUrl
+      }
+    }
+    isUploading.value = false
+    target.value = ''
+  }
+
+  async function handleDeleteImage(imageId: string) {
+    if (!confirm('この画像を削除しますか？')) return
+    const success = await deleteMyImage(imageId)
+    if (success) {
+      images.value = images.value.filter((img) => img.id !== imageId)
+      if (selectedImageId.value === imageId) {
+        const mainImg = images.value.find((img) => img.isMain) ?? images.value[0]
+        selectedImageId.value = mainImg?.id ?? null
+      }
+    }
+  }
+
+  async function handleSetMain(imageId: string) {
+    const success = await setMyMainImage(imageId)
+    if (success) {
+      images.value = images.value.map((img) => ({
+        ...img,
+        isMain: img.id === imageId,
+      }))
+    }
+  }
+
+  /** 下書き保存（メイン画像URLを自動同期） */
   async function handleSave() {
     isSaving.value = true
     successMessage.value = null
+
+    // メイン画像の URL を imageUrl に自動同期
+    const currentImageUrl = mainImageUrl.value || imageUrl.value
 
     const result = await saveProfileDraft({
       name: name.value,
       role: role.value,
       bio: bio.value,
-      imageUrl: imageUrl.value,
+      imageUrl: currentImageUrl,
       imageCropPosition: imageCropPosition.value,
     })
 
     if (result) {
+      imageUrl.value = currentImageUrl
       successMessage.value = '下書きを保存しました'
       setTimeout(() => (successMessage.value = null), 3000)
     }
@@ -66,12 +254,14 @@
     isSaving.value = true
     successMessage.value = null
 
-    // 先に保存してから申請
+    // メイン画像の URL を imageUrl に自動同期
+    const currentImageUrl = mainImageUrl.value || imageUrl.value
+
     const saved = await saveProfileDraft({
       name: name.value,
       role: role.value,
       bio: bio.value,
-      imageUrl: imageUrl.value,
+      imageUrl: currentImageUrl,
       imageCropPosition: imageCropPosition.value,
     })
 
@@ -191,30 +381,170 @@
           />
         </div>
 
-        <div class="space-y-2">
-          <label class="text-xs text-muted-foreground tracking-wider uppercase">画像URL</label>
-          <input
-            v-model="imageUrl"
-            type="text"
-            :disabled="!isEditable()"
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
-            placeholder="画像URLを入力"
-          />
+        <!-- 画像管理セクション -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <label class="text-xs text-muted-foreground tracking-wider uppercase">画像管理</label>
+            <button
+              v-if="isEditable()"
+              type="button"
+              @click="triggerFileInput"
+              :disabled="isUploading"
+              class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            >
+              <Upload :size="14" />
+              {{ isUploading ? 'アップロード中...' : '画像を追加' }}
+            </button>
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleImageUpload"
+            />
+          </div>
+
+          <!-- アップロード済み画像一覧（クリックで選択→クロップ編集） -->
+          <div v-if="images.length > 0" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            <div
+              v-for="img in images"
+              :key="img.id"
+              class="relative group rounded-lg overflow-hidden border-2 transition-colors cursor-pointer"
+              :class="
+                selectedImageId === img.id
+                  ? 'border-primary ring-2 ring-primary/30'
+                  : img.isMain
+                    ? 'border-primary/50'
+                    : 'border-white/10 hover:border-white/20'
+              "
+              @click="selectedImageId = img.id"
+            >
+              <div class="aspect-square overflow-hidden bg-secondary">
+                <img
+                  :src="img.imageUrl"
+                  alt="staff image"
+                  class="w-full h-full object-cover"
+                  :style="{ objectPosition: (img.cropPosition ?? '50 50').split(' ').map((v: string) => v + '%').join(' ') }"
+                />
+              </div>
+              <!-- メインバッジ -->
+              <div
+                v-if="img.isMain"
+                class="absolute top-1.5 left-1.5 bg-primary text-primary-foreground text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-full"
+              >
+                メイン
+              </div>
+              <!-- 選択中インジケーター -->
+              <div
+                v-if="selectedImageId === img.id"
+                class="absolute top-1.5 right-1.5 bg-primary text-primary-foreground text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-full"
+              >
+                編集中
+              </div>
+              <!-- 操作ボタン（ホバーで表示） -->
+              <div
+                v-if="isEditable()"
+                class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
+              >
+                <button
+                  v-if="!img.isMain"
+                  type="button"
+                  @click.stop="handleSetMain(img.id)"
+                  class="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                  title="メイン画像に設定"
+                >
+                  <Star :size="14" class="text-white" />
+                </button>
+                <button
+                  type="button"
+                  @click.stop="handleDeleteImage(img.id)"
+                  class="p-2 bg-red-500/40 rounded-full hover:bg-red-500/60 transition-colors"
+                  title="削除"
+                >
+                  <Trash2 :size="14" class="text-white" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <p v-else-if="imagesLoaded" class="text-xs text-muted-foreground">
+            画像がアップロードされていません。「画像を追加」から画像をアップロードしてください。
+          </p>
         </div>
 
-        <div class="space-y-2">
-          <label class="text-xs text-muted-foreground tracking-wider uppercase">
-            画像切り抜き位置
-          </label>
-          <select
-            v-model="imageCropPosition"
-            :disabled="!isEditable()"
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
-          >
-            <option value="center">中央</option>
-            <option value="top">上</option>
-            <option value="bottom">下</option>
-          </select>
+        <!-- 画像表示位置プレビュー（ドラッグで切り抜き位置を調整 — 選択中の画像に適用） -->
+        <div v-if="selectedImageUrl || imageUrl" class="space-y-4">
+          <div class="flex items-center gap-3">
+            <p class="text-[11px] tracking-wider uppercase text-muted-foreground">
+              表示プレビュー — 画像を選択してドラッグで表示位置を調整
+            </p>
+            <button
+              v-if="isEditable()"
+              type="button"
+              @click="resetCropPosition"
+              class="text-[10px] tracking-wider text-muted-foreground/60 hover:text-foreground underline transition-colors"
+            >
+              中央にリセット
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-6">
+            <!-- カード表示プレビュー（ドラッグ対応） -->
+            <div class="space-y-2">
+              <p class="text-[10px] tracking-wider uppercase text-muted-foreground/70">
+                スタッフ一覧（カード）
+              </p>
+              <div
+                class="relative w-48 h-52 overflow-hidden rounded-lg border-2 bg-secondary transition-colors select-none"
+                :class="[
+                  isDragging ? 'border-primary cursor-grabbing' : selectedImageId ? 'border-primary/40 cursor-grab' : 'border-white/20',
+                  !isEditable() && 'pointer-events-none opacity-70',
+                ]"
+                @mousedown="onDragStart"
+                @touchstart="onDragStart"
+              >
+                <img
+                  :src="selectedImageUrl || imageUrl"
+                  :alt="name || 'プレビュー'"
+                  class="w-full h-full object-cover pointer-events-none"
+                  :style="{ objectPosition: cropPositionStyle }"
+                  @error="($event.target as HTMLImageElement).style.display = 'none'"
+                />
+                <div
+                  class="absolute inset-0 border-2 border-dashed border-primary/30 pointer-events-none"
+                />
+                <div
+                  v-if="selectedImageId"
+                  class="absolute top-2 right-2 bg-black/60 rounded-full p-1.5 pointer-events-none"
+                >
+                  <Move class="w-3 h-3 text-white/80" />
+                </div>
+              </div>
+            </div>
+            <!-- 詳細ページプレビュー（連動表示） -->
+            <div class="space-y-2">
+              <p class="text-[10px] tracking-wider uppercase text-muted-foreground/70">
+                スタッフ詳細ページ
+              </p>
+              <div
+                class="relative w-36 overflow-hidden rounded-lg border-2 border-primary/40 bg-secondary"
+                style="aspect-ratio: 3/4"
+              >
+                <img
+                  :src="selectedImageUrl || imageUrl"
+                  :alt="name || 'プレビュー'"
+                  class="w-full h-full object-cover"
+                  :style="{ objectPosition: cropPositionStyle }"
+                  @error="($event.target as HTMLImageElement).style.display = 'none'"
+                />
+                <div
+                  class="absolute inset-0 border-2 border-dashed border-primary/30 pointer-events-none"
+                />
+              </div>
+            </div>
+          </div>
+          <!-- 座標表示 -->
+          <p class="text-[10px] text-muted-foreground/50 tracking-wider">
+            位置: {{ selectedCropPosition.split(' ')[0] }}% / {{ selectedCropPosition.split(' ')[1] }}%
+          </p>
         </div>
 
         <!-- ボタン群 -->

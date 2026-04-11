@@ -284,6 +284,28 @@ export function useAdminApi() {
     }
   }
 
+  /** 画像のクロップ位置を更新 */
+  async function updateImageCropPosition(
+    staffId: string,
+    imageId: string,
+    cropPosition: string
+  ): Promise<StaffImage | null> {
+    error.value = null
+    try {
+      return await apiFetch<StaffImage>(
+        `/api/admin/staffs/${staffId}/images/${imageId}/crop`,
+        {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({ cropPosition }),
+        }
+      )
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : 'クロップ位置の更新に失敗しました'
+      return null
+    }
+  }
+
   return {
     isLoading,
     error,
@@ -294,6 +316,7 @@ export function useAdminApi() {
     uploadStaffImage,
     deleteStaffImage,
     setMainImage,
+    updateImageCropPosition,
     createMenuCategory,
     updateMenuCategory,
     deleteMenuCategory,

@@ -36,6 +36,7 @@ type StaffDraftRepository interface {
 	GetScheduleDraftByStaffID(ctx context.Context, staffID uuid.UUID) (domain.StaffScheduleDraft, error)
 	GetScheduleDraftByID(ctx context.Context, id uuid.UUID) (domain.StaffScheduleDraft, error)
 	ListPendingScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error)
+	ListApprovedScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error)
 	CreateScheduleDraft(ctx context.Context, staffID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error)
 	UpdateScheduleDraftItems(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error)
 	SubmitScheduleDraft(ctx context.Context, id uuid.UUID) (domain.StaffScheduleDraft, error)
@@ -221,8 +222,10 @@ func (u *staffPortalUsecase) SubmitScheduleDraft(ctx context.Context, staffID uu
 type AdminReviewUsecase interface {
 	ListPendingProfileDrafts(ctx context.Context) ([]domain.StaffProfileDraft, error)
 	ListPendingScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error)
+	ListApprovedScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error)
 	ReviewProfileDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffProfileDraft, error)
 	ReviewScheduleDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error)
+	PublishScheduleDraft(ctx context.Context, draftID uuid.UUID) error
 	// 単体取得
 	GetProfileDraft(ctx context.Context, draftID uuid.UUID) (domain.StaffProfileDraft, error)
 	GetScheduleDraft(ctx context.Context, draftID uuid.UUID) (domain.StaffScheduleDraft, error)
@@ -231,6 +234,8 @@ type AdminReviewUsecase interface {
 	UpdateScheduleDraftContent(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error)
 	// スタッフ名取得
 	GetStaffName(ctx context.Context, staffID uuid.UUID) (string, error)
+	// スタッフ画像取得（staff_images テーブルから複数画像を返す）
+	ListImagesByStaffID(ctx context.Context, staffID uuid.UUID) ([]domain.StaffImage, error)
 }
 
 type adminReviewUsecase struct {
@@ -248,9 +253,18 @@ func (u *adminReviewUsecase) ListPendingProfileDrafts(ctx context.Context) ([]do
 	return u.draftRepo.ListPendingProfileDrafts(ctx)
 }
 
+// ListImagesByStaffID はスタッフの画像一覧を返す（staff_images テーブル）。
+func (u *adminReviewUsecase) ListImagesByStaffID(ctx context.Context, staffID uuid.UUID) ([]domain.StaffImage, error) {
+	return u.staffRepo.ListImagesByStaffID(ctx, staffID.String())
+}
+
 // ListPendingScheduleDrafts は承認待ちのスケジュール下書き一覧を返す。
 func (u *adminReviewUsecase) ListPendingScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error) {
 	return u.draftRepo.ListPendingScheduleDrafts(ctx)
+}
+
+func (u *adminReviewUsecase) ListApprovedScheduleDrafts(ctx context.Context) ([]domain.StaffScheduleDraft, error) {
+	return u.draftRepo.ListApprovedScheduleDrafts(ctx)
 }
 
 // ReviewProfileDraft は管理者がプロフィール下書きをレビューする。
@@ -293,7 +307,7 @@ func (u *adminReviewUsecase) ReviewProfileDraft(ctx context.Context, draftID uui
 }
 
 // ReviewScheduleDraft は管理者がスケジュール下書きをレビューする。
-// 承認時はライブの staff_schedules テーブルに反映する。
+// 承認してもライブデータには即時反映せず、別途 PublishScheduleDraft で反映する。
 func (u *adminReviewUsecase) ReviewScheduleDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error) {
 	if input.Status != domain.DraftStatusApproved && input.Status != domain.DraftStatusRejected {
 		return domain.StaffScheduleDraft{}, errors.New("ステータスは approved または rejected を指定してください")
@@ -308,28 +322,40 @@ func (u *adminReviewUsecase) ReviewScheduleDraft(ctx context.Context, draftID uu
 		return domain.StaffScheduleDraft{}, errors.New("pending 状態の下書きのみレビューできます")
 	}
 
+	// 承認しても店舗ページには即時反映しない。
+	// 管理者が別途 PublishScheduleDraft を呼び出して反映する。
 	reviewed, err := u.draftRepo.ReviewScheduleDraft(ctx, draftID, input)
 	if err != nil {
 		return domain.StaffScheduleDraft{}, err
 	}
 
-	// 承認の場合、ライブスケジュールに反映
-	if input.Status == domain.DraftStatusApproved {
-		scheduleInputs := make([]domain.ScheduleInput, len(draft.Items))
-		for i, item := range draft.Items {
-			scheduleInputs[i] = domain.ScheduleInput{
-				DayOfWeek: item.DayOfWeek,
-				StartTime: item.StartTime.Format("15:04"),
-				EndTime:   item.EndTime.Format("15:04"),
-			}
-		}
-		_, err := u.staffRepo.ReplaceSchedules(ctx, draft.StaffID.String(), scheduleInputs)
-		if err != nil {
-			return domain.StaffScheduleDraft{}, errors.New("ライブスケジュールへの反映に失敗しました: " + err.Error())
+	return reviewed, nil
+}
+
+// PublishScheduleDraft は承認済みスケジュール下書きをライブデータに反映し、下書きを削除する。
+// 2段階フロー: 承認 → 店舗反映 の「店舗反映」ステップ。
+func (u *adminReviewUsecase) PublishScheduleDraft(ctx context.Context, draftID uuid.UUID) error {
+	draft, err := u.draftRepo.GetScheduleDraftByID(ctx, draftID)
+	if err != nil {
+		return errors.New("下書きが見つかりません")
+	}
+	if draft.Status != domain.DraftStatusApproved {
+		return errors.New("approved 状態の下書きのみ反映できます")
+	}
+	scheduleInputs := make([]domain.ScheduleInput, len(draft.Items))
+	for i, item := range draft.Items {
+		scheduleInputs[i] = domain.ScheduleInput{
+			DayOfWeek: item.DayOfWeek,
+			StartTime: item.StartTime.Format("15:04"),
+			EndTime:   item.EndTime.Format("15:04"),
 		}
 	}
-
-	return reviewed, nil
+	_, err = u.staffRepo.ReplaceSchedules(ctx, draft.StaffID.String(), scheduleInputs)
+	if err != nil {
+		return errors.New("ライブスケジュールへの反映に失敗しました: " + err.Error())
+	}
+	// 反映後、下書きを削除
+	return u.draftRepo.DeleteScheduleDraft(ctx, draftID)
 }
 
 // GetProfileDraft は管理者がプロフィール下書きを単体で取得する。

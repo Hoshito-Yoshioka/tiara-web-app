@@ -23,20 +23,31 @@ func NewAdminReviewHandler(us usecase.AdminReviewUsecase) *AdminReviewHandler {
 
 // --- Profile Draft Review ---
 
+// StaffImageJSON はスタッフ画像のJSON表現。
+type StaffImageJSON struct {
+	ID           string `json:"id"`
+	StaffID      string `json:"staffId"`
+	ImageURL     string `json:"imageUrl"`
+	IsMain       bool   `json:"isMain"`
+	SortOrder    int    `json:"sortOrder"`
+	CropPosition string `json:"cropPosition"`
+}
+
 // PendingProfileDraftResponse は管理者向けの承認待ちプロフィール下書きレスポンス。
 type PendingProfileDraftResponse struct {
-	ID                string  `json:"id"`
-	StaffID           string  `json:"staffId"`
-	StaffName         string  `json:"staffName"`
-	Name              string  `json:"name"`
-	Role              string  `json:"role"`
-	Bio               string  `json:"bio"`
-	ImageURL          string  `json:"imageUrl"`
-	ImageCropPosition string  `json:"imageCropPosition"`
-	Status            string  `json:"status"`
-	AdminComment      string  `json:"adminComment"`
-	SubmittedAt       *string `json:"submittedAt,omitempty"`
-	CreatedAt         string  `json:"createdAt"`
+	ID                string           `json:"id"`
+	StaffID           string           `json:"staffId"`
+	StaffName         string           `json:"staffName"`
+	Name              string           `json:"name"`
+	Role              string           `json:"role"`
+	Bio               string           `json:"bio"`
+	ImageURL          string           `json:"imageUrl"`
+	ImageCropPosition string           `json:"imageCropPosition"`
+	Status            string           `json:"status"`
+	AdminComment      string           `json:"adminComment"`
+	SubmittedAt       *string          `json:"submittedAt,omitempty"`
+	CreatedAt         string           `json:"createdAt"`
+	Images            []StaffImageJSON `json:"images"`
 }
 
 // toPendingProfileDraftResponse は domain を管理者向けレスポンスに変換する。
@@ -73,8 +84,27 @@ func (h *AdminReviewHandler) ListPendingProfileDrafts(c echo.Context) error {
 		// スタッフ名を取得して設定
 		staffName, _ := h.reviewUsecase.GetStaffName(c.Request().Context(), d.StaffID)
 		resp[i].StaffName = staffName
+		// スタッフ画像一覧を取得して設定
+		images, _ := h.reviewUsecase.ListImagesByStaffID(c.Request().Context(), d.StaffID)
+		resp[i].Images = toStaffImageJSONList(images)
 	}
 	return c.JSON(http.StatusOK, resp)
+}
+
+// toStaffImageJSONList は domain.StaffImage のスライスを JSON 応答用に変換する。
+func toStaffImageJSONList(images []domain.StaffImage) []StaffImageJSON {
+	result := make([]StaffImageJSON, len(images))
+	for i, img := range images {
+		result[i] = StaffImageJSON{
+			ID:           img.ID.String(),
+			StaffID:      img.StaffID.String(),
+			ImageURL:     img.ImageURL,
+			IsMain:       img.IsMain,
+			SortOrder:    img.SortOrder,
+			CropPosition: img.CropPosition,
+		}
+	}
+	return result
 }
 
 // ReviewDraftRequest はレビューリクエストのボディ型。
@@ -165,6 +195,38 @@ func (h *AdminReviewHandler) ListPendingScheduleDrafts(c echo.Context) error {
 		resp[i].StaffName = staffName
 	}
 	return c.JSON(http.StatusOK, resp)
+}
+
+// ListApprovedScheduleDrafts は承認済み（未反映）のスケジュール下書き一覧を返す。
+func (h *AdminReviewHandler) ListApprovedScheduleDrafts(c echo.Context) error {
+	drafts, err := h.reviewUsecase.ListApprovedScheduleDrafts(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	resp := make([]PendingScheduleDraftResponse, len(drafts))
+	for i, d := range drafts {
+		resp[i] = toPendingScheduleDraftResponse(d)
+		staffName, _ := h.reviewUsecase.GetStaffName(c.Request().Context(), d.StaffID)
+		resp[i].StaffName = staffName
+	}
+	return c.JSON(http.StatusOK, resp)
+}
+
+// PublishScheduleDraft は承認済みスケジュール下書きをライブデータに反映する。
+func (h *AdminReviewHandler) PublishScheduleDraft(c echo.Context) error {
+	draftIDStr := c.Param("id")
+	draftID, err := uuid.Parse(draftIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid draft ID"})
+	}
+
+	err = h.reviewUsecase.PublishScheduleDraft(c.Request().Context(), draftID)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "スケジュールを店舗ページに反映しました"})
 }
 
 // ReviewScheduleDraft は管理者がスケジュール下書きをレビューする。

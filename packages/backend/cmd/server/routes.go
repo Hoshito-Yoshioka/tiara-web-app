@@ -12,13 +12,13 @@ import (
 // handlers はDIで構築されたハンドラー群を束ねる構造体。
 // main から routes へ渡す唯一の依存。
 type handlers struct {
-	shop          *handler.ShopHandler
-	staff         *handler.StaffHandler
-	auth          *handler.AuthHandler
-	menu          *handler.MenuHandler
-	staffPortal   *handler.StaffPortalHandler
-	adminReview   *handler.AdminReviewHandler
-	adminAccount  *handler.AdminAccountHandler
+	shop         *handler.ShopHandler
+	staff        *handler.StaffHandler
+	auth         *handler.AuthHandler
+	menu         *handler.MenuHandler
+	staffPortal  *handler.StaffPortalHandler
+	adminReview  *handler.AdminReviewHandler
+	adminAccount *handler.AdminAccountHandler
 }
 
 // registerRoutes は全ルートを Echo インスタンスに登録する。
@@ -66,6 +66,7 @@ func registerAdminRoutes(e *echo.Echo, h *handlers, jwtSecret string) {
 	admin.POST("/staffs/:id/images", h.staff.UploadStaffImage)
 	admin.DELETE("/staffs/:id/images/:imageId", h.staff.DeleteStaffImage)
 	admin.PUT("/staffs/:id/images/main", h.staff.SetMainImage)
+	admin.PUT("/staffs/:id/images/:imageId/crop", h.staff.UpdateImageCropPosition)
 
 	// Menu
 	admin.POST("/menu/categories", h.menu.CreateMenuCategory)
@@ -81,9 +82,11 @@ func registerAdminRoutes(e *echo.Echo, h *handlers, jwtSecret string) {
 	admin.PUT("/reviews/profiles/:id", h.adminReview.ReviewProfileDraft)
 	admin.PUT("/reviews/profiles/:id/content", h.adminReview.UpdateProfileDraftContent)
 	admin.GET("/reviews/schedules", h.adminReview.ListPendingScheduleDrafts)
+	admin.GET("/reviews/schedules/approved", h.adminReview.ListApprovedScheduleDrafts)
 	admin.GET("/reviews/schedules/:id", h.adminReview.GetScheduleDraft)
 	admin.PUT("/reviews/schedules/:id", h.adminReview.ReviewScheduleDraft)
 	admin.PUT("/reviews/schedules/:id/content", h.adminReview.UpdateScheduleDraftContent)
+	admin.POST("/reviews/schedules/:id/publish", h.adminReview.PublishScheduleDraft)
 
 	// Staff accounts
 	admin.GET("/staff-accounts", h.adminAccount.ListStaffAccounts)
@@ -105,6 +108,13 @@ func registerPortalRoutes(e *echo.Echo, h *handlers, jwtSecret string) {
 	portal.GET("/schedule", h.staffPortal.GetMyScheduleDraft)
 	portal.PUT("/schedule", h.staffPortal.SaveMyScheduleDraft)
 	portal.POST("/schedule/:id/submit", h.staffPortal.SubmitMyScheduleDraft)
+
+	// Image management (自分の画像のみ操作可能)
+	portal.GET("/images", h.staffPortal.ListMyImages)
+	portal.POST("/images", h.staffPortal.UploadMyImage)
+	portal.DELETE("/images/:imageId", h.staffPortal.DeleteMyImage)
+	portal.PUT("/images/:imageId/crop", h.staffPortal.UpdateMyImageCropPosition)
+	portal.PUT("/images/main", h.staffPortal.SetMyMainImage)
 }
 
 // healthCheck はヘルスチェック用のハンドラー。

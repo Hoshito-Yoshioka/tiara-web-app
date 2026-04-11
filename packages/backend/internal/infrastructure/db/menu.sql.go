@@ -215,6 +215,42 @@ func (q *Queries) ListMenuItemsByCategoryID(ctx context.Context, categoryID pgty
 	return items, nil
 }
 
+const swapMenuCategorySortOrder = `-- name: SwapMenuCategorySortOrder :exec
+UPDATE menu_categories SET sort_order = $2 WHERE sort_order = $1 AND id != $3
+`
+
+type SwapMenuCategorySortOrderParams struct {
+	SortOrder   int32
+	SortOrder_2 int32
+	ID          pgtype.UUID
+}
+
+func (q *Queries) SwapMenuCategorySortOrder(ctx context.Context, arg SwapMenuCategorySortOrderParams) error {
+	_, err := q.db.Exec(ctx, swapMenuCategorySortOrder, arg.SortOrder, arg.SortOrder_2, arg.ID)
+	return err
+}
+
+const swapMenuItemSortOrder = `-- name: SwapMenuItemSortOrder :exec
+UPDATE menu_items SET sort_order = $3 WHERE category_id = $1 AND sort_order = $2 AND id != $4
+`
+
+type SwapMenuItemSortOrderParams struct {
+	CategoryID  pgtype.UUID
+	SortOrder   int32
+	SortOrder_2 int32
+	ID          pgtype.UUID
+}
+
+func (q *Queries) SwapMenuItemSortOrder(ctx context.Context, arg SwapMenuItemSortOrderParams) error {
+	_, err := q.db.Exec(ctx, swapMenuItemSortOrder,
+		arg.CategoryID,
+		arg.SortOrder,
+		arg.SortOrder_2,
+		arg.ID,
+	)
+	return err
+}
+
 const updateMenuCategory = `-- name: UpdateMenuCategory :one
 UPDATE menu_categories
 SET name = $2, description = $3, sort_order = $4

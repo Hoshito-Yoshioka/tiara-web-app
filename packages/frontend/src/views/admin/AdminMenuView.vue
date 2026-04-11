@@ -182,6 +182,58 @@
     }
   }
 
+  /** カテゴリの表示順ドロップダウン選択肢を生成 */
+  function categorySortOrderOptions(
+    currentSortOrder: number,
+    excludeId?: string
+  ): { value: number; label: string }[] {
+    const categories = menuList.value.map((e) => e.category).filter((c) => c.id !== excludeId)
+    const usedOrders = new Map<number, string>()
+    for (const c of categories) {
+      usedOrders.set(c.sortOrder, c.name)
+    }
+    const allOrders = [...categories.map((c) => c.sortOrder), currentSortOrder]
+    const maxOrder = Math.max(...allOrders, 0) + 1
+    const options: { value: number; label: string }[] = []
+    for (let i = 0; i <= maxOrder; i++) {
+      if (i === currentSortOrder && excludeId) {
+        options.push({ value: i, label: `${i}（現在）` })
+      } else if (usedOrders.has(i)) {
+        options.push({ value: i, label: `${i}（${usedOrders.get(i)}と入れ替える）` })
+      } else {
+        options.push({ value: i, label: `${i}` })
+      }
+    }
+    return options
+  }
+
+  /** アイテムの表示順ドロップダウン選択肢を生成 */
+  function itemSortOrderOptions(
+    categoryId: string,
+    currentSortOrder: number,
+    excludeId?: string
+  ): { value: number; label: string }[] {
+    const entry = menuList.value.find((e) => e.category.id === categoryId)
+    const items = (entry?.items ?? []).filter((it) => it.id !== excludeId)
+    const usedOrders = new Map<number, string>()
+    for (const it of items) {
+      usedOrders.set(it.sortOrder, it.name)
+    }
+    const allOrders = [...items.map((it) => it.sortOrder), currentSortOrder]
+    const maxOrder = Math.max(...allOrders, 0) + 1
+    const options: { value: number; label: string }[] = []
+    for (let i = 0; i <= maxOrder; i++) {
+      if (i === currentSortOrder && excludeId) {
+        options.push({ value: i, label: `${i}（現在）` })
+      } else if (usedOrders.has(i)) {
+        options.push({ value: i, label: `${i}（${usedOrders.get(i)}と入れ替える）` })
+      } else {
+        options.push({ value: i, label: `${i}` })
+      }
+    }
+    return options
+  }
+
   onMounted(() => fetchMenus())
 </script>
 
@@ -240,12 +292,18 @@
             placeholder="説明（任意）"
             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:border-white/30"
           />
-          <input
+          <select
             v-model.number="newCategoryForm.sortOrder"
-            type="number"
-            placeholder="表示順"
-            class="w-32 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:border-white/30"
-          />
+            class="w-auto bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 [color-scheme:dark]"
+          >
+            <option
+              v-for="opt in categorySortOrderOptions(newCategoryForm.sortOrder)"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ opt.label }}
+            </option>
+          </select>
           <div class="flex gap-2 pt-1">
             <button
               @click="handleCreateCategory"
@@ -282,11 +340,18 @@
                 placeholder="説明"
                 class="flex-1 bg-white/10 border border-white/20 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/40"
               />
-              <input
+              <select
                 v-model.number="categoryForm.sortOrder"
-                type="number"
-                class="w-20 bg-white/10 border border-white/20 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/40"
-              />
+                class="w-auto bg-white/10 border border-white/20 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/40 [color-scheme:dark]"
+              >
+                <option
+                  v-for="opt in categorySortOrderOptions(categoryForm.sortOrder, entry.category.id)"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
               <button
                 @click="saveCategory(entry.category.id)"
                 :disabled="isSaving"
@@ -352,12 +417,18 @@
                     placeholder="説明（任意）"
                     class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
                   />
-                  <input
+                  <select
                     v-model.number="itemForm.sortOrder"
-                    type="number"
-                    placeholder="表示順"
-                    class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
-                  />
+                    class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30 [color-scheme:dark]"
+                  >
+                    <option
+                      v-for="opt in itemSortOrderOptions(entry.category.id, itemForm.sortOrder, item.id)"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.label }}
+                    </option>
+                  </select>
                 </div>
                 <div class="flex gap-2">
                   <button
@@ -428,12 +499,18 @@
                   placeholder="説明（任意）"
                   class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
                 />
-                <input
+                <select
                   v-model.number="newItemForm.sortOrder"
-                  type="number"
-                  placeholder="表示順"
-                  class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
-                />
+                  class="bg-white/5 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30 [color-scheme:dark]"
+                >
+                  <option
+                    v-for="opt in itemSortOrderOptions(entry.category.id, newItemForm.sortOrder)"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >
+                    {{ opt.label }}
+                  </option>
+                </select>
               </div>
               <div class="flex gap-2">
                 <button

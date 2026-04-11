@@ -7,6 +7,9 @@ SELECT * FROM staff_schedule_drafts WHERE staff_id = $1 AND status IN ('draft', 
 -- name: ListPendingScheduleDrafts :many
 SELECT * FROM staff_schedule_drafts WHERE status = 'pending' ORDER BY submitted_at ASC;
 
+-- name: ListApprovedScheduleDrafts :many
+SELECT * FROM staff_schedule_drafts WHERE status = 'approved' ORDER BY reviewed_at ASC;
+
 -- name: CreateScheduleDraft :one
 INSERT INTO staff_schedule_drafts (staff_id, status)
 VALUES ($1, $2) RETURNING *;

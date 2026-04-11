@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"tiara-web-app/backend/internal/domain"
@@ -16,13 +20,22 @@ import (
 type StaffPortalHandler struct {
 	authUsecase    usecase.StaffAuthUsecase
 	portalUsecase  usecase.StaffPortalUsecase
+	staffUsecase   usecase.StaffUsecase
 	jwtSecret      string
 	jwtExpiryHours int
+	uploadDir      string
 }
 
 // NewStaffPortalHandler は新しいStaffPortalHandlerのインスタンスを作成する。
-func NewStaffPortalHandler(auth usecase.StaffAuthUsecase, portal usecase.StaffPortalUsecase, jwtSecret string, jwtExpiryHours int) *StaffPortalHandler {
-	return &StaffPortalHandler{authUsecase: auth, portalUsecase: portal, jwtSecret: jwtSecret, jwtExpiryHours: jwtExpiryHours}
+func NewStaffPortalHandler(auth usecase.StaffAuthUsecase, portal usecase.StaffPortalUsecase, staff usecase.StaffUsecase, jwtSecret string, jwtExpiryHours int, uploadDir string) *StaffPortalHandler {
+	return &StaffPortalHandler{
+		authUsecase:    auth,
+		portalUsecase:  portal,
+		staffUsecase:   staff,
+		jwtSecret:      jwtSecret,
+		jwtExpiryHours: jwtExpiryHours,
+		uploadDir:      uploadDir,
+	}
 }
 
 // --- Helper ---
@@ -367,4 +380,145 @@ func (h *StaffPortalHandler) SubmitMyScheduleDraft(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))
+}
+
+// --- Image Management ---
+// スタッフが自分自身の画像を管理するためのハンドラー群。
+// JWT から取得した staff_id を使い、自分の画像のみ操作可能にする。
+
+// ListMyImages は自分の画像一覧を取得する。
+func (h *StaffPortalHandler) ListMyImages(c echo.Context) error {
+	staffID, err := getStaffIDFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := h.staffUsecase.GetStaffWithSchedules(c.Request().Context(), staffID.String())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, result.Images)
+}
+
+// UploadMyImage は自分のスタッフ画像をアップロードする。
+func (h *StaffPortalHandler) UploadMyImage(c echo.Context) error {
+	staffID, err := getStaffIDFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image file is required"})
+	}
+
+	// ファイルサイズ制限 (10MB)
+	if file.Size > 10*1024*1024 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "file size must be less than 10MB"})
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to read file"})
+	}
+	defer src.Close()
+
+	// uploads ディレクトリ作成
+	uploadDir := filepath.Join(h.uploadDir, "staff")
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create upload directory"})
+	}
+
+	// ユニークファイル名生成
+	ext := filepath.Ext(file.Filename)
+	filename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+	dstPath := filepath.Join(uploadDir, filename)
+
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save file"})
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to write file"})
+	}
+
+	isMain := c.FormValue("isMain") == "true"
+	imageURL := fmt.Sprintf("/uploads/staff/%s", filename)
+
+	image, err := h.staffUsecase.UploadStaffImage(c.Request().Context(), staffID.String(), imageURL, isMain, 0)
+	if err != nil {
+		os.Remove(dstPath)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, image)
+}
+
+// DeleteMyImage は自分のスタッフ画像を削除する。
+func (h *StaffPortalHandler) DeleteMyImage(c echo.Context) error {
+	_, err := getStaffIDFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	imageID := c.Param("imageId")
+	if imageID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image id is required"})
+	}
+
+	err = h.staffUsecase.DeleteStaffImage(c.Request().Context(), imageID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+// SetMyMainImage は自分のメイン画像を設定する。
+func (h *StaffPortalHandler) SetMyMainImage(c echo.Context) error {
+	staffID, err := getStaffIDFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	var req struct {
+		ImageID string `json:"imageId"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	image, err := h.staffUsecase.SetMainImage(c.Request().Context(), staffID.String(), req.ImageID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, image)
+}
+
+// UpdateMyImageCropPosition は自分の画像のクロップ位置を更新する。
+func (h *StaffPortalHandler) UpdateMyImageCropPosition(c echo.Context) error {
+	_, err := getStaffIDFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	imageID := c.Param("imageId")
+	if imageID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image id is required"})
+	}
+
+	var req struct {
+		CropPosition string `json:"cropPosition"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	image, err := h.staffUsecase.UpdateImageCropPosition(c.Request().Context(), imageID, req.CropPosition)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, image)
 }

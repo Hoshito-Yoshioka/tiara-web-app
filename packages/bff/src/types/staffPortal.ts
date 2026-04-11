@@ -40,6 +40,18 @@ export interface ProfileDraftResponse {
   reviewedAt?: string
   createdAt?: string
   updatedAt?: string
+  /** スタッフに紐づく画像一覧（staff_images） */
+  images?: StaffImageForDraft[]
+}
+
+/** ドラフトレスポンスに含まれるスタッフ画像 */
+export interface StaffImageForDraft {
+  id: string
+  staffId: string
+  imageUrl: string
+  isMain: boolean
+  sortOrder: number
+  cropPosition: string
 }
 
 // --- Schedule Draft ---

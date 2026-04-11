@@ -47,6 +47,7 @@ function toImage(raw: StaffImageResponse): StaffImage {
     imageUrl: raw.ImageURL,
     isMain: raw.IsMain,
     sortOrder: raw.SortOrder,
+    cropPosition: raw.CropPosition ?? '50 50',
   }
 }
 

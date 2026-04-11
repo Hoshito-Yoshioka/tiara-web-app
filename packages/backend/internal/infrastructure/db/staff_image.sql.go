@@ -21,14 +21,15 @@ func (q *Queries) ClearMainFlagByStaffID(ctx context.Context, staffID pgtype.UUI
 }
 
 const createStaffImage = `-- name: CreateStaffImage :one
-INSERT INTO staff_images (staff_id, image_url, is_main, sort_order) VALUES ($1, $2, $3, $4) RETURNING id, staff_id, image_url, is_main, sort_order, created_at, updated_at
+INSERT INTO staff_images (staff_id, image_url, is_main, sort_order, crop_position) VALUES ($1, $2, $3, $4, $5) RETURNING id, staff_id, image_url, is_main, sort_order, crop_position, created_at, updated_at
 `
 
 type CreateStaffImageParams struct {
-	StaffID   pgtype.UUID
-	ImageUrl  string
-	IsMain    bool
-	SortOrder int32
+	StaffID      pgtype.UUID
+	ImageUrl     string
+	IsMain       bool
+	SortOrder    int32
+	CropPosition string
 }
 
 func (q *Queries) CreateStaffImage(ctx context.Context, arg CreateStaffImageParams) (StaffImage, error) {
@@ -37,6 +38,7 @@ func (q *Queries) CreateStaffImage(ctx context.Context, arg CreateStaffImagePara
 		arg.ImageUrl,
 		arg.IsMain,
 		arg.SortOrder,
+		arg.CropPosition,
 	)
 	var i StaffImage
 	err := row.Scan(
@@ -45,6 +47,7 @@ func (q *Queries) CreateStaffImage(ctx context.Context, arg CreateStaffImagePara
 		&i.ImageUrl,
 		&i.IsMain,
 		&i.SortOrder,
+		&i.CropPosition,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -70,7 +73,7 @@ func (q *Queries) DeleteStaffImage(ctx context.Context, id pgtype.UUID) error {
 }
 
 const listAllStaffImages = `-- name: ListAllStaffImages :many
-SELECT id, staff_id, image_url, is_main, sort_order, created_at, updated_at FROM staff_images ORDER BY staff_id, is_main DESC, sort_order ASC
+SELECT id, staff_id, image_url, is_main, sort_order, crop_position, created_at, updated_at FROM staff_images ORDER BY staff_id, is_main DESC, sort_order ASC
 `
 
 func (q *Queries) ListAllStaffImages(ctx context.Context) ([]StaffImage, error) {
@@ -88,6 +91,7 @@ func (q *Queries) ListAllStaffImages(ctx context.Context) ([]StaffImage, error) 
 			&i.ImageUrl,
 			&i.IsMain,
 			&i.SortOrder,
+			&i.CropPosition,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -102,7 +106,7 @@ func (q *Queries) ListAllStaffImages(ctx context.Context) ([]StaffImage, error) 
 }
 
 const listImagesByStaffID = `-- name: ListImagesByStaffID :many
-SELECT id, staff_id, image_url, is_main, sort_order, created_at, updated_at FROM staff_images WHERE staff_id = $1 ORDER BY is_main DESC, sort_order ASC
+SELECT id, staff_id, image_url, is_main, sort_order, crop_position, created_at, updated_at FROM staff_images WHERE staff_id = $1 ORDER BY is_main DESC, sort_order ASC
 `
 
 func (q *Queries) ListImagesByStaffID(ctx context.Context, staffID pgtype.UUID) ([]StaffImage, error) {
@@ -120,6 +124,7 @@ func (q *Queries) ListImagesByStaffID(ctx context.Context, staffID pgtype.UUID) 
 			&i.ImageUrl,
 			&i.IsMain,
 			&i.SortOrder,
+			&i.CropPosition,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -134,7 +139,7 @@ func (q *Queries) ListImagesByStaffID(ctx context.Context, staffID pgtype.UUID) 
 }
 
 const setMainImage = `-- name: SetMainImage :one
-UPDATE staff_images SET is_main = true WHERE id = $1 RETURNING id, staff_id, image_url, is_main, sort_order, created_at, updated_at
+UPDATE staff_images SET is_main = true WHERE id = $1 RETURNING id, staff_id, image_url, is_main, sort_order, crop_position, created_at, updated_at
 `
 
 func (q *Queries) SetMainImage(ctx context.Context, id pgtype.UUID) (StaffImage, error) {
@@ -146,6 +151,32 @@ func (q *Queries) SetMainImage(ctx context.Context, id pgtype.UUID) (StaffImage,
 		&i.ImageUrl,
 		&i.IsMain,
 		&i.SortOrder,
+		&i.CropPosition,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateImageCropPosition = `-- name: UpdateImageCropPosition :one
+UPDATE staff_images SET crop_position = $2 WHERE id = $1 RETURNING id, staff_id, image_url, is_main, sort_order, crop_position, created_at, updated_at
+`
+
+type UpdateImageCropPositionParams struct {
+	ID           pgtype.UUID
+	CropPosition string
+}
+
+func (q *Queries) UpdateImageCropPosition(ctx context.Context, arg UpdateImageCropPositionParams) (StaffImage, error) {
+	row := q.db.QueryRow(ctx, updateImageCropPosition, arg.ID, arg.CropPosition)
+	var i StaffImage
+	err := row.Scan(
+		&i.ID,
+		&i.StaffID,
+		&i.ImageUrl,
+		&i.IsMain,
+		&i.SortOrder,
+		&i.CropPosition,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -153,14 +184,15 @@ func (q *Queries) SetMainImage(ctx context.Context, id pgtype.UUID) (StaffImage,
 }
 
 const updateStaffImage = `-- name: UpdateStaffImage :one
-UPDATE staff_images SET image_url = $2, is_main = $3, sort_order = $4 WHERE id = $1 RETURNING id, staff_id, image_url, is_main, sort_order, created_at, updated_at
+UPDATE staff_images SET image_url = $2, is_main = $3, sort_order = $4, crop_position = $5 WHERE id = $1 RETURNING id, staff_id, image_url, is_main, sort_order, crop_position, created_at, updated_at
 `
 
 type UpdateStaffImageParams struct {
-	ID        pgtype.UUID
-	ImageUrl  string
-	IsMain    bool
-	SortOrder int32
+	ID           pgtype.UUID
+	ImageUrl     string
+	IsMain       bool
+	SortOrder    int32
+	CropPosition string
 }
 
 func (q *Queries) UpdateStaffImage(ctx context.Context, arg UpdateStaffImageParams) (StaffImage, error) {
@@ -169,6 +201,7 @@ func (q *Queries) UpdateStaffImage(ctx context.Context, arg UpdateStaffImagePara
 		arg.ImageUrl,
 		arg.IsMain,
 		arg.SortOrder,
+		arg.CropPosition,
 	)
 	var i StaffImage
 	err := row.Scan(
@@ -177,6 +210,7 @@ func (q *Queries) UpdateStaffImage(ctx context.Context, arg UpdateStaffImagePara
 		&i.ImageUrl,
 		&i.IsMain,
 		&i.SortOrder,
+		&i.CropPosition,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

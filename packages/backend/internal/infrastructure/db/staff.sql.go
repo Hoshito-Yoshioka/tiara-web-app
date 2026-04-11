@@ -256,6 +256,27 @@ func (q *Queries) ListStaffsByShopID(ctx context.Context, shopID pgtype.UUID) ([
 	return items, nil
 }
 
+const swapStaffSortOrder = `-- name: SwapStaffSortOrder :exec
+UPDATE staffs SET sort_order = $3 WHERE shop_id = $1 AND sort_order = $2 AND id != $4
+`
+
+type SwapStaffSortOrderParams struct {
+	ShopID      pgtype.UUID
+	SortOrder   int32
+	SortOrder_2 int32
+	ID          pgtype.UUID
+}
+
+func (q *Queries) SwapStaffSortOrder(ctx context.Context, arg SwapStaffSortOrderParams) error {
+	_, err := q.db.Exec(ctx, swapStaffSortOrder,
+		arg.ShopID,
+		arg.SortOrder,
+		arg.SortOrder_2,
+		arg.ID,
+	)
+	return err
+}
+
 const updateStaff = `-- name: UpdateStaff :one
 UPDATE staffs SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6, sort_order = $7 WHERE id = $1 RETURNING id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at
 `

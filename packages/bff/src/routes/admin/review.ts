@@ -137,6 +137,26 @@ adminReviewRoutes.get('/schedules', async (c) => {
   return c.json(data)
 })
 
+/** GET /api/admin/reviews/schedules/approved — 承認済み（未反映）スケジュール下書き一覧 */
+adminReviewRoutes.get('/schedules/approved', async (c) => {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader) {
+    return c.json({ error: 'Authorization header is required' }, 401)
+  }
+
+  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/approved`, {
+    headers: { Authorization: authHeader },
+  })
+
+  if (!res.ok) {
+    const error = await res.json()
+    return c.json(error, res.status as 401 | 500)
+  }
+
+  const data: ScheduleDraftResponse[] = await res.json()
+  return c.json(data)
+})
+
 /** GET /api/admin/reviews/schedules/:id — スケジュール下書き単体取得 */
 adminReviewRoutes.get('/schedules/:id', async (c) => {
   const authHeader = c.req.header('Authorization')
@@ -212,6 +232,29 @@ adminReviewRoutes.put('/schedules/:id/content', async (c) => {
   }
 
   const data: ScheduleDraftResponse = await res.json()
+  return c.json(data)
+})
+
+/** POST /api/admin/reviews/schedules/:id/publish — 承認済みスケジュールを店舗ページに反映 */
+adminReviewRoutes.post('/schedules/:id/publish', async (c) => {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader) {
+    return c.json({ error: 'Authorization header is required' }, 401)
+  }
+
+  const id = c.req.param('id')
+
+  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/${id}/publish`, {
+    method: 'POST',
+    headers: { Authorization: authHeader },
+  })
+
+  if (!res.ok) {
+    const error = await res.json()
+    return c.json(error, res.status as 400 | 401)
+  }
+
+  const data = await res.json()
   return c.json(data)
 })
 

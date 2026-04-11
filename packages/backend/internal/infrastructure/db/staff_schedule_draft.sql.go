@@ -125,6 +125,39 @@ func (q *Queries) GetScheduleDraftByStaffID(ctx context.Context, staffID pgtype.
 	return i, err
 }
 
+const listApprovedScheduleDrafts = `-- name: ListApprovedScheduleDrafts :many
+SELECT id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_schedule_drafts WHERE status = 'approved' ORDER BY reviewed_at ASC
+`
+
+func (q *Queries) ListApprovedScheduleDrafts(ctx context.Context) ([]StaffScheduleDraft, error) {
+	rows, err := q.db.Query(ctx, listApprovedScheduleDrafts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []StaffScheduleDraft
+	for rows.Next() {
+		var i StaffScheduleDraft
+		if err := rows.Scan(
+			&i.ID,
+			&i.StaffID,
+			&i.Status,
+			&i.AdminComment,
+			&i.SubmittedAt,
+			&i.ReviewedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPendingScheduleDrafts = `-- name: ListPendingScheduleDrafts :many
 SELECT id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_schedule_drafts WHERE status = 'pending' ORDER BY submitted_at ASC
 `
