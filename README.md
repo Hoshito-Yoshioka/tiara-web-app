@@ -91,7 +91,7 @@ docker-compose ps
 
 ```bash
 cd packages/backend
-set -a && source ../../.env && set +a && go run ./cmd/server/main.go
+set -a && source ../../.env && set +a && go run ./cmd/server/
 ```
 
 > **Note:** Go は `.env` ファイルを自動で読み込みません。`set -a` で変数を自動 export する設定にしてから `source` で読み込み、`set +a` で元に戻しています。
