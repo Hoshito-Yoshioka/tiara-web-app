@@ -16,11 +16,12 @@ import { adminAccountRoutes } from './routes/admin/account'
 
 const app = new Hono()
 
-// CORS: Frontend (Vite dev server) からのアクセスを許可
+// CORS: Frontend からのアクセスを許可（環境変数で設定可能）
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173'
 app.use(
   '/*',
   cors({
-    origin: 'http://localhost:5173',
+    origin: CORS_ORIGIN,
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowHeaders: ['Content-Type', 'Authorization'],
   })

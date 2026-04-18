@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { authMiddleware, type AuthEnv } from '../../middleware/auth'
 import type {
   ReviewDraftRequest,
   ProfileDraftResponse,
@@ -7,7 +8,7 @@ import type {
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
-const adminReviewRoutes = new Hono()
+const adminReviewRoutes = new Hono<AuthEnv>()
 
 /**
  * 管理者用レビュールート
@@ -15,14 +16,14 @@ const adminReviewRoutes = new Hono()
  * Admin JWT トークンが必要。
  */
 
+// 全ルートに認証ミドルウェアを適用
+adminReviewRoutes.use('/*', authMiddleware)
+
 // --- Profile Draft Review ---
 
 /** GET /api/admin/reviews/profiles — 承認待ちプロフィール下書き一覧 */
 adminReviewRoutes.get('/profiles', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const res = await fetch(`${BACKEND_URL}/admin/reviews/profiles`, {
     headers: { Authorization: authHeader },
@@ -39,10 +40,7 @@ adminReviewRoutes.get('/profiles', async (c) => {
 
 /** GET /api/admin/reviews/profiles/:id — プロフィール下書き単体取得 */
 adminReviewRoutes.get('/profiles/:id', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
 
@@ -61,10 +59,7 @@ adminReviewRoutes.get('/profiles/:id', async (c) => {
 
 /** PUT /api/admin/reviews/profiles/:id — プロフィール下書きをレビュー */
 adminReviewRoutes.put('/profiles/:id', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
   const body = await c.req.json<ReviewDraftRequest>()
@@ -89,10 +84,7 @@ adminReviewRoutes.put('/profiles/:id', async (c) => {
 
 /** PUT /api/admin/reviews/profiles/:id/content — プロフィール下書きの内容を修正 */
 adminReviewRoutes.put('/profiles/:id/content', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
   const body = await c.req.json()
@@ -119,10 +111,7 @@ adminReviewRoutes.put('/profiles/:id/content', async (c) => {
 
 /** GET /api/admin/reviews/schedules — 承認待ちスケジュール下書き一覧 */
 adminReviewRoutes.get('/schedules', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules`, {
     headers: { Authorization: authHeader },
@@ -139,10 +128,7 @@ adminReviewRoutes.get('/schedules', async (c) => {
 
 /** GET /api/admin/reviews/schedules/approved — 承認済み（未反映）スケジュール下書き一覧 */
 adminReviewRoutes.get('/schedules/approved', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/approved`, {
     headers: { Authorization: authHeader },
@@ -159,10 +145,7 @@ adminReviewRoutes.get('/schedules/approved', async (c) => {
 
 /** GET /api/admin/reviews/schedules/:id — スケジュール下書き単体取得 */
 adminReviewRoutes.get('/schedules/:id', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
 
@@ -181,10 +164,7 @@ adminReviewRoutes.get('/schedules/:id', async (c) => {
 
 /** PUT /api/admin/reviews/schedules/:id — スケジュール下書きをレビュー */
 adminReviewRoutes.put('/schedules/:id', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
   const body = await c.req.json<ReviewDraftRequest>()
@@ -209,10 +189,7 @@ adminReviewRoutes.put('/schedules/:id', async (c) => {
 
 /** PUT /api/admin/reviews/schedules/:id/content — スケジュール下書きの内容を修正 */
 adminReviewRoutes.put('/schedules/:id/content', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
   const body = await c.req.json()
@@ -237,10 +214,7 @@ adminReviewRoutes.put('/schedules/:id/content', async (c) => {
 
 /** POST /api/admin/reviews/schedules/:id/publish — 承認済みスケジュールを店舗ページに反映 */
 adminReviewRoutes.post('/schedules/:id/publish', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
 

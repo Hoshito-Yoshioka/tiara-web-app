@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"tiara-web-app/backend/internal/domain"
@@ -172,7 +173,8 @@ func (h *StaffPortalHandler) GetMyProfileDraft(c echo.Context) error {
 
 	draft, err := h.portalUsecase.GetMyProfileDraft(c.Request().Context(), staffID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
@@ -318,7 +320,8 @@ func (h *StaffPortalHandler) GetMyScheduleDraft(c echo.Context) error {
 
 	draft, err := h.portalUsecase.GetMyScheduleDraft(c.Request().Context(), staffID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))
@@ -395,7 +398,8 @@ func (h *StaffPortalHandler) ListMyImages(c echo.Context) error {
 
 	result, err := h.staffUsecase.GetStaffWithSchedules(c.Request().Context(), staffID.String())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusOK, result.Images)
@@ -413,9 +417,9 @@ func (h *StaffPortalHandler) UploadMyImage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image file is required"})
 	}
 
-	// ファイルサイズ制限 (10MB)
-	if file.Size > 10*1024*1024 {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "file size must be less than 10MB"})
+	// ファイルバリデーション（サイズ・拡張子・MIMEタイプ）
+	if err := validateImageFile(file); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
 	src, err := file.Open()
@@ -430,8 +434,8 @@ func (h *StaffPortalHandler) UploadMyImage(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create upload directory"})
 	}
 
-	// ユニークファイル名生成
-	ext := filepath.Ext(file.Filename)
+	// ユニークファイル名生成（拡張子を正規化）
+	ext := strings.ToLower(filepath.Ext(file.Filename))
 	filename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
 	dstPath := filepath.Join(uploadDir, filename)
 
@@ -451,15 +455,31 @@ func (h *StaffPortalHandler) UploadMyImage(c echo.Context) error {
 	image, err := h.staffUsecase.UploadStaffImage(c.Request().Context(), staffID.String(), imageURL, isMain, 0)
 	if err != nil {
 		os.Remove(dstPath)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusCreated, image)
 }
 
+// verifyImageOwnership は指定された画像がスタッフの所有物かを検証する。
+// スタッフの全画像を取得し、対象の画像IDが含まれるかチェックする。
+func (h *StaffPortalHandler) verifyImageOwnership(c echo.Context, staffID uuid.UUID, imageID string) error {
+	result, err := h.staffUsecase.GetStaffWithSchedules(c.Request().Context(), staffID.String())
+	if err != nil {
+		return fmt.Errorf("failed to verify image ownership")
+	}
+	for _, img := range result.Images {
+		if img.ID.String() == imageID {
+			return nil
+		}
+	}
+	return fmt.Errorf("image does not belong to this staff")
+}
+
 // DeleteMyImage は自分のスタッフ画像を削除する。
 func (h *StaffPortalHandler) DeleteMyImage(c echo.Context) error {
-	_, err := getStaffIDFromContext(c)
+	staffID, err := getStaffIDFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -469,9 +489,14 @@ func (h *StaffPortalHandler) DeleteMyImage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image id is required"})
 	}
 
+	// 所有権チェック
+	if err := h.verifyImageOwnership(c, staffID, imageID); err != nil {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "forbidden"})
+	}
+
 	err = h.staffUsecase.DeleteStaffImage(c.Request().Context(), imageID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -492,14 +517,15 @@ func (h *StaffPortalHandler) SetMyMainImage(c echo.Context) error {
 
 	image, err := h.staffUsecase.SetMainImage(c.Request().Context(), staffID.String(), req.ImageID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, image)
 }
 
 // UpdateMyImageCropPosition は自分の画像のクロップ位置を更新する。
 func (h *StaffPortalHandler) UpdateMyImageCropPosition(c echo.Context) error {
-	_, err := getStaffIDFromContext(c)
+	staffID, err := getStaffIDFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -507,6 +533,11 @@ func (h *StaffPortalHandler) UpdateMyImageCropPosition(c echo.Context) error {
 	imageID := c.Param("imageId")
 	if imageID == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image id is required"})
+	}
+
+	// 所有権チェック
+	if err := h.verifyImageOwnership(c, staffID, imageID); err != nil {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "forbidden"})
 	}
 
 	var req struct {
@@ -518,7 +549,7 @@ func (h *StaffPortalHandler) UpdateMyImageCropPosition(c echo.Context) error {
 
 	image, err := h.staffUsecase.UpdateImageCropPosition(c.Request().Context(), imageID, req.CropPosition)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, image)
 }

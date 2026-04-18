@@ -7,6 +7,8 @@ import (
 	authMiddleware "tiara-web-app/backend/internal/interface/middleware"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"golang.org/x/time/rate"
 )
 
 // handlers はDIで構築されたハンドラー群を束ねる構造体。
@@ -43,9 +45,15 @@ func registerPublicRoutes(e *echo.Echo, h *handlers) {
 
 // --- Auth ---
 
+// loginRateLimiter はログインエンドポイント用のレート制限ミドルウェア。
+// 1秒あたり5リクエスト、バースト10まで許容。
+var loginRateLimiter = middleware.RateLimiter(
+	middleware.NewRateLimiterMemoryStore(rate.Limit(5)),
+)
+
 func registerAuthRoutes(e *echo.Echo, h *handlers) {
-	e.POST("/auth/login", h.auth.Login)
-	e.POST("/staff-auth/login", h.staffPortal.Login)
+	e.POST("/auth/login", h.auth.Login, loginRateLimiter)
+	e.POST("/staff-auth/login", h.staffPortal.Login, loginRateLimiter)
 }
 
 // --- Admin (JWT Protected) ---

@@ -58,6 +58,7 @@ POSTGRES_DB=tiara_db
 POSTGRES_USER=your_db_user          # 任意のユーザー名
 POSTGRES_PASSWORD=your_db_password  # 任意のパスワード
 DATABASE_URL=postgres://your_db_user:your_db_password@localhost:5432/tiara_db
+JWT_SECRET=your_jwt_secret_key      # JWT署名用の秘密鍵（必須）
 ```
 
 ### 3. npm パッケージをインストール
@@ -174,6 +175,9 @@ tiara-web-app/
 
 **`DATABASE_URL environment variable is not set`**
 → Go は `.env` を自動で読み込みません。起動コマンドに `set -a && source ../../.env && set +a &&` を付けて実行してください（[② バックエンドを起動](#②-バックエンドgo--echoを起動) 参照）。`.env` 自体が存在しない場合は [環境変数の設定](#2-環境変数を設定) を確認してください。
+
+**`JWT_SECRET environment variable is not set`**
+→ `.env` に `JWT_SECRET` が設定されていません。任意の秘密鍵文字列を設定してください。
 
 **`Unable to connect to database`**
 → Docker コンテナが起動していません。`docker-compose up -d` を実行してから再試行してください。

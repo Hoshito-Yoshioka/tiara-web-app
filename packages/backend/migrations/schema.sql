@@ -97,7 +97,7 @@ CREATE TABLE staff_profile_drafts (
     bio TEXT NOT NULL DEFAULT '',
     image_url TEXT NOT NULL DEFAULT '',
     image_crop_position VARCHAR(20) NOT NULL DEFAULT '50 50',
-    status VARCHAR(20) NOT NULL DEFAULT 'draft',
+    status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'pending', 'approved', 'rejected')),
     admin_comment TEXT NOT NULL DEFAULT '',
     submitted_at TIMESTAMP WITH TIME ZONE,
     reviewed_at TIMESTAMP WITH TIME ZONE,
@@ -119,7 +119,7 @@ EXECUTE FUNCTION update_timestamp();
 CREATE TABLE staff_schedule_drafts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     staff_id UUID NOT NULL REFERENCES staffs(id) ON DELETE CASCADE,
-    status VARCHAR(20) NOT NULL DEFAULT 'draft',
+    status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'pending', 'approved', 'rejected')),
     admin_comment TEXT NOT NULL DEFAULT '',
     submitted_at TIMESTAMP WITH TIME ZONE,
     reviewed_at TIMESTAMP WITH TIME ZONE,

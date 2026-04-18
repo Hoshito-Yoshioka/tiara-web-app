@@ -1,14 +1,18 @@
 import { Hono } from 'hono'
+import { authMiddleware, type AuthEnv } from '../../middleware/auth'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
-const adminAccountRoutes = new Hono()
+const adminAccountRoutes = new Hono<AuthEnv>()
 
 /**
  * 管理者用スタッフアカウント管理ルート。
  * Backend の /admin/staff-accounts/* エンドポイントへプロキシする。
  * Admin JWT トークンが必要。
  */
+
+// 全ルートに認証ミドルウェアを適用
+adminAccountRoutes.use('/*', authMiddleware)
 
 /** スタッフアカウントレスポンス型 */
 interface StaffAccountResponse {
@@ -21,10 +25,7 @@ interface StaffAccountResponse {
 
 /** GET /api/admin/staff-accounts — スタッフアカウント一覧 */
 adminAccountRoutes.get('/', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const res = await fetch(`${BACKEND_URL}/admin/staff-accounts`, {
     headers: { Authorization: authHeader },
@@ -41,10 +42,7 @@ adminAccountRoutes.get('/', async (c) => {
 
 /** GET /api/admin/staff-accounts/staff/:staffId — スタッフIDでアカウント取得 */
 adminAccountRoutes.get('/staff/:staffId', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const staffId = c.req.param('staffId')
   const res = await fetch(`${BACKEND_URL}/admin/staff-accounts/staff/${staffId}`, {
@@ -62,10 +60,7 @@ adminAccountRoutes.get('/staff/:staffId', async (c) => {
 
 /** POST /api/admin/staff-accounts — スタッフアカウント作成 */
 adminAccountRoutes.post('/', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const body = await c.req.json()
 
@@ -89,10 +84,7 @@ adminAccountRoutes.post('/', async (c) => {
 
 /** PUT /api/admin/staff-accounts/:id — スタッフアカウント更新 */
 adminAccountRoutes.put('/:id', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
   const body = await c.req.json()
@@ -117,10 +109,7 @@ adminAccountRoutes.put('/:id', async (c) => {
 
 /** DELETE /api/admin/staff-accounts/:id — スタッフアカウント削除 */
 adminAccountRoutes.delete('/:id', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
-  }
+  const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
 

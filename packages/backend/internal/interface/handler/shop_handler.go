@@ -21,7 +21,8 @@ func NewShopHandler(us usecase.ShopUsecase) *ShopHandler {
 func (h *ShopHandler) ListShops(c echo.Context) error {
 	shops, err := h.shopUsecase.ListShops(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, shops)
 }
@@ -68,7 +69,8 @@ func (h *ShopHandler) UpdateShop(c echo.Context) error {
 
 	shop, err := h.shopUsecase.UpdateShop(c.Request().Context(), id, input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, shop)
 }

@@ -75,7 +75,8 @@ func toPendingProfileDraftResponse(d domain.StaffProfileDraft) PendingProfileDra
 func (h *AdminReviewHandler) ListPendingProfileDrafts(c echo.Context) error {
 	drafts, err := h.reviewUsecase.ListPendingProfileDrafts(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	resp := make([]PendingProfileDraftResponse, len(drafts))
@@ -184,7 +185,8 @@ func toPendingScheduleDraftResponse(d domain.StaffScheduleDraft) PendingSchedule
 func (h *AdminReviewHandler) ListPendingScheduleDrafts(c echo.Context) error {
 	drafts, err := h.reviewUsecase.ListPendingScheduleDrafts(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	resp := make([]PendingScheduleDraftResponse, len(drafts))
@@ -201,7 +203,8 @@ func (h *AdminReviewHandler) ListPendingScheduleDrafts(c echo.Context) error {
 func (h *AdminReviewHandler) ListApprovedScheduleDrafts(c echo.Context) error {
 	drafts, err := h.reviewUsecase.ListApprovedScheduleDrafts(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	resp := make([]PendingScheduleDraftResponse, len(drafts))

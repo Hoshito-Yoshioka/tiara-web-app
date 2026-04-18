@@ -53,6 +53,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	claims := jwt.MapClaims{
 		"sub":      admin.ID.String(),
 		"username": admin.Username,
+		"type":     "admin", // スタッフトークンと区別するためのクレーム
 		"exp":      time.Now().Add(time.Duration(h.jwtExpiryHours) * time.Hour).Unix(),
 		"iat":      time.Now().Unix(),
 	}

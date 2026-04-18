@@ -12,7 +12,7 @@ import (
 type TokenClaims struct {
 	Subject  string
 	Username string
-	Type     string // "staff" or "" (admin)
+	Type     string // "admin" or "staff"
 }
 
 // parseToken は Authorization ヘッダーから JWT トークンをパースし、クレームを返す。
@@ -63,6 +63,11 @@ func JWTAuth(jwtSecret string) echo.MiddlewareFunc {
 			tc, err := parseToken(c, jwtSecret)
 			if err != nil {
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+			}
+
+			// スタッフトークンによる管理者APIへのアクセスを拒否
+			if tc.Type != "admin" {
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid token type"})
 			}
 
 			c.Set("admin_id", tc.Subject)
