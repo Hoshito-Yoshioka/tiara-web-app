@@ -98,6 +98,22 @@
       </button>
     </div>
 
+    <!-- モバイルメニュー背景オーバーレイ -->
+    <Transition
+      enter-active-class="transition-opacity duration-300 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="isMenuOpen"
+        class="md:hidden fixed inset-0 top-16 bg-black/80 backdrop-blur-sm z-40"
+        @click="closeMenu"
+      />
+    </Transition>
+
     <!-- モバイルメニュー -->
     <Transition
       enter-active-class="transition-all duration-500 ease-out"
@@ -109,7 +125,7 @@
     >
       <div
         v-if="isMenuOpen"
-        class="md:hidden absolute top-16 left-0 right-0 bg-black/98 border-b border-white/10 py-10"
+        class="md:hidden absolute top-16 left-0 right-0 z-50 bg-black border-b border-white/10 py-10"
       >
         <nav class="flex flex-col items-center gap-8">
           <RouterLink

@@ -14,13 +14,13 @@
 <template>
   <div class="min-h-screen bg-background">
     <!-- ヘッダー -->
-    <header class="border-b border-white/10 px-6 py-4">
-      <div class="max-w-4xl mx-auto flex items-center justify-between">
-        <div>
+    <header class="bg-background border-b border-white/10 px-6 py-4">
+      <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
+        <div class="shrink-0">
           <h1 class="tracking-[0.3em] text-sm font-light text-foreground uppercase">TIARA</h1>
           <p class="text-[10px] text-muted-foreground tracking-wider mt-0.5">STAFF PORTAL</p>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 overflow-x-auto">
           <RouterLink
             :to="{ name: 'portal-dashboard' }"
             class="text-xs text-muted-foreground hover:text-foreground transition-colors"

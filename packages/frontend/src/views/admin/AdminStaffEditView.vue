@@ -527,7 +527,7 @@
           <input
             v-model="form.imageUrl"
             type="url"
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors"
             placeholder="https://..."
           />
         </div>
@@ -634,7 +634,7 @@
             <button
               type="button"
               @click="resetCropPosition"
-              class="text-[10px] tracking-wider text-muted-foreground/60 hover:text-foreground underline transition-colors"
+              class="text-[10px] tracking-wider text-muted-foreground/80 hover:text-foreground underline transition-colors"
             >
               中央にリセット
             </button>
@@ -739,7 +739,7 @@
           >
             <select
               v-model.number="schedule.dayOfWeek"
-              class="bg-zinc-900 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
+              class="bg-zinc-900 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30 [color-scheme:dark]"
             >
               <option v-for="(day, i) in DAYS" :key="i" :value="i">{{ day }}</option>
             </select>

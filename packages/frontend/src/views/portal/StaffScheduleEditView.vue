@@ -154,7 +154,7 @@
           <select
             v-model.number="item.dayOfWeek"
             :disabled="!isEditable()"
-            class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
+            class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50 [color-scheme:dark]"
           >
             <option v-for="(label, i) in dayLabels" :key="i" :value="i">{{ label }}</option>
           </select>
@@ -164,7 +164,7 @@
             v-model="item.startTime"
             type="time"
             :disabled="!isEditable()"
-            class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
+            class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50 [color-scheme:dark]"
           />
 
           <span class="text-muted-foreground text-sm">〜</span>
@@ -174,7 +174,7 @@
             v-model="item.endTime"
             type="time"
             :disabled="!isEditable()"
-            class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
+            class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50 [color-scheme:dark]"
           />
 
           <!-- 削除ボタン -->

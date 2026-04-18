@@ -354,7 +354,7 @@
             v-model="name"
             type="text"
             :disabled="!isEditable()"
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
             placeholder="名前を入力"
           />
         </div>
@@ -365,7 +365,7 @@
             v-model="role"
             type="text"
             :disabled="!isEditable()"
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
             placeholder="役職を入力"
           />
         </div>
@@ -376,7 +376,7 @@
             v-model="bio"
             :disabled="!isEditable()"
             rows="4"
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors resize-none disabled:opacity-50"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors resize-none disabled:opacity-50"
             placeholder="自己紹介を入力"
           />
         </div>

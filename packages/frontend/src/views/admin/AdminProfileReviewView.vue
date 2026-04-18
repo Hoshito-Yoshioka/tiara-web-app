@@ -378,7 +378,7 @@
               <textarea
                 v-model="reviewComment"
                 rows="2"
-                class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-white/30 transition-colors resize-none"
+                class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors resize-none"
                 placeholder="コメントを入力"
               />
             </div>

@@ -96,7 +96,7 @@
       </div>
 
       <!-- モバイルナビ -->
-      <nav class="sm:hidden flex items-center gap-4 px-6 pb-3">
+      <nav class="sm:hidden flex items-center gap-4 px-6 pb-3 overflow-x-auto">
         <RouterLink
           to="/admin/shop"
           class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"

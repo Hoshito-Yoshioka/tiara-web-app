@@ -238,7 +238,7 @@
                   >
                     <select
                       v-model.number="item.dayOfWeek"
-                      class="bg-zinc-900 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30"
+                      class="bg-zinc-900 border border-white/10 rounded px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-white/30 [color-scheme:dark]"
                     >
                       <option v-for="(day, i) in dayLabels" :key="i" :value="i">{{ day }}</option>
                     </select>
@@ -292,7 +292,7 @@
                   <textarea
                     v-model="reviewComment"
                     rows="2"
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors resize-none"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors resize-none"
                     placeholder="コメントを入力"
                   />
                 </div>
