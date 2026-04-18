@@ -29,6 +29,18 @@
   const isSaving = ref(false)
   const successMessage = ref<string | null>(null)
 
+  /** 最後に保存した値のスナップショット（未保存変更の検知用） */
+  const savedSnapshot = ref({ name: '', role: '', bio: '' })
+
+  /** フォームに未保存の変更があるか */
+  const hasUnsavedChanges = computed(() => {
+    return (
+      name.value !== savedSnapshot.value.name ||
+      role.value !== savedSnapshot.value.role ||
+      bio.value !== savedSnapshot.value.bio
+    )
+  })
+
   /** スタッフ画像一覧（リアクティブ） */
   const images = ref<StaffImage[]>([])
   /** 画像一覧の初回読み込み完了フラグ */
@@ -70,6 +82,7 @@
       bio.value = profileDraft.value.bio
       imageUrl.value = profileDraft.value.imageUrl
       imageCropPosition.value = profileDraft.value.imageCropPosition || '50 50'
+      savedSnapshot.value = { name: name.value, role: role.value, bio: bio.value }
     }
     // 画像一覧を取得
     images.value = await fetchMyImages()
@@ -240,6 +253,7 @@
 
     if (result) {
       imageUrl.value = currentImageUrl
+      savedSnapshot.value = { name: name.value, role: role.value, bio: bio.value }
       successMessage.value = '下書きを保存しました'
       setTimeout(() => (successMessage.value = null), 3000)
     }
@@ -249,6 +263,10 @@
   /** 承認申請 */
   async function handleSubmit() {
     if (!profileDraft.value?.id) return
+    if (hasUnsavedChanges.value) {
+      alert('未保存の変更があります。先に「下書き保存」を行ってから承認申請してください。')
+      return
+    }
     if (!confirm('この内容で承認申請しますか？')) return
 
     isSaving.value = true
@@ -567,14 +585,32 @@
             {{ isSaving ? '保存中...' : '下書き保存' }}
           </button>
 
-          <button
-            type="button"
-            :disabled="isSaving || !isSubmittable()"
-            @click="handleSubmit"
-            class="bg-white text-black rounded-lg px-6 py-3 text-sm font-medium tracking-wider hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ profileDraft?.status === 'pending' ? '提出済み' : '承認申請' }}
-          </button>
+          <div class="flex flex-col gap-1">
+            <button
+              type="button"
+              :disabled="isSaving || !isSubmittable()"
+              @click="handleSubmit"
+              class="bg-white text-black rounded-lg px-6 py-3 text-sm font-medium tracking-wider hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ profileDraft?.status === 'pending' ? '提出済み' : '承認申請' }}
+            </button>
+            <p
+              v-if="
+                !isSubmittable() &&
+                profileDraft?.status !== 'pending' &&
+                profileDraft?.status !== 'approved'
+              "
+              class="text-[11px] text-muted-foreground/70"
+            >
+              ⮶ 先に「下書き保存」を行ってください
+            </p>
+            <p
+              v-else-if="hasUnsavedChanges && isSubmittable()"
+              class="text-[11px] text-amber-400/80"
+            >
+              ⚠ 未保存の変更があります
+            </p>
+          </div>
         </div>
       </form>
     </div>
