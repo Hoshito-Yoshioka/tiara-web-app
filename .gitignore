@@ -47,3 +47,6 @@ packages/backend/bin/
 
 # github
 .github/
+
+# uploads
+.packages/backend/uploads/staff/
