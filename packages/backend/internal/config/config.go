@@ -16,9 +16,9 @@ type Config struct {
 	CORSOrigins []string
 
 	// JWT
-	JWTSecret         string
-	JWTExpiryHours    int
-	UploadDir         string
+	JWTSecret      string
+	JWTExpiryHours int
+	UploadDir      string
 }
 
 // Load は環境変数からConfigを読み込む。
