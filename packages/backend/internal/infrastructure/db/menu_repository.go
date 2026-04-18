@@ -7,14 +7,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type menuRepository struct {
-	q *Queries
+	q    *Queries
+	pool *pgxpool.Pool
 }
 
-func NewMenuRepository(q *Queries) usecase.MenuRepository {
-	return &menuRepository{q: q}
+func NewMenuRepository(q *Queries, pool *pgxpool.Pool) usecase.MenuRepository {
+	return &menuRepository{q: q, pool: pool}
 }
 
 // pgtype.UUID → uuid.UUID 変換ヘルパー
@@ -113,8 +115,34 @@ func (r *menuRepository) UpdateMenuCategory(ctx context.Context, id string, inpu
 	if err != nil {
 		return domain.MenuCategory{}, err
 	}
-	cat, err := r.q.UpdateMenuCategory(ctx, UpdateMenuCategoryParams{
-		ID:          toPgtypeUUID(uid),
+	pgtypeUID := toPgtypeUUID(uid)
+
+	// トランザクション開始（sort_order スワップ対応）
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return domain.MenuCategory{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := r.q.WithTx(tx)
+
+	// 現在のカテゴリを取得
+	current, err := qtx.GetMenuCategoryByID(ctx, pgtypeUID)
+	if err != nil {
+		return domain.MenuCategory{}, err
+	}
+
+	// sort_order が変更された場合、他のカテゴリと入れ替え
+	if current.SortOrder != input.SortOrder {
+		_ = qtx.SwapMenuCategorySortOrder(ctx, SwapMenuCategorySortOrderParams{
+			SortOrder:   input.SortOrder,
+			SortOrder_2: current.SortOrder,
+			ID:          pgtypeUID,
+		})
+	}
+
+	cat, err := qtx.UpdateMenuCategory(ctx, UpdateMenuCategoryParams{
+		ID:          pgtypeUID,
 		Name:        input.Name,
 		Description: input.Description,
 		SortOrder:   input.SortOrder,
@@ -122,6 +150,12 @@ func (r *menuRepository) UpdateMenuCategory(ctx context.Context, id string, inpu
 	if err != nil {
 		return domain.MenuCategory{}, err
 	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return domain.MenuCategory{}, err
+	}
+
 	return toMenuCategory(cat), nil
 }
 
@@ -156,8 +190,37 @@ func (r *menuRepository) UpdateMenuItem(ctx context.Context, id string, input do
 	if err != nil {
 		return domain.MenuItem{}, err
 	}
-	item, err := r.q.UpdateMenuItem(ctx, UpdateMenuItemParams{
-		ID:          toPgtypeUUID(uid),
+	pgtypeUID := toPgtypeUUID(uid)
+
+	// トランザクション開始（sort_order スワップ対応）
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return domain.MenuItem{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := r.q.WithTx(tx)
+
+	// 現在のアイテムの sort_order と category_id を取得するための SQL（sqlc クエリではなく直接取得）
+	var currentSortOrder int32
+	var currentCategoryID pgtype.UUID
+	err = tx.QueryRow(ctx, "SELECT sort_order, category_id FROM menu_items WHERE id = $1", pgtypeUID).Scan(&currentSortOrder, &currentCategoryID)
+	if err != nil {
+		return domain.MenuItem{}, err
+	}
+
+	// sort_order が変更された場合、同一カテゴリ内の他のアイテムと入れ替え
+	if currentSortOrder != input.SortOrder {
+		_ = qtx.SwapMenuItemSortOrder(ctx, SwapMenuItemSortOrderParams{
+			CategoryID:  currentCategoryID,
+			SortOrder:   input.SortOrder,
+			SortOrder_2: currentSortOrder,
+			ID:          pgtypeUID,
+		})
+	}
+
+	item, err := qtx.UpdateMenuItem(ctx, UpdateMenuItemParams{
+		ID:          pgtypeUID,
 		Name:        input.Name,
 		Price:       input.Price,
 		Description: input.Description,
@@ -166,6 +229,12 @@ func (r *menuRepository) UpdateMenuItem(ctx context.Context, id string, input do
 	if err != nil {
 		return domain.MenuItem{}, err
 	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return domain.MenuItem{}, err
+	}
+
 	return toMenuItem(item), nil
 }
 

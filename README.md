@@ -91,7 +91,7 @@ docker-compose ps
 
 ```bash
 cd packages/backend
-set -a && source ../../.env && set +a && go run ./cmd/server/main.go
+set -a && source ../../.env && set +a && go run ./cmd/server/
 ```
 
 > **Note:** Go は `.env` ファイルを自動で読み込みません。`set -a` で変数を自動 export する設定にしてから `source` で読み込み、`set +a` で元に戻しています。
@@ -124,19 +124,27 @@ pnpm dev:frontend
 
 ## ページ一覧
 
-| パス            | ページ                 |
-| --------------- | ---------------------- |
-| `/`             | ホーム                 |
-| `/shop`         | 店舗紹介               |
-| `/staff`        | スタッフ一覧           |
-| `/staff/:id`    | スタッフ詳細           |
-| `/schedule`     | 出勤スケジュール       |
-| `/price`        | 料金システム           |
-| `/access`       | アクセス               |
-| `/admin/login`  | 管理画面ログイン       |
-| `/admin/shop`   | 店舗情報編集（要認証） |
-| `/admin/staffs` | スタッフ管理（要認証） |
-| `/admin/menu`   | メニュー管理（要認証） |
+| パス                      | ページ                                   |
+| ------------------------- | ---------------------------------------- |
+| `/`                       | ホーム                                   |
+| `/shop`                   | 店舗紹介                                 |
+| `/staff`                  | スタッフ一覧                             |
+| `/staff/:id`              | スタッフ詳細                             |
+| `/schedule`               | 出勤スケジュール                         |
+| `/price`                  | 料金システム                             |
+| `/access`                 | アクセス                                 |
+| `/admin/login`            | 管理画面ログイン                         |
+| `/admin/shop`             | 店舗情報編集（要認証）                   |
+| `/admin/staffs`           | スタッフ管理（要認証）                   |
+| `/admin/staffs/new`       | スタッフ新規作成（要認証）               |
+| `/admin/staffs/:id/edit`  | スタッフ編集（要認証）                   |
+| `/admin/menu`             | メニュー管理（要認証）                   |
+| `/admin/profile-reviews`  | プロフィール承認（要認証）               |
+| `/admin/schedule-reviews` | シフト承認（要認証）                     |
+| `/mypage/login`           | スタッフポータルログイン                 |
+| `/mypage/dashboard`       | スタッフダッシュボード（要スタッフ認証） |
+| `/mypage/profile`         | プロフィール編集（要スタッフ認証）       |
+| `/mypage/schedule`        | シフト編集（要スタッフ認証）             |
 
 ---
 

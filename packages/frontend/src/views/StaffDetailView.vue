@@ -306,7 +306,7 @@
                       >
                         {{ DAY_LABELS[schedule.dayOfWeek] }}曜日
                       </span>
-                      <span class="text-xs text-muted-foreground/60">
+                      <span class="text-xs text-muted-foreground">
                         {{ formatDateShort(weekDates[schedule.dayOfWeek]) }}
                       </span>
                     </div>

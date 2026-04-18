@@ -11,6 +11,95 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createSchedule = `-- name: CreateSchedule :one
+INSERT INTO staff_schedules (staff_id, day_of_week, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING id, staff_id, day_of_week, start_time, end_time, created_at, updated_at
+`
+
+type CreateScheduleParams struct {
+	StaffID   pgtype.UUID
+	DayOfWeek int32
+	StartTime pgtype.Time
+	EndTime   pgtype.Time
+}
+
+func (q *Queries) CreateSchedule(ctx context.Context, arg CreateScheduleParams) (StaffSchedule, error) {
+	row := q.db.QueryRow(ctx, createSchedule,
+		arg.StaffID,
+		arg.DayOfWeek,
+		arg.StartTime,
+		arg.EndTime,
+	)
+	var i StaffSchedule
+	err := row.Scan(
+		&i.ID,
+		&i.StaffID,
+		&i.DayOfWeek,
+		&i.StartTime,
+		&i.EndTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createStaff = `-- name: CreateStaff :one
+INSERT INTO staffs (shop_id, name, role, bio, image_url, image_crop_position, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at
+`
+
+type CreateStaffParams struct {
+	ShopID            pgtype.UUID
+	Name              string
+	Role              string
+	Bio               string
+	ImageUrl          string
+	ImageCropPosition string
+	SortOrder         int32
+}
+
+func (q *Queries) CreateStaff(ctx context.Context, arg CreateStaffParams) (Staff, error) {
+	row := q.db.QueryRow(ctx, createStaff,
+		arg.ShopID,
+		arg.Name,
+		arg.Role,
+		arg.Bio,
+		arg.ImageUrl,
+		arg.ImageCropPosition,
+		arg.SortOrder,
+	)
+	var i Staff
+	err := row.Scan(
+		&i.ID,
+		&i.ShopID,
+		&i.Name,
+		&i.Role,
+		&i.Bio,
+		&i.ImageUrl,
+		&i.ImageCropPosition,
+		&i.SortOrder,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteSchedulesByStaffID = `-- name: DeleteSchedulesByStaffID :exec
+DELETE FROM staff_schedules WHERE staff_id = $1
+`
+
+func (q *Queries) DeleteSchedulesByStaffID(ctx context.Context, staffID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteSchedulesByStaffID, staffID)
+	return err
+}
+
+const deleteStaff = `-- name: DeleteStaff :exec
+DELETE FROM staffs WHERE id = $1
+`
+
+func (q *Queries) DeleteStaff(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteStaff, id)
+	return err
+}
+
 const getStaffByID = `-- name: GetStaffByID :one
 SELECT id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at FROM staffs WHERE id = $1
 `
@@ -167,45 +256,30 @@ func (q *Queries) ListStaffsByShopID(ctx context.Context, shopID pgtype.UUID) ([
 	return items, nil
 }
 
-type CreateStaffParams struct {
-	ShopID            pgtype.UUID
-	Name              string
-	Role              string
-	Bio               string
-	ImageUrl          string
-	ImageCropPosition string
-	SortOrder         int32
-}
-
-const createStaff = `-- name: CreateStaff :one
-INSERT INTO staffs (shop_id, name, role, bio, image_url, image_crop_position, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at
+const swapStaffSortOrder = `-- name: SwapStaffSortOrder :exec
+UPDATE staffs SET sort_order = $3 WHERE shop_id = $1 AND sort_order = $2 AND id != $4
 `
 
-func (q *Queries) CreateStaff(ctx context.Context, arg CreateStaffParams) (Staff, error) {
-	row := q.db.QueryRow(ctx, createStaff,
-		arg.ShopID,
-		arg.Name,
-		arg.Role,
-		arg.Bio,
-		arg.ImageUrl,
-		arg.ImageCropPosition,
-		arg.SortOrder,
-	)
-	var i Staff
-	err := row.Scan(
-		&i.ID,
-		&i.ShopID,
-		&i.Name,
-		&i.Role,
-		&i.Bio,
-		&i.ImageUrl,
-		&i.ImageCropPosition,
-		&i.SortOrder,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+type SwapStaffSortOrderParams struct {
+	ShopID      pgtype.UUID
+	SortOrder   int32
+	SortOrder_2 int32
+	ID          pgtype.UUID
 }
+
+func (q *Queries) SwapStaffSortOrder(ctx context.Context, arg SwapStaffSortOrderParams) error {
+	_, err := q.db.Exec(ctx, swapStaffSortOrder,
+		arg.ShopID,
+		arg.SortOrder,
+		arg.SortOrder_2,
+		arg.ID,
+	)
+	return err
+}
+
+const updateStaff = `-- name: UpdateStaff :one
+UPDATE staffs SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6, sort_order = $7 WHERE id = $1 RETURNING id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at
+`
 
 type UpdateStaffParams struct {
 	ID                pgtype.UUID
@@ -216,10 +290,6 @@ type UpdateStaffParams struct {
 	ImageCropPosition string
 	SortOrder         int32
 }
-
-const updateStaff = `-- name: UpdateStaff :one
-UPDATE staffs SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6, sort_order = $7 WHERE id = $1 RETURNING id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at
-`
 
 func (q *Queries) UpdateStaff(ctx context.Context, arg UpdateStaffParams) (Staff, error) {
 	row := q.db.QueryRow(ctx, updateStaff,
@@ -241,55 +311,6 @@ func (q *Queries) UpdateStaff(ctx context.Context, arg UpdateStaffParams) (Staff
 		&i.ImageUrl,
 		&i.ImageCropPosition,
 		&i.SortOrder,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const deleteStaff = `-- name: DeleteStaff :exec
-DELETE FROM staffs WHERE id = $1
-`
-
-func (q *Queries) DeleteStaff(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteStaff, id)
-	return err
-}
-
-const deleteSchedulesByStaffID = `-- name: DeleteSchedulesByStaffID :exec
-DELETE FROM staff_schedules WHERE staff_id = $1
-`
-
-func (q *Queries) DeleteSchedulesByStaffID(ctx context.Context, staffID pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteSchedulesByStaffID, staffID)
-	return err
-}
-
-type CreateScheduleParams struct {
-	StaffID   pgtype.UUID
-	DayOfWeek int32
-	StartTime pgtype.Time
-	EndTime   pgtype.Time
-}
-
-const createSchedule = `-- name: CreateSchedule :one
-INSERT INTO staff_schedules (staff_id, day_of_week, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING id, staff_id, day_of_week, start_time, end_time, created_at, updated_at
-`
-
-func (q *Queries) CreateSchedule(ctx context.Context, arg CreateScheduleParams) (StaffSchedule, error) {
-	row := q.db.QueryRow(ctx, createSchedule,
-		arg.StaffID,
-		arg.DayOfWeek,
-		arg.StartTime,
-		arg.EndTime,
-	)
-	var i StaffSchedule
-	err := row.Scan(
-		&i.ID,
-		&i.StaffID,
-		&i.DayOfWeek,
-		&i.StartTime,
-		&i.EndTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

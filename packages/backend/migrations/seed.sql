@@ -64,3 +64,11 @@ INSERT INTO menu_items (category_id, name, price, description, sort_order) VALUE
 ('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a04', 'グラスワイン（赤・白）', '¥800〜', '', 3),
 ('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a04', 'シャンパン（グラス）', '¥1,500〜', '', 4),
 ('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a04', 'シャンパン（ボトル）', '¥8,000〜', '', 5);
+
+-- ==============================
+-- スタッフアカウント（パスワード: staff123）
+-- ==============================
+INSERT INTO staff_accounts (staff_id, username, password_hash) VALUES
+('b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a01', 'yuki', crypt('staff123', gen_salt('bf', 10))),
+('b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a02', 'rina', crypt('staff123', gen_salt('bf', 10))),
+('b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a03', 'kenji', crypt('staff123', gen_salt('bf', 10)));

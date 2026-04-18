@@ -30,6 +30,7 @@ export interface StaffImageResponse {
   ImageURL: string
   IsMain: boolean
   SortOrder: number
+  CropPosition: string
   CreatedAt: string
   UpdatedAt: string
 }
@@ -69,6 +70,7 @@ export interface StaffImage {
   imageUrl: string
   isMain: boolean
   sortOrder: number
+  cropPosition: string
 }
 
 /** BFF → Frontend 向け StaffWithSchedules 型 */

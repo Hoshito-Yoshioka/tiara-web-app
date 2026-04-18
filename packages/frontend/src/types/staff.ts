@@ -26,6 +26,7 @@ export interface StaffImage {
   imageUrl: string
   isMain: boolean
   sortOrder: number
+  cropPosition: string
 }
 
 /** BFF から受け取る StaffWithSchedules 型 */

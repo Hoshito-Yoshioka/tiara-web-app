@@ -6,9 +6,13 @@ import { staffRoutes } from './routes/staff'
 import { scheduleRoutes } from './routes/schedule'
 import { menuRoutes } from './routes/menu'
 import { authRoutes } from './routes/auth'
+import { staffAuthRoutes } from './routes/staff-auth'
+import { portalRoutes } from './routes/portal'
 import { adminShopRoutes } from './routes/admin/shop'
 import { adminStaffRoutes } from './routes/admin/staff'
 import { adminMenuRoutes } from './routes/admin/menu'
+import { adminReviewRoutes } from './routes/admin/review'
+import { adminAccountRoutes } from './routes/admin/account'
 
 const app = new Hono()
 
@@ -35,11 +39,17 @@ app.route('/api/menus', menuRoutes)
 
 // Auth routes
 app.route('/api/auth', authRoutes)
+app.route('/api/staff-auth', staffAuthRoutes)
+
+// Staff Portal routes (スタッフ専用)
+app.route('/api/portal', portalRoutes)
 
 // Admin routes (認証ミドルウェアは各ルートファイル内で適用)
 app.route('/api/admin/shops', adminShopRoutes)
 app.route('/api/admin/staffs', adminStaffRoutes)
 app.route('/api/admin/menu', adminMenuRoutes)
+app.route('/api/admin/reviews', adminReviewRoutes)
+app.route('/api/admin/staff-accounts', adminAccountRoutes)
 
 // Static file proxy: アップロード画像を Backend から配信
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'

@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"os"
+	"log"
+	"os/signal"
+	"syscall"
 	"time"
 
+	"tiara-web-app/backend/internal/config"
 	"tiara-web-app/backend/internal/infrastructure/db"
 	handler "tiara-web-app/backend/internal/interface/handler"
-	authMiddleware "tiara-web-app/backend/internal/interface/middleware"
 	"tiara-web-app/backend/internal/usecase"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,40 +19,70 @@ import (
 )
 
 func main() {
-	e := echo.New()
+	// --- Config ---
+	cfg := config.Load()
+	if cfg.DatabaseURL == "" {
+		log.Fatal("DATABASE_URL environment variable is not set")
+	}
 
-	// Middleware
+	// --- Database ---
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v\n", err)
+	}
+	defer pool.Close()
+
+	if err := pool.Ping(ctx); err != nil {
+		log.Fatalf("Failed to ping database: %v\n", err)
+	}
+	fmt.Println("Successfully connected to the database!")
+
+	// --- DI ---
+	h := buildHandlers(pool, cfg)
+
+	// --- Echo ---
+	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:3001"},
+		AllowOrigins: cfg.CORSOrigins,
 		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE},
 		AllowHeaders: []string{echo.HeaderContentType, echo.HeaderAuthorization},
 	}))
 
-	// Database Connection
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		e.Logger.Fatal("DATABASE_URL environment variable is not set")
+	// Static file serving
+	e.Static("/uploads", cfg.UploadDir)
+
+	// Route registration
+	registerRoutes(e, h, cfg.JWTSecret)
+
+	// --- Graceful Shutdown ---
+	// シグナル(Ctrl-C / SIGTERM)を受けたら安全に停止する。
+	srvCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		if err := e.Start(":" + cfg.Port); err != nil {
+			e.Logger.Info("shutting down the server")
+		}
+	}()
+
+	<-srvCtx.Done()
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := e.Shutdown(shutdownCtx); err != nil {
+		e.Logger.Fatal(err)
 	}
+	fmt.Println("Server stopped gracefully")
+}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	pool, err := pgxpool.New(ctx, databaseURL)
-	if err != nil {
-		e.Logger.Fatalf("Unable to connect to database: %v\n", err)
-	}
-	defer pool.Close()
-
-	// Ping database to verify connection
-	err = pool.Ping(ctx)
-	if err != nil {
-		e.Logger.Fatalf("Failed to ping database: %v\n", err)
-	}
-	fmt.Println("Successfully connected to the database!")
-
-	// Dependencies
+// buildHandlers は全ハンドラーのDI構築を行う。
+func buildHandlers(pool *pgxpool.Pool, cfg *config.Config) *handlers {
 	queries := db.New(pool)
 
 	shopRepo := db.NewShopRepository(queries)
@@ -64,49 +95,29 @@ func main() {
 
 	adminRepo := db.NewAdminRepository(queries)
 	authUsecase := usecase.NewAuthUsecase(adminRepo)
-	authHandler := handler.NewAuthHandler(authUsecase)
+	authHandler := handler.NewAuthHandler(authUsecase, cfg.JWTSecret, cfg.JWTExpiryHours)
 
-	menuRepo := db.NewMenuRepository(queries)
+	menuRepo := db.NewMenuRepository(queries, pool)
 	menuUsecase := usecase.NewMenuUsecase(menuRepo)
 	menuHandler := handler.NewMenuHandler(menuUsecase)
 
-	// Static file serving for uploaded images
-	e.Static("/uploads", "uploads")
+	staffAccountRepo := db.NewStaffAccountRepository(queries)
+	staffAuthUsecase := usecase.NewStaffAuthUsecase(staffAccountRepo)
+	staffDraftRepo := db.NewStaffDraftRepository(queries, pool)
+	staffPortalUsecase := usecase.NewStaffPortalUsecase(staffDraftRepo, staffRepo)
+	staffPortalHandler := handler.NewStaffPortalHandler(staffAuthUsecase, staffPortalUsecase, staffUsecase, cfg.JWTSecret, cfg.JWTExpiryHours, cfg.UploadDir)
+	adminReviewUsecase := usecase.NewAdminReviewUsecase(staffDraftRepo, staffRepo)
+	adminReviewHandler := handler.NewAdminReviewHandler(adminReviewUsecase)
+	adminAccountUsecase := usecase.NewAdminAccountUsecase(staffAccountRepo)
+	adminAccountHandler := handler.NewAdminAccountHandler(adminAccountUsecase)
 
-	// Public Routes
-	e.GET("/", healthCheck)
-	e.GET("/shops", shopHandler.ListShops)
-	e.GET("/shops/:id", shopHandler.GetShopByID)
-	e.GET("/staffs", staffHandler.ListStaffs)
-	e.GET("/staffs/:id", staffHandler.GetStaffWithSchedules)
-	e.GET("/schedules", staffHandler.ListAllStaffsWithSchedules)
-	e.GET("/menus", menuHandler.ListMenuCategoriesWithItems)
-
-	// Auth Routes
-	e.POST("/auth/login", authHandler.Login)
-
-	// Admin Routes (JWT Protected)
-	admin := e.Group("/admin", authMiddleware.JWTAuth())
-	admin.GET("/auth/verify", authHandler.Verify)
-	admin.PUT("/shops/:id", shopHandler.UpdateShop)
-	admin.POST("/staffs", staffHandler.CreateStaff)
-	admin.PUT("/staffs/:id", staffHandler.UpdateStaff)
-	admin.DELETE("/staffs/:id", staffHandler.DeleteStaff)
-	admin.POST("/staffs/:id/images", staffHandler.UploadStaffImage)
-	admin.DELETE("/staffs/:id/images/:imageId", staffHandler.DeleteStaffImage)
-	admin.PUT("/staffs/:id/images/main", staffHandler.SetMainImage)
-	admin.POST("/menu/categories", menuHandler.CreateMenuCategory)
-	admin.PUT("/menu/categories/:id", menuHandler.UpdateMenuCategory)
-	admin.DELETE("/menu/categories/:id", menuHandler.DeleteMenuCategory)
-	admin.POST("/menu/items", menuHandler.CreateMenuItem)
-	admin.PUT("/menu/items/:id", menuHandler.UpdateMenuItem)
-	admin.DELETE("/menu/items/:id", menuHandler.DeleteMenuItem)
-
-	// Start server
-	e.Logger.Fatal(e.Start(":1323"))
-}
-
-// Handler
-func healthCheck(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World! This is Tiara API.")
+	return &handlers{
+		shop:         shopHandler,
+		staff:        staffHandler,
+		auth:         authHandler,
+		menu:         menuHandler,
+		staffPortal:  staffPortalHandler,
+		adminReview:  adminReviewHandler,
+		adminAccount: adminAccountHandler,
+	}
 }

@@ -21,6 +21,7 @@ type StaffRepository interface {
 	CreateStaffImage(ctx context.Context, staffID string, imageURL string, isMain bool, sortOrder int) (domain.StaffImage, error)
 	DeleteStaffImage(ctx context.Context, id string) error
 	SetMainImage(ctx context.Context, staffID string, imageID string) (domain.StaffImage, error)
+	UpdateImageCropPosition(ctx context.Context, id string, cropPosition string) (domain.StaffImage, error)
 }
 
 // StaffUsecase はスタッフに関するビジネスロジックを定義するインターフェース。
@@ -35,6 +36,7 @@ type StaffUsecase interface {
 	UploadStaffImage(ctx context.Context, staffID string, imageURL string, isMain bool, sortOrder int) (domain.StaffImage, error)
 	DeleteStaffImage(ctx context.Context, id string) error
 	SetMainImage(ctx context.Context, staffID string, imageID string) (domain.StaffImage, error)
+	UpdateImageCropPosition(ctx context.Context, id string, cropPosition string) (domain.StaffImage, error)
 }
 
 type staffUsecase struct {
@@ -181,4 +183,9 @@ func (u *staffUsecase) DeleteStaffImage(ctx context.Context, id string) error {
 // SetMainImage は指定された画像をメイン画像に設定する。
 func (u *staffUsecase) SetMainImage(ctx context.Context, staffID string, imageID string) (domain.StaffImage, error) {
 	return u.staffRepo.SetMainImage(ctx, staffID, imageID)
+}
+
+// UpdateImageCropPosition は指定された画像のクロップ位置を更新する。
+func (u *staffUsecase) UpdateImageCropPosition(ctx context.Context, id string, cropPosition string) (domain.StaffImage, error) {
+	return u.staffRepo.UpdateImageCropPosition(ctx, id, cropPosition)
 }

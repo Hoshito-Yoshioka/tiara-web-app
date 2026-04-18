@@ -52,6 +52,7 @@ function toImage(raw: StaffImageResponse): StaffImage {
     imageUrl: raw.ImageURL,
     isMain: raw.IsMain,
     sortOrder: raw.SortOrder,
+    cropPosition: raw.CropPosition ?? '50 50',
   }
 }
 
@@ -204,6 +205,31 @@ adminStaffRoutes.put('/:id/images/main', async (c) => {
   }
 
   return c.json({ message: 'ok' })
+})
+
+/** PUT /api/admin/staffs/:id/images/:imageId/crop — 画像のクロップ位置を更新 */
+adminStaffRoutes.put('/:id/images/:imageId/crop', async (c) => {
+  const id = c.req.param('id')
+  const imageId = c.req.param('imageId')
+  const body = await c.req.json()
+  const authHeader = c.get('authHeader') as string
+
+  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images/${imageId}/crop`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authHeader,
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to update crop position' }))
+    return c.json(error, res.status as 500)
+  }
+
+  const data: StaffImageResponse = await res.json()
+  return c.json(toImage(data))
 })
 
 export { adminStaffRoutes }

@@ -19,7 +19,11 @@
       await authStore.login(username.value, password.value)
       router.push({ name: 'admin-shop-edit' })
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'ログインに失敗しました'
+      if (e instanceof Error && e.message.includes('401')) {
+        error.value = '入力されたアカウントのIDまたはパスワードに誤りがあります。'
+      } else {
+        error.value = e instanceof Error ? e.message : 'ログインに失敗しました'
+      }
     } finally {
       isLoading.value = false
     }
@@ -57,7 +61,7 @@
             type="text"
             required
             autocomplete="username"
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors"
             placeholder="Enter username"
           />
         </div>
@@ -72,7 +76,7 @@
             type="password"
             required
             autocomplete="current-password"
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-white/30 transition-colors"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors"
             placeholder="Enter password"
           />
         </div>

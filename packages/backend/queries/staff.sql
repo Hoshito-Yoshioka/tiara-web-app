@@ -27,3 +27,6 @@ DELETE FROM staff_schedules WHERE staff_id = $1;
 
 -- name: CreateSchedule :one
 INSERT INTO staff_schedules (staff_id, day_of_week, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING *;
+
+-- name: SwapStaffSortOrder :exec
+UPDATE staffs SET sort_order = $3 WHERE shop_id = $1 AND sort_order = $2 AND id != $4;
