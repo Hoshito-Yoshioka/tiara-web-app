@@ -526,9 +526,9 @@
           <label class="text-xs text-muted-foreground tracking-wider uppercase">画像URL</label>
           <input
             v-model="form.imageUrl"
-            type="url"
+            type="text"
             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors"
-            placeholder="https://..."
+            placeholder="https://... または /uploads/..."
           />
         </div>
 
