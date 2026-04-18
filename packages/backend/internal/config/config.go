@@ -16,20 +16,21 @@ type Config struct {
 	CORSOrigins []string
 
 	// JWT
-	JWTSecret         string
-	JWTExpiryHours    int
-	UploadDir         string
+	JWTSecret      string
+	JWTExpiryHours int
+	UploadDir      string
 }
 
 // Load は環境変数からConfigを読み込む。
 // デフォルト値はローカル開発用。
+// JWT_SECRET は必須（デフォルト値なし）。
 func Load() *Config {
 	return &Config{
 		DatabaseURL:    getEnv("DATABASE_URL", ""),
 		Port:           getEnv("PORT", "1323"),
 		CORSOrigins:    []string{getEnv("CORS_ORIGIN", "http://localhost:3001")},
-		JWTSecret:      getEnv("JWT_SECRET", "tiara-dev-secret-key"),
-		JWTExpiryHours: getEnvInt("JWT_EXPIRY_HOURS", 24),
+		JWTSecret:      getEnv("JWT_SECRET", ""),
+		JWTExpiryHours: getEnvInt("JWT_EXPIRY_HOURS", 2),
 		UploadDir:      getEnv("UPLOAD_DIR", "uploads"),
 	}
 }

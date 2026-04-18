@@ -34,7 +34,8 @@ type StaffAccountResponse struct {
 func (h *AdminAccountHandler) ListStaffAccounts(c echo.Context) error {
 	accounts, err := h.accountUsecase.ListStaffAccounts(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	resp := make([]StaffAccountResponse, len(accounts))
@@ -148,7 +149,8 @@ func (h *AdminAccountHandler) DeleteStaffAccount(c echo.Context) error {
 	}
 
 	if err := h.accountUsecase.DeleteStaffAccount(c.Request().Context(), id); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.NoContent(http.StatusNoContent)

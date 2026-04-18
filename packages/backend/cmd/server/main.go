@@ -24,6 +24,9 @@ func main() {
 	if cfg.DatabaseURL == "" {
 		log.Fatal("DATABASE_URL environment variable is not set")
 	}
+	if cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
 
 	// --- Database ---
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

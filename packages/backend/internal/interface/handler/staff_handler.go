@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"tiara-web-app/backend/internal/domain"
 	"tiara-web-app/backend/internal/usecase"
 
@@ -27,7 +28,8 @@ func NewStaffHandler(us usecase.StaffUsecase) *StaffHandler {
 func (h *StaffHandler) ListStaffs(c echo.Context) error {
 	staffs, err := h.staffUsecase.ListStaffs(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, staffs)
 }
@@ -51,7 +53,8 @@ func (h *StaffHandler) GetStaffWithSchedules(c echo.Context) error {
 func (h *StaffHandler) ListAllStaffsWithSchedules(c echo.Context) error {
 	result, err := h.staffUsecase.ListAllStaffsWithSchedules(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, result)
 }
@@ -118,7 +121,8 @@ func (h *StaffHandler) CreateStaff(c echo.Context) error {
 
 	result, err := h.staffUsecase.CreateStaff(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusCreated, result)
 }
@@ -147,7 +151,8 @@ func (h *StaffHandler) UpdateStaff(c echo.Context) error {
 
 	result, err := h.staffUsecase.UpdateStaff(c.Request().Context(), id, input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, result)
 }
@@ -161,7 +166,8 @@ func (h *StaffHandler) DeleteStaff(c echo.Context) error {
 
 	err := h.staffUsecase.DeleteStaff(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -179,9 +185,9 @@ func (h *StaffHandler) UploadStaffImage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image file is required"})
 	}
 
-	// ファイルサイズ制限 (10MB)
-	if file.Size > 10*1024*1024 {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "file size must be less than 10MB"})
+	// ファイルバリデーション（サイズ・拡張子・MIMEタイプ）
+	if err := validateImageFile(file); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
 	src, err := file.Open()
@@ -196,8 +202,8 @@ func (h *StaffHandler) UploadStaffImage(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create upload directory"})
 	}
 
-	// ユニークファイル名生成
-	ext := filepath.Ext(file.Filename)
+	// ユニークファイル名生成（拡張子を正規化）
+	ext := strings.ToLower(filepath.Ext(file.Filename))
 	filename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
 	dstPath := filepath.Join(uploadDir, filename)
 
@@ -219,7 +225,8 @@ func (h *StaffHandler) UploadStaffImage(c echo.Context) error {
 	if err != nil {
 		// ファイルを削除
 		os.Remove(dstPath)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusCreated, image)
@@ -234,7 +241,8 @@ func (h *StaffHandler) DeleteStaffImage(c echo.Context) error {
 
 	err := h.staffUsecase.DeleteStaffImage(c.Request().Context(), imageID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -258,7 +266,8 @@ func (h *StaffHandler) SetMainImage(c echo.Context) error {
 
 	image, err := h.staffUsecase.SetMainImage(c.Request().Context(), staffID, req.ImageID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, image)
 }
@@ -282,7 +291,8 @@ func (h *StaffHandler) UpdateImageCropPosition(c echo.Context) error {
 
 	image, err := h.staffUsecase.UpdateImageCropPosition(c.Request().Context(), imageID, req.CropPosition)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, image)
 }

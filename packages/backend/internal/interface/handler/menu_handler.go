@@ -20,7 +20,8 @@ func NewMenuHandler(us usecase.MenuUsecase) *MenuHandler {
 func (h *MenuHandler) ListMenuCategoriesWithItems(c echo.Context) error {
 	result, err := h.menuUsecase.ListMenuCategoriesWithItems(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, result)
 }
@@ -47,7 +48,8 @@ func (h *MenuHandler) CreateMenuCategory(c echo.Context) error {
 		SortOrder:   req.SortOrder,
 	})
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusCreated, cat)
 }
@@ -71,7 +73,8 @@ func (h *MenuHandler) UpdateMenuCategory(c echo.Context) error {
 		SortOrder:   req.SortOrder,
 	})
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, cat)
 }
@@ -80,7 +83,8 @@ func (h *MenuHandler) UpdateMenuCategory(c echo.Context) error {
 func (h *MenuHandler) DeleteMenuCategory(c echo.Context) error {
 	id := c.Param("id")
 	if err := h.menuUsecase.DeleteMenuCategory(c.Request().Context(), id); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -111,7 +115,8 @@ func (h *MenuHandler) CreateMenuItem(c echo.Context) error {
 		SortOrder:   req.SortOrder,
 	})
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusCreated, item)
 }
@@ -137,7 +142,8 @@ func (h *MenuHandler) UpdateMenuItem(c echo.Context) error {
 		SortOrder:   req.SortOrder,
 	})
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.JSON(http.StatusOK, item)
 }
@@ -146,7 +152,8 @@ func (h *MenuHandler) UpdateMenuItem(c echo.Context) error {
 func (h *MenuHandler) DeleteMenuItem(c echo.Context) error {
 	id := c.Param("id")
 	if err := h.menuUsecase.DeleteMenuItem(c.Request().Context(), id); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
