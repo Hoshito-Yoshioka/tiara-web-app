@@ -48,5 +48,8 @@ packages/backend/bin/
 # github
 .github/
 
+# docs (ローカル専用ドキュメント)
+docs/
+
 # uploads
 .packages/backend/uploads/staff/
