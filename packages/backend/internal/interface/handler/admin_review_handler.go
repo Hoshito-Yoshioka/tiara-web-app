@@ -75,8 +75,7 @@ func toPendingProfileDraftResponse(d domain.StaffProfileDraft) PendingProfileDra
 func (h *AdminReviewHandler) ListPendingProfileDrafts(c echo.Context) error {
 	drafts, err := h.reviewUsecase.ListPendingProfileDrafts(c.Request().Context())
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 
 	resp := make([]PendingProfileDraftResponse, len(drafts))
@@ -134,7 +133,7 @@ func (h *AdminReviewHandler) ReviewProfileDraft(c echo.Context) error {
 
 	draft, err := h.reviewUsecase.ReviewProfileDraft(c.Request().Context(), draftID, input)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
@@ -185,8 +184,7 @@ func toPendingScheduleDraftResponse(d domain.StaffScheduleDraft) PendingSchedule
 func (h *AdminReviewHandler) ListPendingScheduleDrafts(c echo.Context) error {
 	drafts, err := h.reviewUsecase.ListPendingScheduleDrafts(c.Request().Context())
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 
 	resp := make([]PendingScheduleDraftResponse, len(drafts))
@@ -203,8 +201,7 @@ func (h *AdminReviewHandler) ListPendingScheduleDrafts(c echo.Context) error {
 func (h *AdminReviewHandler) ListApprovedScheduleDrafts(c echo.Context) error {
 	drafts, err := h.reviewUsecase.ListApprovedScheduleDrafts(c.Request().Context())
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 
 	resp := make([]PendingScheduleDraftResponse, len(drafts))
@@ -226,7 +223,7 @@ func (h *AdminReviewHandler) PublishScheduleDraft(c echo.Context) error {
 
 	err = h.reviewUsecase.PublishScheduleDraft(c.Request().Context(), draftID)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "スケジュールを店舗ページに反映しました"})
@@ -252,7 +249,7 @@ func (h *AdminReviewHandler) ReviewScheduleDraft(c echo.Context) error {
 
 	draft, err := h.reviewUsecase.ReviewScheduleDraft(c.Request().Context(), draftID, input)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))
@@ -270,7 +267,7 @@ func (h *AdminReviewHandler) GetProfileDraft(c echo.Context) error {
 
 	draft, err := h.reviewUsecase.GetProfileDraft(c.Request().Context(), draftID)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "draft not found"})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
@@ -299,7 +296,7 @@ func (h *AdminReviewHandler) UpdateProfileDraftContent(c echo.Context) error {
 
 	draft, err := h.reviewUsecase.UpdateProfileDraftContent(c.Request().Context(), draftID, input)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
@@ -315,7 +312,7 @@ func (h *AdminReviewHandler) GetScheduleDraft(c echo.Context) error {
 
 	draft, err := h.reviewUsecase.GetScheduleDraft(c.Request().Context(), draftID)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "draft not found"})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))
@@ -358,7 +355,7 @@ func (h *AdminReviewHandler) UpdateScheduleDraftContent(c echo.Context) error {
 
 	draft, err := h.reviewUsecase.UpdateScheduleDraftContent(c.Request().Context(), draftID, items)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))

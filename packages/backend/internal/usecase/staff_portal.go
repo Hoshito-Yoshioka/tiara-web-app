@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"tiara-web-app/backend/internal/domain"
 
 	"github.com/google/uuid"
@@ -67,12 +67,12 @@ func NewStaffAuthUsecase(repo StaffAccountRepository) StaffAuthUsecase {
 func (u *staffAuthUsecase) Login(ctx context.Context, username, password string) (domain.StaffAccount, error) {
 	account, err := u.accountRepo.GetStaffAccountByUsername(ctx, username)
 	if err != nil {
-		return domain.StaffAccount{}, errors.New("invalid credentials")
+		return domain.StaffAccount{}, fmt.Errorf("invalid credentials: %w", domain.ErrUnauthorized)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(account.PasswordHash), []byte(password))
 	if err != nil {
-		return domain.StaffAccount{}, errors.New("invalid credentials")
+		return domain.StaffAccount{}, fmt.Errorf("invalid credentials: %w", domain.ErrUnauthorized)
 	}
 
 	return account, nil
@@ -149,11 +149,11 @@ func (u *staffPortalUsecase) SubmitProfileDraft(ctx context.Context, staffID uui
 
 	// 自分の下書きのみ操作可能
 	if draft.StaffID != staffID {
-		return domain.StaffProfileDraft{}, errors.New("他のスタッフの下書きは操作できません")
+		return domain.StaffProfileDraft{}, fmt.Errorf("他のスタッフの下書きは操作できません: %w", domain.ErrForbidden)
 	}
 
 	if draft.Status != domain.DraftStatusDraft && draft.Status != domain.DraftStatusRejected {
-		return domain.StaffProfileDraft{}, errors.New("draft または rejected 状態の下書きのみ申請できます")
+		return domain.StaffProfileDraft{}, fmt.Errorf("draft または rejected 状態の下書きのみ申請できます: %w", domain.ErrInvalidInput)
 	}
 
 	return u.draftRepo.SubmitProfileDraft(ctx, draftID)
@@ -205,11 +205,11 @@ func (u *staffPortalUsecase) SubmitScheduleDraft(ctx context.Context, staffID uu
 	}
 
 	if draft.StaffID != staffID {
-		return domain.StaffScheduleDraft{}, errors.New("他のスタッフの下書きは操作できません")
+		return domain.StaffScheduleDraft{}, fmt.Errorf("他のスタッフの下書きは操作できません: %w", domain.ErrForbidden)
 	}
 
 	if draft.Status != domain.DraftStatusDraft && draft.Status != domain.DraftStatusRejected {
-		return domain.StaffScheduleDraft{}, errors.New("draft または rejected 状態の下書きのみ申請できます")
+		return domain.StaffScheduleDraft{}, fmt.Errorf("draft または rejected 状態の下書きのみ申請できます: %w", domain.ErrInvalidInput)
 	}
 
 	return u.draftRepo.SubmitScheduleDraft(ctx, draftID)
@@ -271,16 +271,16 @@ func (u *adminReviewUsecase) ListApprovedScheduleDrafts(ctx context.Context) ([]
 // 承認時はライブの staffs テーブルに反映する。
 func (u *adminReviewUsecase) ReviewProfileDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffProfileDraft, error) {
 	if input.Status != domain.DraftStatusApproved && input.Status != domain.DraftStatusRejected {
-		return domain.StaffProfileDraft{}, errors.New("ステータスは approved または rejected を指定してください")
+		return domain.StaffProfileDraft{}, fmt.Errorf("ステータスは approved または rejected を指定してください: %w", domain.ErrInvalidInput)
 	}
 
 	draft, err := u.draftRepo.GetProfileDraftByID(ctx, draftID)
 	if err != nil {
-		return domain.StaffProfileDraft{}, err
+		return domain.StaffProfileDraft{}, fmt.Errorf("下書きが見つかりません: %w", domain.ErrNotFound)
 	}
 
 	if draft.Status != domain.DraftStatusPending {
-		return domain.StaffProfileDraft{}, errors.New("pending 状態の下書きのみレビューできます")
+		return domain.StaffProfileDraft{}, fmt.Errorf("pending 状態の下書きのみレビューできます: %w", domain.ErrInvalidInput)
 	}
 
 	// レビュー結果を記録
@@ -299,7 +299,7 @@ func (u *adminReviewUsecase) ReviewProfileDraft(ctx context.Context, draftID uui
 			ImageCropPosition: draft.ImageCropPosition,
 		})
 		if err != nil {
-			return domain.StaffProfileDraft{}, errors.New("ライブデータへの反映に失敗しました: " + err.Error())
+			return domain.StaffProfileDraft{}, fmt.Errorf("ライブデータへの反映に失敗しました: %w", domain.ErrInternal)
 		}
 	}
 
@@ -310,16 +310,16 @@ func (u *adminReviewUsecase) ReviewProfileDraft(ctx context.Context, draftID uui
 // 承認してもライブデータには即時反映せず、別途 PublishScheduleDraft で反映する。
 func (u *adminReviewUsecase) ReviewScheduleDraft(ctx context.Context, draftID uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error) {
 	if input.Status != domain.DraftStatusApproved && input.Status != domain.DraftStatusRejected {
-		return domain.StaffScheduleDraft{}, errors.New("ステータスは approved または rejected を指定してください")
+		return domain.StaffScheduleDraft{}, fmt.Errorf("ステータスは approved または rejected を指定してください: %w", domain.ErrInvalidInput)
 	}
 
 	draft, err := u.draftRepo.GetScheduleDraftByID(ctx, draftID)
 	if err != nil {
-		return domain.StaffScheduleDraft{}, err
+		return domain.StaffScheduleDraft{}, fmt.Errorf("下書きが見つかりません: %w", domain.ErrNotFound)
 	}
 
 	if draft.Status != domain.DraftStatusPending {
-		return domain.StaffScheduleDraft{}, errors.New("pending 状態の下書きのみレビューできます")
+		return domain.StaffScheduleDraft{}, fmt.Errorf("pending 状態の下書きのみレビューできます: %w", domain.ErrInvalidInput)
 	}
 
 	// 承認しても店舗ページには即時反映しない。
@@ -337,10 +337,10 @@ func (u *adminReviewUsecase) ReviewScheduleDraft(ctx context.Context, draftID uu
 func (u *adminReviewUsecase) PublishScheduleDraft(ctx context.Context, draftID uuid.UUID) error {
 	draft, err := u.draftRepo.GetScheduleDraftByID(ctx, draftID)
 	if err != nil {
-		return errors.New("下書きが見つかりません")
+		return fmt.Errorf("下書きが見つかりません: %w", domain.ErrNotFound)
 	}
 	if draft.Status != domain.DraftStatusApproved {
-		return errors.New("approved 状態の下書きのみ反映できます")
+		return fmt.Errorf("approved 状態の下書きのみ反映できます: %w", domain.ErrInvalidInput)
 	}
 	scheduleInputs := make([]domain.ScheduleInput, len(draft.Items))
 	for i, item := range draft.Items {
@@ -352,7 +352,7 @@ func (u *adminReviewUsecase) PublishScheduleDraft(ctx context.Context, draftID u
 	}
 	_, err = u.staffRepo.ReplaceSchedules(ctx, draft.StaffID.String(), scheduleInputs)
 	if err != nil {
-		return errors.New("ライブスケジュールへの反映に失敗しました: " + err.Error())
+		return fmt.Errorf("ライブスケジュールへの反映に失敗しました: %w", domain.ErrInternal)
 	}
 	// 反映後、下書きを削除
 	return u.draftRepo.DeleteScheduleDraft(ctx, draftID)
@@ -420,12 +420,12 @@ func (u *adminAccountUsecase) GetStaffAccountByStaffID(ctx context.Context, staf
 // CreateStaffAccount は新しいスタッフアカウントを作成する（パスワードをbcryptハッシュ化）。
 func (u *adminAccountUsecase) CreateStaffAccount(ctx context.Context, staffID uuid.UUID, username, password string) (domain.StaffAccount, error) {
 	if username == "" || password == "" {
-		return domain.StaffAccount{}, errors.New("ユーザー名とパスワードは必須です")
+		return domain.StaffAccount{}, fmt.Errorf("ユーザー名とパスワードは必須です: %w", domain.ErrInvalidInput)
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return domain.StaffAccount{}, errors.New("パスワードのハッシュ化に失敗しました")
+		return domain.StaffAccount{}, fmt.Errorf("パスワードのハッシュ化に失敗しました: %w", domain.ErrInternal)
 	}
 
 	return u.accountRepo.CreateStaffAccount(ctx, staffID, username, string(hash))
@@ -435,14 +435,14 @@ func (u *adminAccountUsecase) CreateStaffAccount(ctx context.Context, staffID uu
 // password が空の場合はパスワードを変更せず、現在のハッシュを維持する。
 func (u *adminAccountUsecase) UpdateStaffAccount(ctx context.Context, id uuid.UUID, username, password string) (domain.StaffAccount, error) {
 	if username == "" {
-		return domain.StaffAccount{}, errors.New("ユーザー名は必須です")
+		return domain.StaffAccount{}, fmt.Errorf("ユーザー名は必須です: %w", domain.ErrInvalidInput)
 	}
 
 	var passwordHash string
 	if password != "" {
 		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			return domain.StaffAccount{}, errors.New("パスワードのハッシュ化に失敗しました")
+			return domain.StaffAccount{}, fmt.Errorf("パスワードのハッシュ化に失敗しました: %w", domain.ErrInternal)
 		}
 		passwordHash = string(hash)
 	} else {
@@ -458,7 +458,7 @@ func (u *adminAccountUsecase) UpdateStaffAccount(ctx context.Context, id uuid.UU
 			}
 		}
 		if passwordHash == "" {
-			return domain.StaffAccount{}, errors.New("アカウントが見つかりません")
+			return domain.StaffAccount{}, fmt.Errorf("アカウントが見つかりません: %w", domain.ErrNotFound)
 		}
 	}
 

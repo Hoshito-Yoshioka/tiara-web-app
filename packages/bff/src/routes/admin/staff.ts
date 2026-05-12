@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { zValidator } from '@hono/zod-validator'
 import { authMiddleware, type AuthEnv } from '../../middleware/auth'
 import type {
   Staff,
@@ -10,7 +11,12 @@ import type {
   StaffWithSchedules,
   StaffWithSchedulesResponse,
 } from '../../types/staff'
-import type { CreateStaffRequest, UpdateStaffRequest } from '../../types/admin'
+import {
+  createStaffSchema,
+  updateStaffSchema,
+  setMainImageSchema,
+  updateCropPositionSchema,
+} from '../../schemas'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
@@ -66,8 +72,8 @@ function toStaffWithSchedules(data: StaffWithSchedulesResponse): StaffWithSchedu
 }
 
 /** POST /api/admin/staffs — スタッフ新規作成 */
-adminStaffRoutes.post('/', async (c) => {
-  const body = await c.req.json<CreateStaffRequest>()
+adminStaffRoutes.post('/', zValidator('json', createStaffSchema), async (c) => {
+  const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
   const res = await fetch(`${BACKEND_URL}/admin/staffs`, {
@@ -89,9 +95,9 @@ adminStaffRoutes.post('/', async (c) => {
 })
 
 /** PUT /api/admin/staffs/:id — スタッフ情報更新 */
-adminStaffRoutes.put('/:id', async (c) => {
+adminStaffRoutes.put('/:id', zValidator('json', updateStaffSchema), async (c) => {
   const id = c.req.param('id')
-  const body = await c.req.json<UpdateStaffRequest>()
+  const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
   const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}`, {
@@ -185,9 +191,9 @@ adminStaffRoutes.delete('/:id/images/:imageId', async (c) => {
 })
 
 /** PUT /api/admin/staffs/:id/images/main — メイン画像を設定 */
-adminStaffRoutes.put('/:id/images/main', async (c) => {
+adminStaffRoutes.put('/:id/images/main', zValidator('json', setMainImageSchema), async (c) => {
   const id = c.req.param('id')
-  const body = await c.req.json()
+  const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
   const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images/main`, {
@@ -208,28 +214,32 @@ adminStaffRoutes.put('/:id/images/main', async (c) => {
 })
 
 /** PUT /api/admin/staffs/:id/images/:imageId/crop — 画像のクロップ位置を更新 */
-adminStaffRoutes.put('/:id/images/:imageId/crop', async (c) => {
-  const id = c.req.param('id')
-  const imageId = c.req.param('imageId')
-  const body = await c.req.json()
-  const authHeader = c.get('authHeader') as string
+adminStaffRoutes.put(
+  '/:id/images/:imageId/crop',
+  zValidator('json', updateCropPositionSchema),
+  async (c) => {
+    const id = c.req.param('id')
+    const imageId = c.req.param('imageId')
+    const body = c.req.valid('json')
+    const authHeader = c.get('authHeader') as string
 
-  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images/${imageId}/crop`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: authHeader,
-    },
-    body: JSON.stringify(body),
-  })
+    const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images/${imageId}/crop`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authHeader,
+      },
+      body: JSON.stringify(body),
+    })
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: 'Failed to update crop position' }))
-    return c.json(error, res.status as 500)
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Failed to update crop position' }))
+      return c.json(error, res.status as 500)
+    }
+
+    const data: StaffImageResponse = await res.json()
+    return c.json(toImage(data))
   }
-
-  const data: StaffImageResponse = await res.json()
-  return c.json(toImage(data))
-})
+)
 
 export { adminStaffRoutes }

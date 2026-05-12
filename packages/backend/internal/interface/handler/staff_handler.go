@@ -28,8 +28,7 @@ func NewStaffHandler(us usecase.StaffUsecase) *StaffHandler {
 func (h *StaffHandler) ListStaffs(c echo.Context) error {
 	staffs, err := h.staffUsecase.ListStaffs(c.Request().Context())
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 	return c.JSON(http.StatusOK, staffs)
 }
@@ -43,7 +42,7 @@ func (h *StaffHandler) GetStaffWithSchedules(c echo.Context) error {
 
 	result, err := h.staffUsecase.GetStaffWithSchedules(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "staff not found"})
+		return handleError(c, err)
 	}
 	return c.JSON(http.StatusOK, result)
 }
@@ -53,8 +52,7 @@ func (h *StaffHandler) GetStaffWithSchedules(c echo.Context) error {
 func (h *StaffHandler) ListAllStaffsWithSchedules(c echo.Context) error {
 	result, err := h.staffUsecase.ListAllStaffsWithSchedules(c.Request().Context())
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 	return c.JSON(http.StatusOK, result)
 }
@@ -121,8 +119,7 @@ func (h *StaffHandler) CreateStaff(c echo.Context) error {
 
 	result, err := h.staffUsecase.CreateStaff(c.Request().Context(), input)
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 	return c.JSON(http.StatusCreated, result)
 }
@@ -151,8 +148,7 @@ func (h *StaffHandler) UpdateStaff(c echo.Context) error {
 
 	result, err := h.staffUsecase.UpdateStaff(c.Request().Context(), id, input)
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 	return c.JSON(http.StatusOK, result)
 }
@@ -166,8 +162,7 @@ func (h *StaffHandler) DeleteStaff(c echo.Context) error {
 
 	err := h.staffUsecase.DeleteStaff(c.Request().Context(), id)
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 	return c.NoContent(http.StatusNoContent)
 }

@@ -1,13 +1,15 @@
 import { Hono } from 'hono'
-import type { LoginRequest, LoginResponse } from '../types/admin'
+import { zValidator } from '@hono/zod-validator'
+import { loginSchema } from '../schemas'
+import type { LoginResponse } from '../types/admin'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
 const authRoutes = new Hono()
 
 /** POST /api/auth/login — ログイン（Backend へプロキシ） */
-authRoutes.post('/login', async (c) => {
-  const body = await c.req.json<LoginRequest>()
+authRoutes.post('/login', zValidator('json', loginSchema), async (c) => {
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/auth/login`, {
     method: 'POST',

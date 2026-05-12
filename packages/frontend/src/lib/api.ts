@@ -22,7 +22,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
       },
       ...options,
     })
-  } catch (e) {
+  } catch (_e) {
     throw new Error(
       `BFF (${API_BASE_URL}) に接続できません。BFF サーバーが起動しているか確認してください。`
     )
@@ -70,7 +70,7 @@ export async function apiUpload<T>(
       },
       body,
     })
-  } catch (e) {
+  } catch (_e) {
     throw new Error(
       `BFF (${API_BASE_URL}) に接続できません。BFF サーバーが起動しているか確認してください。`
     )

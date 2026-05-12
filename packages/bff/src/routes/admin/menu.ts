@@ -1,13 +1,14 @@
 import { Hono } from 'hono'
+import { zValidator } from '@hono/zod-validator'
 import { authMiddleware, type AuthEnv } from '../../middleware/auth'
 import type { MenuCategoryResponse, MenuItemResponse } from '../../types/menu'
-import type {
-  CreateMenuCategoryRequest,
-  UpdateMenuCategoryRequest,
-  CreateMenuItemRequest,
-  UpdateMenuItemRequest,
-} from '../../types/admin'
-import { toMenuCategory, toMenuItem, toMenuCategoryWithItems } from '../menu'
+import {
+  createMenuCategorySchema,
+  updateMenuCategorySchema,
+  createMenuItemSchema,
+  updateMenuItemSchema,
+} from '../../schemas'
+import { toMenuCategory, toMenuItem } from '../menu'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
@@ -20,8 +21,8 @@ adminMenuRoutes.use('/*', authMiddleware)
 // ============================================================
 
 /** POST /api/admin/menu/categories */
-adminMenuRoutes.post('/categories', async (c) => {
-  const body = await c.req.json<CreateMenuCategoryRequest>()
+adminMenuRoutes.post('/categories', zValidator('json', createMenuCategorySchema), async (c) => {
+  const body = c.req.valid('json')
   const authHeader = c.get('authHeader')
 
   const res = await fetch(`${BACKEND_URL}/admin/menu/categories`, {
@@ -37,9 +38,9 @@ adminMenuRoutes.post('/categories', async (c) => {
 })
 
 /** PUT /api/admin/menu/categories/:id */
-adminMenuRoutes.put('/categories/:id', async (c) => {
+adminMenuRoutes.put('/categories/:id', zValidator('json', updateMenuCategorySchema), async (c) => {
   const id = c.req.param('id')
-  const body = await c.req.json<UpdateMenuCategoryRequest>()
+  const body = c.req.valid('json')
   const authHeader = c.get('authHeader')
 
   const res = await fetch(`${BACKEND_URL}/admin/menu/categories/${id}`, {
@@ -75,8 +76,8 @@ adminMenuRoutes.delete('/categories/:id', async (c) => {
 // ============================================================
 
 /** POST /api/admin/menu/items */
-adminMenuRoutes.post('/items', async (c) => {
-  const body = await c.req.json<CreateMenuItemRequest>()
+adminMenuRoutes.post('/items', zValidator('json', createMenuItemSchema), async (c) => {
+  const body = c.req.valid('json')
   const authHeader = c.get('authHeader')
 
   const res = await fetch(`${BACKEND_URL}/admin/menu/items`, {
@@ -92,9 +93,9 @@ adminMenuRoutes.post('/items', async (c) => {
 })
 
 /** PUT /api/admin/menu/items/:id */
-adminMenuRoutes.put('/items/:id', async (c) => {
+adminMenuRoutes.put('/items/:id', zValidator('json', updateMenuItemSchema), async (c) => {
   const id = c.req.param('id')
-  const body = await c.req.json<UpdateMenuItemRequest>()
+  const body = c.req.valid('json')
   const authHeader = c.get('authHeader')
 
   const res = await fetch(`${BACKEND_URL}/admin/menu/items/${id}`, {

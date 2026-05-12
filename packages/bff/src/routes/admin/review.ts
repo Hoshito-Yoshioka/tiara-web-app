@@ -1,10 +1,8 @@
 import { Hono } from 'hono'
+import { zValidator } from '@hono/zod-validator'
 import { authMiddleware, type AuthEnv } from '../../middleware/auth'
-import type {
-  ReviewDraftRequest,
-  ProfileDraftResponse,
-  ScheduleDraftResponse,
-} from '../../types/staffPortal'
+import type { ProfileDraftResponse, ScheduleDraftResponse } from '../../types/staffPortal'
+import { reviewDraftSchema } from '../../schemas'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
@@ -58,11 +56,11 @@ adminReviewRoutes.get('/profiles/:id', async (c) => {
 })
 
 /** PUT /api/admin/reviews/profiles/:id — プロフィール下書きをレビュー */
-adminReviewRoutes.put('/profiles/:id', async (c) => {
+adminReviewRoutes.put('/profiles/:id', zValidator('json', reviewDraftSchema), async (c) => {
   const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
-  const body = await c.req.json<ReviewDraftRequest>()
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/admin/reviews/profiles/${id}`, {
     method: 'PUT',
@@ -163,11 +161,11 @@ adminReviewRoutes.get('/schedules/:id', async (c) => {
 })
 
 /** PUT /api/admin/reviews/schedules/:id — スケジュール下書きをレビュー */
-adminReviewRoutes.put('/schedules/:id', async (c) => {
+adminReviewRoutes.put('/schedules/:id', zValidator('json', reviewDraftSchema), async (c) => {
   const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
-  const body = await c.req.json<ReviewDraftRequest>()
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/${id}`, {
     method: 'PUT',

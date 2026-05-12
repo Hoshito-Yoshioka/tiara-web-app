@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { onMounted } from 'vue'
   import { useShopApi } from '@/composables/useShopApi'
-  import { Clock, MapPin, Phone } from 'lucide-vue-next'
+  import { Clock, MapPin } from 'lucide-vue-next'
 
   const { shops, isLoading, error, fetchShops } = useShopApi()
 
