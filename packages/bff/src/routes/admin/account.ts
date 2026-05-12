@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
+import { zValidator } from '@hono/zod-validator'
 import { authMiddleware, type AuthEnv } from '../../middleware/auth'
+import { createStaffAccountSchema, updateStaffAccountSchema } from '../../schemas'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
@@ -59,10 +61,10 @@ adminAccountRoutes.get('/staff/:staffId', async (c) => {
 })
 
 /** POST /api/admin/staff-accounts — スタッフアカウント作成 */
-adminAccountRoutes.post('/', async (c) => {
+adminAccountRoutes.post('/', zValidator('json', createStaffAccountSchema), async (c) => {
   const authHeader = c.get('authHeader')
 
-  const body = await c.req.json()
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/admin/staff-accounts`, {
     method: 'POST',
@@ -83,11 +85,11 @@ adminAccountRoutes.post('/', async (c) => {
 })
 
 /** PUT /api/admin/staff-accounts/:id — スタッフアカウント更新 */
-adminAccountRoutes.put('/:id', async (c) => {
+adminAccountRoutes.put('/:id', zValidator('json', updateStaffAccountSchema), async (c) => {
   const authHeader = c.get('authHeader')
 
   const id = c.req.param('id')
-  const body = await c.req.json()
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/admin/staff-accounts/${id}`, {
     method: 'PUT',

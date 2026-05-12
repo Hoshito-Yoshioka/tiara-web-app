@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
+import { zValidator } from '@hono/zod-validator'
 import { authMiddleware, type AuthEnv } from '../../middleware/auth'
 import type { Shop, ShopResponse } from '../../types/shop'
-import type { UpdateShopRequest } from '../../types/admin'
+import { updateShopSchema } from '../../schemas'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
@@ -22,9 +23,9 @@ function toShop(raw: ShopResponse): Shop {
 }
 
 /** PUT /api/admin/shops/:id — 店舗情報を更新 */
-adminShopRoutes.put('/:id', async (c) => {
+adminShopRoutes.put('/:id', zValidator('json', updateShopSchema), async (c) => {
   const id = c.req.param('id')
-  const body = await c.req.json<UpdateShopRequest>()
+  const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
   const res = await fetch(`${BACKEND_URL}/admin/shops/${id}`, {

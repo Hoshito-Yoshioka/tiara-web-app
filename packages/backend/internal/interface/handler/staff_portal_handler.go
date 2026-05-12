@@ -78,7 +78,7 @@ func (h *StaffPortalHandler) Login(c echo.Context) error {
 
 	account, err := h.authUsecase.Login(c.Request().Context(), req.Username, req.Password)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
+		return handleError(c, err)
 	}
 
 	jwtClaims := jwt.MapClaims{
@@ -173,8 +173,7 @@ func (h *StaffPortalHandler) GetMyProfileDraft(c echo.Context) error {
 
 	draft, err := h.portalUsecase.GetMyProfileDraft(c.Request().Context(), staffID)
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
@@ -211,7 +210,7 @@ func (h *StaffPortalHandler) SaveMyProfileDraft(c echo.Context) error {
 
 	draft, err := h.portalUsecase.SaveProfileDraft(c.Request().Context(), staffID, input)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
@@ -232,7 +231,7 @@ func (h *StaffPortalHandler) SubmitMyProfileDraft(c echo.Context) error {
 
 	draft, err := h.portalUsecase.SubmitProfileDraft(c.Request().Context(), staffID, draftID)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
@@ -320,8 +319,7 @@ func (h *StaffPortalHandler) GetMyScheduleDraft(c echo.Context) error {
 
 	draft, err := h.portalUsecase.GetMyScheduleDraft(c.Request().Context(), staffID)
 	if err != nil {
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))
@@ -358,7 +356,7 @@ func (h *StaffPortalHandler) SaveMyScheduleDraft(c echo.Context) error {
 
 	draft, err := h.portalUsecase.SaveScheduleDraft(c.Request().Context(), staffID, items)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))
@@ -379,7 +377,7 @@ func (h *StaffPortalHandler) SubmitMyScheduleDraft(c echo.Context) error {
 
 	draft, err := h.portalUsecase.SubmitScheduleDraft(c.Request().Context(), staffID, draftID)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toScheduleDraftResponse(draft))

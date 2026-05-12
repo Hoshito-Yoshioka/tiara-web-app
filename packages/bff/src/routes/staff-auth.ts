@@ -1,13 +1,15 @@
 import { Hono } from 'hono'
-import type { StaffLoginRequest, StaffLoginResponse } from '../types/staffPortal'
+import { zValidator } from '@hono/zod-validator'
+import { loginSchema } from '../schemas'
+import type { StaffLoginResponse } from '../types/staffPortal'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
 const staffAuthRoutes = new Hono()
 
 /** POST /api/staff-auth/login — スタッフログイン（Backend へプロキシ） */
-staffAuthRoutes.post('/login', async (c) => {
-  const body = await c.req.json<StaffLoginRequest>()
+staffAuthRoutes.post('/login', zValidator('json', loginSchema), async (c) => {
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/staff-auth/login`, {
     method: 'POST',

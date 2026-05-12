@@ -33,6 +33,11 @@ __pycache__/
 go.work
 go.work.sum
 
+# --- Go generated ---
+coverage.out
+coverage.html
+*.prof
+
 # --- Docker ---
 .docker/
 
@@ -47,6 +52,9 @@ packages/backend/bin/
 
 # github
 .github/
+
+# docs (ローカル専用ドキュメント)
+docs/
 
 # uploads
 .packages/backend/uploads/staff/

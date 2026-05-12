@@ -10,6 +10,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+  },
   server: {
     proxy: {
       // アップロード画像を BFF 経由で Backend から配信

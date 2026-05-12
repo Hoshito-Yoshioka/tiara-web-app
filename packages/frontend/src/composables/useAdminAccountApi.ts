@@ -39,7 +39,7 @@ export function useAdminAccountApi() {
         }
       )
       account.value = data
-    } catch (e) {
+    } catch (_e) {
       // 404 の場合はアカウント未作成
       account.value = null
       error.value = null

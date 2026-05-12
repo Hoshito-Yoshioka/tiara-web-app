@@ -4,9 +4,19 @@
   "description": "A web application for the bar 'Tiara', built with Vue, Hono, and Go.",
   "scripts": {
     "dev:frontend": "pnpm --filter frontend dev",
-    "dev:bff": "pnpm --filter bff dev"
+    "dev:bff": "pnpm --filter bff dev",
+    "test": "pnpm --filter frontend test && pnpm --filter bff test",
+    "test:frontend": "pnpm --filter frontend test",
+    "test:bff": "pnpm --filter bff test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
-    "prettier": "^3.2.5"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-vue": "^10.9.1",
+    "globals": "^17.6.0",
+    "prettier": "^3.2.5",
+    "typescript-eslint": "^8.59.3"
   }
 }

@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"tiara-web-app/backend/internal/domain"
 
 	"golang.org/x/crypto/bcrypt"
@@ -34,12 +34,12 @@ func NewAuthUsecase(repo AdminRepository) AuthUsecase {
 func (u *authUsecase) Login(ctx context.Context, username, password string) (domain.Admin, error) {
 	admin, err := u.adminRepo.GetAdminByUsername(ctx, username)
 	if err != nil {
-		return domain.Admin{}, errors.New("invalid credentials")
+		return domain.Admin{}, fmt.Errorf("invalid credentials: %w", domain.ErrUnauthorized)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte(password))
 	if err != nil {
-		return domain.Admin{}, errors.New("invalid credentials")
+		return domain.Admin{}, fmt.Errorf("invalid credentials: %w", domain.ErrUnauthorized)
 	}
 
 	return admin, nil

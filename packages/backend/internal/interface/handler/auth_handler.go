@@ -46,7 +46,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 
 	admin, err := h.authUsecase.Login(c.Request().Context(), req.Username, req.Password)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
+		return handleError(c, err)
 	}
 
 	// JWT トークンを生成

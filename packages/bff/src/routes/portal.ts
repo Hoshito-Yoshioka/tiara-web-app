@@ -1,11 +1,13 @@
 import { Hono } from 'hono'
-import type {
-  SaveProfileDraftRequest,
-  SaveScheduleDraftRequest,
-  ProfileDraftResponse,
-  ScheduleDraftResponse,
-} from '../types/staffPortal'
+import { zValidator } from '@hono/zod-validator'
+import type { ProfileDraftResponse, ScheduleDraftResponse } from '../types/staffPortal'
 import type { StaffImageResponse, StaffImage } from '../types/staff'
+import {
+  saveProfileDraftSchema,
+  saveScheduleDraftSchema,
+  setMainImageSchema,
+  updateCropPositionSchema,
+} from '../schemas'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
@@ -52,13 +54,13 @@ portalRoutes.get('/profile', async (c) => {
 })
 
 /** PUT /api/portal/profile — プロフィール下書きを保存 */
-portalRoutes.put('/profile', async (c) => {
+portalRoutes.put('/profile', zValidator('json', saveProfileDraftSchema), async (c) => {
   const authHeader = c.req.header('Authorization')
   if (!authHeader) {
     return c.json({ error: 'Authorization header is required' }, 401)
   }
 
-  const body = await c.req.json<SaveProfileDraftRequest>()
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/portal/profile`, {
     method: 'PUT',
@@ -124,13 +126,13 @@ portalRoutes.get('/schedule', async (c) => {
 })
 
 /** PUT /api/portal/schedule — スケジュール下書きを保存 */
-portalRoutes.put('/schedule', async (c) => {
+portalRoutes.put('/schedule', zValidator('json', saveScheduleDraftSchema), async (c) => {
   const authHeader = c.req.header('Authorization')
   if (!authHeader) {
     return c.json({ error: 'Authorization header is required' }, 401)
   }
 
-  const body = await c.req.json<SaveScheduleDraftRequest>()
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/portal/schedule`, {
     method: 'PUT',
@@ -246,13 +248,13 @@ portalRoutes.delete('/images/:imageId', async (c) => {
 })
 
 /** PUT /api/portal/images/main — メイン画像を設定 */
-portalRoutes.put('/images/main', async (c) => {
+portalRoutes.put('/images/main', zValidator('json', setMainImageSchema), async (c) => {
   const authHeader = c.req.header('Authorization')
   if (!authHeader) {
     return c.json({ error: 'Authorization header is required' }, 401)
   }
 
-  const body = await c.req.json()
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/portal/images/main`, {
     method: 'PUT',
@@ -272,31 +274,35 @@ portalRoutes.put('/images/main', async (c) => {
 })
 
 /** PUT /api/portal/images/:imageId/crop — 画像のクロップ位置を更新 */
-portalRoutes.put('/images/:imageId/crop', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader) {
-    return c.json({ error: 'Authorization header is required' }, 401)
+portalRoutes.put(
+  '/images/:imageId/crop',
+  zValidator('json', updateCropPositionSchema),
+  async (c) => {
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader) {
+      return c.json({ error: 'Authorization header is required' }, 401)
+    }
+
+    const imageId = c.req.param('imageId')
+    const body = c.req.valid('json')
+
+    const res = await fetch(`${BACKEND_URL}/portal/images/${imageId}/crop`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authHeader,
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Failed to update crop position' }))
+      return c.json(error, res.status as 400 | 500)
+    }
+
+    const data: StaffImageResponse = await res.json()
+    return c.json(toImage(data))
   }
-
-  const imageId = c.req.param('imageId')
-  const body = await c.req.json()
-
-  const res = await fetch(`${BACKEND_URL}/portal/images/${imageId}/crop`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: authHeader,
-    },
-    body: JSON.stringify(body),
-  })
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: 'Failed to update crop position' }))
-    return c.json(error, res.status as 400 | 500)
-  }
-
-  const data: StaffImageResponse = await res.json()
-  return c.json(toImage(data))
-})
+)
 
 export { portalRoutes }
