@@ -133,3 +133,103 @@ func TestMenuUsecase_CreateMenuItem_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Old Fashioned", result.Name)
 }
+
+func TestMenuUsecase_GetMenuCategoryByID_Success(t *testing.T) {
+	cat := domain.MenuCategoryWithItems{
+		Category: domain.MenuCategory{ID: uuid.New(), Name: "Beer"},
+		Items:    []domain.MenuItem{{ID: uuid.New(), Name: "IPA"}},
+	}
+
+	repo := &mockMenuRepository{category: cat}
+	uc := NewMenuUsecase(repo)
+
+	result, err := uc.GetMenuCategoryByID(context.Background(), cat.Category.ID.String())
+
+	assert.NoError(t, err)
+	assert.Equal(t, "Beer", result.Category.Name)
+	assert.Len(t, result.Items, 1)
+}
+
+func TestMenuUsecase_GetMenuCategoryByID_Error(t *testing.T) {
+	repo := &mockMenuRepository{err: errors.New("not found")}
+	uc := NewMenuUsecase(repo)
+
+	_, err := uc.GetMenuCategoryByID(context.Background(), uuid.New().String())
+
+	assert.Error(t, err)
+}
+
+func TestMenuUsecase_UpdateMenuCategory_Success(t *testing.T) {
+	cat := domain.MenuCategory{ID: uuid.New(), Name: "Updated"}
+
+	repo := &mockMenuRepository{menuCategory: cat}
+	uc := NewMenuUsecase(repo)
+
+	result, err := uc.UpdateMenuCategory(context.Background(), cat.ID.String(), domain.UpdateMenuCategoryInput{
+		Name:      "Updated",
+		SortOrder: 2,
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "Updated", result.Name)
+}
+
+func TestMenuUsecase_UpdateMenuCategory_Error(t *testing.T) {
+	repo := &mockMenuRepository{err: errors.New("not found")}
+	uc := NewMenuUsecase(repo)
+
+	_, err := uc.UpdateMenuCategory(context.Background(), uuid.New().String(), domain.UpdateMenuCategoryInput{})
+
+	assert.Error(t, err)
+}
+
+func TestMenuUsecase_UpdateMenuItem_Success(t *testing.T) {
+	item := domain.MenuItem{ID: uuid.New(), Name: "Updated Item", Price: "¥2,000"}
+
+	repo := &mockMenuRepository{menuItem: item}
+	uc := NewMenuUsecase(repo)
+
+	result, err := uc.UpdateMenuItem(context.Background(), item.ID.String(), domain.UpdateMenuItemInput{
+		Name:  "Updated Item",
+		Price: "¥2,000",
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "Updated Item", result.Name)
+}
+
+func TestMenuUsecase_UpdateMenuItem_Error(t *testing.T) {
+	repo := &mockMenuRepository{err: errors.New("not found")}
+	uc := NewMenuUsecase(repo)
+
+	_, err := uc.UpdateMenuItem(context.Background(), uuid.New().String(), domain.UpdateMenuItemInput{})
+
+	assert.Error(t, err)
+}
+
+func TestMenuUsecase_DeleteMenuItem_Success(t *testing.T) {
+	repo := &mockMenuRepository{}
+	uc := NewMenuUsecase(repo)
+
+	err := uc.DeleteMenuItem(context.Background(), uuid.New().String())
+
+	assert.NoError(t, err)
+}
+
+func TestMenuUsecase_DeleteMenuItem_Error(t *testing.T) {
+	repo := &mockMenuRepository{err: errors.New("db error")}
+	uc := NewMenuUsecase(repo)
+
+	err := uc.DeleteMenuItem(context.Background(), uuid.New().String())
+
+	assert.Error(t, err)
+}
+
+func TestMenuUsecase_DeleteMenuCategory_Error(t *testing.T) {
+	repo := &mockMenuRepository{err: errors.New("db error")}
+	uc := NewMenuUsecase(repo)
+
+	err := uc.DeleteMenuCategory(context.Background(), uuid.New().String())
+
+	assert.Error(t, err)
+}

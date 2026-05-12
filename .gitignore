@@ -33,6 +33,11 @@ __pycache__/
 go.work
 go.work.sum
 
+# --- Go generated ---
+coverage.out
+coverage.html
+*.prof
+
 # --- Docker ---
 .docker/
 

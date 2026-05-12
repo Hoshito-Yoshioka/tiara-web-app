@@ -178,3 +178,141 @@ func TestStaffUsecase_UploadStaffImage_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, img.ImageURL, result.ImageURL)
 }
+
+func TestStaffUsecase_CreateStaff_Success(t *testing.T) {
+	staffID := uuid.New()
+	staff := domain.Staff{ID: staffID, Name: "New Staff", Role: "キャスト"}
+	schedules := []domain.StaffSchedule{
+		{ID: uuid.New(), StaffID: staffID, DayOfWeek: 1},
+	}
+
+	repo := &mockStaffRepository{staff: staff, schedules: schedules, images: nil}
+	uc := NewStaffUsecase(repo)
+
+	result, err := uc.CreateStaff(context.Background(), domain.CreateStaffInput{
+		ShopID: uuid.New().String(),
+		Name:   "New Staff",
+		Role:   "キャスト",
+		Schedules: []domain.ScheduleInput{
+			{DayOfWeek: 1, StartTime: "20:00", EndTime: "05:00"},
+		},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "New Staff", result.Staff.Name)
+}
+
+func TestStaffUsecase_CreateStaff_NoSchedules(t *testing.T) {
+	staff := domain.Staff{ID: uuid.New(), Name: "New Staff"}
+
+	repo := &mockStaffRepository{staff: staff}
+	uc := NewStaffUsecase(repo)
+
+	result, err := uc.CreateStaff(context.Background(), domain.CreateStaffInput{
+		ShopID: uuid.New().String(),
+		Name:   "New Staff",
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "New Staff", result.Staff.Name)
+	assert.Nil(t, result.Schedules)
+}
+
+func TestStaffUsecase_CreateStaff_Error(t *testing.T) {
+	repo := &mockStaffRepository{err: errors.New("db error")}
+	uc := NewStaffUsecase(repo)
+
+	_, err := uc.CreateStaff(context.Background(), domain.CreateStaffInput{Name: "Test"})
+
+	assert.Error(t, err)
+}
+
+func TestStaffUsecase_UpdateStaff_Success(t *testing.T) {
+	staffID := uuid.New()
+	staff := domain.Staff{ID: staffID, Name: "Updated"}
+	schedules := []domain.StaffSchedule{
+		{ID: uuid.New(), StaffID: staffID, DayOfWeek: 2},
+	}
+
+	repo := &mockStaffRepository{staff: staff, schedules: schedules}
+	uc := NewStaffUsecase(repo)
+
+	result, err := uc.UpdateStaff(context.Background(), staffID.String(), domain.UpdateStaffInput{
+		Name: "Updated",
+		Schedules: []domain.ScheduleInput{
+			{DayOfWeek: 2, StartTime: "20:00", EndTime: "05:00"},
+		},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "Updated", result.Staff.Name)
+}
+
+func TestStaffUsecase_UpdateStaff_Error(t *testing.T) {
+	repo := &mockStaffRepository{err: errors.New("not found")}
+	uc := NewStaffUsecase(repo)
+
+	_, err := uc.UpdateStaff(context.Background(), uuid.New().String(), domain.UpdateStaffInput{})
+
+	assert.Error(t, err)
+}
+
+func TestStaffUsecase_DeleteStaffImage_Success(t *testing.T) {
+	repo := &mockStaffRepository{}
+	uc := NewStaffUsecase(repo)
+
+	err := uc.DeleteStaffImage(context.Background(), uuid.New().String())
+
+	assert.NoError(t, err)
+}
+
+func TestStaffUsecase_DeleteStaffImage_Error(t *testing.T) {
+	repo := &mockStaffRepository{err: errors.New("not found")}
+	uc := NewStaffUsecase(repo)
+
+	err := uc.DeleteStaffImage(context.Background(), uuid.New().String())
+
+	assert.Error(t, err)
+}
+
+func TestStaffUsecase_SetMainImage_Success(t *testing.T) {
+	img := domain.StaffImage{ID: uuid.New(), IsMain: true}
+
+	repo := &mockStaffRepository{image: img}
+	uc := NewStaffUsecase(repo)
+
+	result, err := uc.SetMainImage(context.Background(), uuid.New().String(), img.ID.String())
+
+	assert.NoError(t, err)
+	assert.True(t, result.IsMain)
+}
+
+func TestStaffUsecase_SetMainImage_Error(t *testing.T) {
+	repo := &mockStaffRepository{err: errors.New("not found")}
+	uc := NewStaffUsecase(repo)
+
+	_, err := uc.SetMainImage(context.Background(), uuid.New().String(), uuid.New().String())
+
+	assert.Error(t, err)
+}
+
+func TestStaffUsecase_UpdateImageCropPosition_Success(t *testing.T) {
+	img := domain.StaffImage{ID: uuid.New(), CropPosition: "30 70"}
+
+	repo := &mockStaffRepository{image: img}
+	uc := NewStaffUsecase(repo)
+
+	result, err := uc.UpdateImageCropPosition(context.Background(), img.ID.String(), "30 70")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "30 70", result.CropPosition)
+}
+
+func TestStaffUsecase_UpdateImageCropPosition_Error(t *testing.T) {
+	repo := &mockStaffRepository{err: errors.New("not found")}
+	uc := NewStaffUsecase(repo)
+
+	_, err := uc.UpdateImageCropPosition(context.Background(), uuid.New().String(), "50 50")
+
+	assert.Error(t, err)
+}
