@@ -138,11 +138,13 @@
       >
         <!-- テーブル（横スクロール対応） -->
         <div class="border border-border bg-card overflow-x-auto">
-          <table class="w-full min-w-[1000px]">
+          <table class="w-full min-w-[600px]">
             <thead>
               <tr class="border-b border-border">
                 <!-- スタッフ名ヘッダー -->
-                <th class="px-4 md:px-6 py-4 text-left sticky left-0 bg-card z-10">
+                <th
+                  class="px-2 md:px-6 py-3 md:py-4 text-left sticky left-0 bg-card z-10 w-[100px] md:w-auto"
+                >
                   <span
                     class="text-[11px] tracking-[0.2em] uppercase text-muted-foreground font-normal"
                   >
@@ -153,7 +155,7 @@
                 <th
                   v-for="(date, idx) in periodDates"
                   :key="idx"
-                  class="px-2 md:px-3 py-4 text-center"
+                  class="px-1 md:px-3 py-3 md:py-4 text-center"
                   :class="isToday(date) ? 'bg-primary/5' : ''"
                 >
                   <div class="flex flex-col items-center gap-0.5">
@@ -177,16 +179,18 @@
                 class="border-b border-border last:border-b-0 transition-colors duration-300 hover:bg-secondary/50"
               >
                 <!-- スタッフ名＋画像 -->
-                <td class="px-4 md:px-6 py-4 sticky left-0 bg-card z-10">
+                <td
+                  class="px-2 md:px-6 py-3 md:py-4 sticky left-0 bg-card z-10 w-[100px] md:w-auto"
+                >
                   <router-link
                     :to="`/staff/${item.staff.id}`"
-                    class="group flex items-center gap-3"
+                    class="group flex items-center gap-2 md:gap-3"
                   >
                     <img
                       v-if="item.staff.imageUrl"
                       :src="item.staff.imageUrl"
                       :alt="item.staff.name"
-                      class="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-border"
+                      class="hidden md:block w-9 h-9 rounded-full object-cover flex-shrink-0 border border-border"
                       :style="{
                         objectPosition: item.staff.imageCropPosition
                           ? item.staff.imageCropPosition
@@ -198,7 +202,7 @@
                     />
                     <div
                       v-else
-                      class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 border border-border"
+                      class="hidden md:flex w-9 h-9 rounded-full bg-secondary items-center justify-center flex-shrink-0 border border-border"
                     >
                       <span class="text-[10px] text-muted-foreground">{{
                         item.staff.name.charAt(0)
@@ -206,12 +210,12 @@
                     </div>
                     <div class="flex flex-col min-w-0">
                       <span
-                        class="text-sm font-light tracking-[0.05em] text-foreground group-hover:text-primary transition-colors duration-300"
+                        class="text-xs md:text-sm font-light tracking-[0.05em] text-foreground group-hover:text-primary transition-colors duration-300 truncate"
                       >
                         {{ item.staff.name }}
                       </span>
                       <span
-                        class="text-[10px] tracking-[0.15em] uppercase text-muted-foreground mt-0.5"
+                        class="hidden md:block text-[10px] tracking-[0.15em] uppercase text-muted-foreground mt-0.5"
                       >
                         {{ item.staff.role }}
                       </span>
@@ -222,7 +226,7 @@
                 <td
                   v-for="(date, idx) in periodDates"
                   :key="idx"
-                  class="px-2 md:px-3 py-4 text-center"
+                  class="px-1 md:px-3 py-3 md:py-4 text-center"
                   :class="isToday(date) ? 'bg-primary/5' : ''"
                 >
                   <template v-if="scheduleMap.get(item.staff.id)?.has(date.getUTCDay())">
