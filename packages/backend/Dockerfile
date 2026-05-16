@@ -23,7 +23,8 @@ COPY --from=builder /app/server .
 COPY migrations/ ./migrations/
 COPY scripts/ ./scripts/
 
-RUN mkdir -p uploads/staff
+RUN chmod +x /app/scripts/entrypoint.sh /app/scripts/migrate.sh \
+    && mkdir -p uploads/staff
 
 EXPOSE 1323
-CMD ["./server"]
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
