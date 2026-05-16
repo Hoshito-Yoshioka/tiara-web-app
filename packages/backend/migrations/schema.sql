@@ -16,7 +16,7 @@ $$ LANGUAGE plpgsql;
 -- admins テーブル
 -- 管理者認証用。パスワードは bcrypt ハッシュで保存。
 -- ==============================
-CREATE TABLE admins (
+CREATE TABLE IF NOT EXISTS admins (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
@@ -24,12 +24,12 @@ CREATE TABLE admins (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER update_admins_updated_at
+CREATE TRIGGER IF NOT EXISTS update_admins_updated_at
 BEFORE UPDATE ON admins
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 
-CREATE TABLE shops (
+CREATE TABLE IF NOT EXISTS shops (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     address TEXT NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE shops (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER update_shops_updated_at
+CREATE TRIGGER IF NOT EXISTS update_shops_updated_at
 BEFORE UPDATE ON shops
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -47,7 +47,7 @@ EXECUTE FUNCTION update_timestamp();
 -- ==============================
 -- staffs テーブル
 -- ==============================
-CREATE TABLE staffs (
+CREATE TABLE IF NOT EXISTS staffs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     shop_id UUID NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE staffs (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER update_staffs_updated_at
+CREATE TRIGGER IF NOT EXISTS update_staffs_updated_at
 BEFORE UPDATE ON staffs
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -70,7 +70,7 @@ EXECUTE FUNCTION update_timestamp();
 -- スタッフ専用ログインアカウント（admin とは別系統）
 -- staff_id は staffs テーブルへの参照（1:1）
 -- ==============================
-CREATE TABLE staff_accounts (
+CREATE TABLE IF NOT EXISTS staff_accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     staff_id UUID NOT NULL UNIQUE REFERENCES staffs(id) ON DELETE CASCADE,
     username VARCHAR(255) NOT NULL UNIQUE,
@@ -79,7 +79,7 @@ CREATE TABLE staff_accounts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER update_staff_accounts_updated_at
+CREATE TRIGGER IF NOT EXISTS update_staff_accounts_updated_at
 BEFORE UPDATE ON staff_accounts
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -89,7 +89,7 @@ EXECUTE FUNCTION update_timestamp();
 -- スタッフが提出するプロフィール変更の下書き/承認待ち
 -- status: draft / pending / approved / rejected
 -- ==============================
-CREATE TABLE staff_profile_drafts (
+CREATE TABLE IF NOT EXISTS staff_profile_drafts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     staff_id UUID NOT NULL REFERENCES staffs(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -105,7 +105,7 @@ CREATE TABLE staff_profile_drafts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER update_staff_profile_drafts_updated_at
+CREATE TRIGGER IF NOT EXISTS update_staff_profile_drafts_updated_at
 BEFORE UPDATE ON staff_profile_drafts
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -116,7 +116,7 @@ EXECUTE FUNCTION update_timestamp();
 -- status: draft / pending / approved / rejected
 -- 承認時に staff_schedules へ反映される
 -- ==============================
-CREATE TABLE staff_schedule_drafts (
+CREATE TABLE IF NOT EXISTS staff_schedule_drafts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     staff_id UUID NOT NULL REFERENCES staffs(id) ON DELETE CASCADE,
     status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'pending', 'approved', 'rejected')),
@@ -127,7 +127,7 @@ CREATE TABLE staff_schedule_drafts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER update_staff_schedule_drafts_updated_at
+CREATE TRIGGER IF NOT EXISTS update_staff_schedule_drafts_updated_at
 BEFORE UPDATE ON staff_schedule_drafts
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -136,7 +136,7 @@ EXECUTE FUNCTION update_timestamp();
 -- staff_schedule_draft_items テーブル
 -- シフト下書きの各曜日データ
 -- ==============================
-CREATE TABLE staff_schedule_draft_items (
+CREATE TABLE IF NOT EXISTS staff_schedule_draft_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     draft_id UUID NOT NULL REFERENCES staff_schedule_drafts(id) ON DELETE CASCADE,
     day_of_week INT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
@@ -149,7 +149,7 @@ CREATE TABLE staff_schedule_draft_items (
 -- スタッフの画像（メイン1枚+サブ複数枚）
 -- is_main: メイン画像フラグ（スタッフ一覧等で使用）
 -- ==============================
-CREATE TABLE staff_images (
+CREATE TABLE IF NOT EXISTS staff_images (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     staff_id UUID NOT NULL REFERENCES staffs(id) ON DELETE CASCADE,
     image_url TEXT NOT NULL,
@@ -160,7 +160,7 @@ CREATE TABLE staff_images (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER update_staff_images_updated_at
+CREATE TRIGGER IF NOT EXISTS update_staff_images_updated_at
 BEFORE UPDATE ON staff_images
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -170,7 +170,7 @@ EXECUTE FUNCTION update_timestamp();
 -- スタッフの出勤スケジュール（曜日ベース）
 -- day_of_week: 0=日, 1=月, 2=火, ..., 6=土
 -- ==============================
-CREATE TABLE staff_schedules (
+CREATE TABLE IF NOT EXISTS staff_schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     staff_id UUID NOT NULL REFERENCES staffs(id) ON DELETE CASCADE,
     day_of_week INT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
@@ -181,7 +181,7 @@ CREATE TABLE staff_schedules (
     UNIQUE (staff_id, day_of_week)
 );
 
-CREATE TRIGGER update_staff_schedules_updated_at
+CREATE TRIGGER IF NOT EXISTS update_staff_schedules_updated_at
 BEFORE UPDATE ON staff_schedules
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -190,7 +190,7 @@ EXECUTE FUNCTION update_timestamp();
 -- menu_categories テーブル
 -- PRICEページに表示するメニューのカテゴリ（例: System, Drinks, Bottle）
 -- ==============================
-CREATE TABLE menu_categories (
+CREATE TABLE IF NOT EXISTS menu_categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL DEFAULT '',
@@ -199,7 +199,7 @@ CREATE TABLE menu_categories (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER update_menu_categories_updated_at
+CREATE TRIGGER IF NOT EXISTS update_menu_categories_updated_at
 BEFORE UPDATE ON menu_categories
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -208,7 +208,7 @@ EXECUTE FUNCTION update_timestamp();
 -- menu_items テーブル
 -- 各カテゴリに属するメニュー品目と価格
 -- ==============================
-CREATE TABLE menu_items (
+CREATE TABLE IF NOT EXISTS menu_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     category_id UUID NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -216,10 +216,11 @@ CREATE TABLE menu_items (
     description TEXT NOT NULL DEFAULT '',
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (category_id, name)
 );
 
-CREATE TRIGGER update_menu_items_updated_at
+CREATE TRIGGER IF NOT EXISTS update_menu_items_updated_at
 BEFORE UPDATE ON menu_items
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
