@@ -9,10 +9,8 @@
     "forceConsistentCasingInFileNames": true,
     "rootDir": "./src",
     "outDir": "./dist",
-    "types": ["node"],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "noEmit": true,
+    "types": ["node"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
