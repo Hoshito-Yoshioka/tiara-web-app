@@ -3,7 +3,7 @@
 
   /** 店舗情報 */
   const shopInfo = {
-    name: 'BAR Tiara',
+    name: 'New Club TIARA',
     postalCode: '〒040-0011',
     address: '北海道函館市本町１−２８ 第５大栄ビル',
     mapEmbedUrl:
@@ -52,7 +52,7 @@
               allowfullscreen
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
-              title="BAR Tiara の所在地"
+              title="New Club TIARA の所在地"
               class="w-full h-[300px] md:h-[450px]"
             />
           </div>

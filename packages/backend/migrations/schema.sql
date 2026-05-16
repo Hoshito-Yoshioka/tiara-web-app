@@ -188,7 +188,7 @@ EXECUTE FUNCTION update_timestamp();
 
 -- ==============================
 -- menu_categories テーブル
--- PRICEページに表示するメニューのカテゴリ（例: Cocktails, Whisky & Spirits）
+-- PRICEページに表示するメニューのカテゴリ（例: System, Drinks, Bottle）
 -- ==============================
 CREATE TABLE menu_categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
