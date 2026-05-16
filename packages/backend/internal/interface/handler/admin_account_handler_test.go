@@ -56,7 +56,8 @@ func TestAdminAccountHandler_ListStaffAccounts(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var resp []StaffAccountResponse
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, "staff1", resp[0].Username)
 	})
@@ -146,7 +147,8 @@ func TestAdminAccountHandler_CreateStaffAccount(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
 		var resp StaffAccountResponse
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Equal(t, "newuser", resp.Username)
 	})
 

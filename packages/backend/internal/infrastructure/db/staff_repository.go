@@ -155,7 +155,7 @@ func (r *staffRepository) UpdateStaff(ctx context.Context, id string, input doma
 	if err != nil {
 		return domain.Staff{}, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
 
 	qtx := r.q.WithTx(tx)
 
@@ -222,7 +222,7 @@ func (r *staffRepository) ReplaceSchedules(ctx context.Context, staffID string, 
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
 
 	qtx := r.q.WithTx(tx)
 

@@ -267,7 +267,7 @@ func (r *staffDraftRepository) CreateScheduleDraft(ctx context.Context, staffID 
 	if err != nil {
 		return domain.StaffScheduleDraft{}, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
 
 	qtx := r.q.WithTx(tx)
 
@@ -307,7 +307,7 @@ func (r *staffDraftRepository) UpdateScheduleDraftItems(ctx context.Context, dra
 	if err != nil {
 		return domain.StaffScheduleDraft{}, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
 
 	qtx := r.q.WithTx(tx)
 
@@ -420,7 +420,7 @@ func (r *staffDraftRepository) ReplaceScheduleDraftItems(ctx context.Context, dr
 	if err != nil {
 		return domain.StaffScheduleDraft{}, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
 
 	qtx := r.q.WithTx(tx)
 
