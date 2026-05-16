@@ -58,7 +58,6 @@ services:
   - type: web
     name: tiara-frontend
     runtime: static
-    plan: free
     buildCommand: pnpm install --frozen-lockfile && pnpm --filter frontend build
     staticPublishPath: packages/frontend/dist
     routes:
