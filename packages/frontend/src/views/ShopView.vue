@@ -28,7 +28,7 @@
         :enter="{ opacity: 1, y: 0, transition: { duration: 700 } }"
         class="flex flex-col items-center mb-20 text-center"
       >
-        <span class="text-primary text-[11px] tracking-[0.4em] uppercase mb-4">Our Locations</span>
+        <span class="text-primary text-[11px] tracking-[0.4em] uppercase mb-4">Our Club</span>
         <h1 class="text-3xl md:text-4xl font-light tracking-[0.2em] uppercase text-foreground">
           Shop
         </h1>
@@ -65,7 +65,7 @@
           :key="shop.id"
           v-motion
           :initial="{ opacity: 0, y: 40 }"
-          :visible="{ opacity: 1, y: 0, transition: { duration: 600, delay: index * 200 } }"
+          :visibleOnce="{ opacity: 1, y: 0, transition: { duration: 600, delay: index * 200 } }"
           class="max-w-3xl mx-auto"
         >
           <!-- 店舗名 -->

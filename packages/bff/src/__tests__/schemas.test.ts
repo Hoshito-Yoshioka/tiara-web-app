@@ -31,8 +31,8 @@ describe('loginSchema', () => {
 describe('updateShopSchema', () => {
   it('valid input', () => {
     const result = updateShopSchema.safeParse({
-      name: 'tiara',
-      address: '東京都',
+      name: 'New Club TIARA',
+      address: '北海道函館市',
       openingTime: '20:00',
       closingTime: '05:00',
     })
@@ -41,7 +41,7 @@ describe('updateShopSchema', () => {
   it('rejects empty name', () => {
     const result = updateShopSchema.safeParse({
       name: '',
-      address: '東京都',
+      address: '北海道函館市',
       openingTime: '20:00',
       closingTime: '05:00',
     })

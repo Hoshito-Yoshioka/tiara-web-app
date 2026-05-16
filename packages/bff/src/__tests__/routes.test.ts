@@ -272,8 +272,8 @@ describe('shopRoutes', () => {
         json: async () => [
           {
             ID: 'shop-1',
-            Name: 'Tiara 本店',
-            Address: '東京都渋谷区',
+            Name: 'New Club TIARA',
+            Address: '北海道函館市本町１−２８',
             OpeningTime: '20:00',
             ClosingTime: '05:00',
           },
@@ -286,8 +286,8 @@ describe('shopRoutes', () => {
       const body = await res.json()
       expect(body[0]).toEqual({
         id: 'shop-1',
-        name: 'Tiara 本店',
-        address: '東京都渋谷区',
+        name: 'New Club TIARA',
+        address: '北海道函館市本町１−２８',
         openingTime: '20:00',
         closingTime: '05:00',
       })
@@ -307,8 +307,8 @@ describe('shopRoutes', () => {
         ok: true,
         json: async () => ({
           ID: 'shop-1',
-          Name: 'Tiara',
-          Address: '渋谷',
+          Name: 'New Club TIARA',
+          Address: '函館',
           OpeningTime: '20:00',
           ClosingTime: '05:00',
         }),

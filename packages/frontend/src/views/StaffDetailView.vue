@@ -250,7 +250,7 @@
           v-if="sortedSchedules.length > 0"
           v-motion
           :initial="{ opacity: 0, y: 30 }"
-          :visible="{ opacity: 1, y: 0, transition: { duration: 600, delay: 200 } }"
+          :visibleOnce="{ opacity: 1, y: 0, transition: { duration: 600, delay: 200 } }"
         >
           <!-- セクションヘッダー -->
           <div class="flex flex-col items-center mb-12 text-center">

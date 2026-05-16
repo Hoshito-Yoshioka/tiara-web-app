@@ -16,18 +16,16 @@
   }
 
   /**
-   * 今日(JST)を基準に、今週（日〜土）の各曜日の日付を返す。
-   * index: 0=日, 1=月, … 6=土
+   * 今日(JST)を基準に、14日間の日付を返す。
    */
-  const weekDates = computed(() => {
+  const periodDates = computed(() => {
     const now = new Date()
     // JSTオフセット (+9h)
     const jstNow = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60 * 1000)
-    const todayDay = jstNow.getUTCDay() // 0=日
     const dates: Date[] = []
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 14; i++) {
       const d = new Date(jstNow)
-      d.setUTCDate(d.getUTCDate() - todayDay + i)
+      d.setUTCDate(d.getUTCDate() + i)
       dates.push(d)
     }
     return dates
@@ -68,12 +66,22 @@
     return item?.schedules.find((s) => s.dayOfWeek === dayOfWeek)
   }
 
-  /** 今日(JST)の曜日 */
-  const todayDayOfWeek = computed(() => {
+  /** 今日(JST)の日付文字列（比較用） */
+  const todayDateKey = computed(() => {
     const now = new Date()
     const jstNow = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60 * 1000)
-    return jstNow.getUTCDay()
+    return `${jstNow.getUTCFullYear()}-${jstNow.getUTCMonth()}-${jstNow.getUTCDate()}`
   })
+
+  /** 指定日が今日かどうか */
+  function isToday(d: Date): boolean {
+    return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}` === todayDateKey.value
+  }
+
+  /** 出勤時間が 20:00 以外の場合のみ表示 */
+  function shouldShowTime(startTime: string): boolean {
+    return formatTime(startTime) !== '20:00'
+  }
 
   onMounted(() => {
     fetchSchedules()
@@ -130,7 +138,7 @@
       >
         <!-- テーブル（横スクロール対応） -->
         <div class="border border-border bg-card overflow-x-auto">
-          <table class="w-full min-w-[640px]">
+          <table class="w-full min-w-[1000px]">
             <thead>
               <tr class="border-b border-border">
                 <!-- スタッフ名ヘッダー -->
@@ -141,22 +149,22 @@
                     Staff
                   </span>
                 </th>
-                <!-- 曜日＋日付ヘッダー -->
+                <!-- 日付ヘッダー（14日間） -->
                 <th
-                  v-for="(label, idx) in DAY_LABELS"
+                  v-for="(date, idx) in periodDates"
                   :key="idx"
-                  class="px-3 md:px-4 py-4 text-center"
-                  :class="idx === todayDayOfWeek ? 'bg-primary/5' : ''"
+                  class="px-2 md:px-3 py-4 text-center"
+                  :class="isToday(date) ? 'bg-primary/5' : ''"
                 >
                   <div class="flex flex-col items-center gap-0.5">
                     <span
                       class="text-[11px] tracking-[0.15em] font-normal"
-                      :class="dayColorClass(idx)"
+                      :class="dayColorClass(date.getUTCDay())"
                     >
-                      {{ label }}
+                      {{ DAY_LABELS[date.getUTCDay()] }}
                     </span>
                     <span class="text-[10px] text-muted-foreground">
-                      {{ formatDate(weekDates[idx]) }}
+                      {{ formatDate(date) }}
                     </span>
                   </div>
                 </th>
@@ -210,18 +218,27 @@
                     </div>
                   </router-link>
                 </td>
-                <!-- 各曜日のセル -->
+                <!-- 各日のセル（14日間） -->
                 <td
-                  v-for="(_, dayIdx) in DAY_LABELS"
-                  :key="dayIdx"
-                  class="px-3 md:px-4 py-4 text-center"
-                  :class="dayIdx === todayDayOfWeek ? 'bg-primary/5' : ''"
+                  v-for="(date, idx) in periodDates"
+                  :key="idx"
+                  class="px-2 md:px-3 py-4 text-center"
+                  :class="isToday(date) ? 'bg-primary/5' : ''"
                 >
-                  <template v-if="scheduleMap.get(item.staff.id)?.has(dayIdx)">
+                  <template v-if="scheduleMap.get(item.staff.id)?.has(date.getUTCDay())">
                     <div class="flex flex-col items-center gap-0.5">
                       <Circle class="w-3.5 h-3.5 text-primary fill-primary" />
-                      <span class="text-[9px] text-muted-foreground tracking-wide">
-                        {{ formatTime(getScheduleForDay(item.staff.id, dayIdx)!.startTime) }}
+                      <span
+                        v-if="
+                          shouldShowTime(
+                            getScheduleForDay(item.staff.id, date.getUTCDay())!.startTime
+                          )
+                        "
+                        class="text-[9px] text-muted-foreground tracking-wide"
+                      >
+                        {{
+                          formatTime(getScheduleForDay(item.staff.id, date.getUTCDay())!.startTime)
+                        }}
                       </span>
                     </div>
                   </template>
@@ -238,7 +255,7 @@
         <div
           v-motion
           :initial="{ opacity: 0 }"
-          :visible="{ opacity: 1, transition: { duration: 500, delay: 400 } }"
+          :visibleOnce="{ opacity: 1, transition: { duration: 500, delay: 400 } }"
           class="mt-6 flex items-center justify-center gap-6 text-[11px] text-muted-foreground tracking-wide"
         >
           <div class="flex items-center gap-2">
