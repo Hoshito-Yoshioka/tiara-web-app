@@ -19,7 +19,6 @@ services:
     plan: free
     dockerfilePath: ./packages/backend/Dockerfile
     dockerContext: ./packages/backend
-    preDeployCommand: 'sh /app/scripts/migrate.sh'
     envVars:
       - key: DATABASE_URL
         fromDatabase:
