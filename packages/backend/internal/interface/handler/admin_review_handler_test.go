@@ -90,7 +90,8 @@ func TestAdminReviewHandler_ListPendingProfileDrafts(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var resp []PendingProfileDraftResponse
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, "Yuki", resp[0].StaffName)
 		assert.Len(t, resp[0].Images, 1)

@@ -122,7 +122,7 @@ func (r *menuRepository) UpdateMenuCategory(ctx context.Context, id string, inpu
 	if err != nil {
 		return domain.MenuCategory{}, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
 
 	qtx := r.q.WithTx(tx)
 
@@ -197,7 +197,7 @@ func (r *menuRepository) UpdateMenuItem(ctx context.Context, id string, input do
 	if err != nil {
 		return domain.MenuItem{}, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
 
 	qtx := r.q.WithTx(tx)
 

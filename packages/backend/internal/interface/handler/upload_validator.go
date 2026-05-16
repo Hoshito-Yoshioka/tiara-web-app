@@ -48,7 +48,7 @@ func validateImageFile(file *multipart.FileHeader) error {
 	if err != nil {
 		return fmt.Errorf("failed to read file")
 	}
-	defer src.Close()
+	defer src.Close() //nolint:errcheck // best-effort close
 
 	// 先頭 512 バイトを読み取って MIME タイプを判定
 	buf := make([]byte, 512)
@@ -64,7 +64,7 @@ func validateImageFile(file *multipart.FileHeader) error {
 
 	// ファイルポインタを先頭に戻す
 	if seeker, ok := src.(io.Seeker); ok {
-		seeker.Seek(0, io.SeekStart)
+		_, _ = seeker.Seek(0, io.SeekStart)
 	}
 
 	return nil

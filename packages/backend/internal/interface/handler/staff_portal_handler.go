@@ -424,7 +424,7 @@ func (h *StaffPortalHandler) UploadMyImage(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to read file"})
 	}
-	defer src.Close()
+	defer src.Close() //nolint:errcheck // best-effort close
 
 	// uploads ディレクトリ作成
 	uploadDir := filepath.Join(h.uploadDir, "staff")
@@ -441,7 +441,7 @@ func (h *StaffPortalHandler) UploadMyImage(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save file"})
 	}
-	defer dst.Close()
+	defer dst.Close() //nolint:errcheck // best-effort close
 
 	if _, err = io.Copy(dst, src); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to write file"})
@@ -452,7 +452,7 @@ func (h *StaffPortalHandler) UploadMyImage(c echo.Context) error {
 
 	image, err := h.staffUsecase.UploadStaffImage(c.Request().Context(), staffID.String(), imageURL, isMain, 0)
 	if err != nil {
-		os.Remove(dstPath)
+		_ = os.Remove(dstPath)
 		c.Logger().Error(err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
