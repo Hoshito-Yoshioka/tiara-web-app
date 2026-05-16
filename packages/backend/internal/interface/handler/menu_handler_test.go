@@ -111,7 +111,8 @@ func TestMenuHandler_CreateMenuCategory(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
 		var resp domain.MenuCategory
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Equal(t, "Whisky", resp.Name)
 	})
 

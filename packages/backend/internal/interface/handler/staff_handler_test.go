@@ -307,7 +307,8 @@ func TestStaffHandler_SetMainImage(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var resp map[string]interface{}
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Equal(t, true, resp["IsMain"])
 	})
 

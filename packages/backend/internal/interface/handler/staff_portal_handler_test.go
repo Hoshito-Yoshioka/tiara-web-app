@@ -87,7 +87,8 @@ func TestStaffPortalHandler_Login(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var resp StaffLoginResponse
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.NotEmpty(t, resp.Token)
 		assert.Equal(t, staffID.String(), resp.StaffID)
 	})
@@ -161,7 +162,8 @@ func TestStaffPortalHandler_Verify(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var resp map[string]string
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Equal(t, "ok", resp["status"])
 		assert.Equal(t, staffID.String(), resp["staffId"])
 	})
@@ -329,7 +331,8 @@ func TestStaffPortalHandler_GetMyScheduleDraft(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var resp ScheduleDraftResponse
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Len(t, resp.Items, 1)
 		assert.Equal(t, "20:00", resp.Items[0].StartTime)
 	})

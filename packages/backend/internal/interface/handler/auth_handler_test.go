@@ -72,7 +72,8 @@ func TestAuthHandler_Login(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 		var resp map[string]string
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err := json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Equal(t, "username and password are required", resp["error"])
 	})
 
@@ -117,7 +118,8 @@ func TestAuthHandler_Verify(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var resp map[string]string
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Equal(t, "ok", resp["status"])
 	})
 }

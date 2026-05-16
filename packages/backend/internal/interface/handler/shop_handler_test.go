@@ -89,7 +89,8 @@ func TestShopHandler_GetShopByID(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var resp domain.Shop
-		json.Unmarshal(rec.Body.Bytes(), &resp)
+		err = json.Unmarshal(rec.Body.Bytes(), &resp)
+		assert.NoError(t, err)
 		assert.Equal(t, "Tiara", resp.Name)
 	})
 

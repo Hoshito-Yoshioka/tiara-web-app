@@ -119,7 +119,7 @@ func (r *staffRepository) SetMainImage(ctx context.Context, staffID string, imag
 	if err != nil {
 		return domain.StaffImage{}, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
 
 	qtx := r.q.WithTx(tx)
 
