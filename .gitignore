@@ -50,8 +50,9 @@ packages/backend/backend
 packages/backend/backend # Go binary
 packages/backend/bin/
 
-# github
-.github/
+# github（workflows だけ追跡）
+.github/*
+!.github/workflows/
 
 # docs (ローカル専用ドキュメント)
 docs/
