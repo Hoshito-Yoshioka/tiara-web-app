@@ -33,8 +33,8 @@ importers:
         specifier: ^1.19.10
         version: 1.19.10(hono@4.12.2)
       '@hono/zod-validator':
-        specifier: ^0.2.2
-        version: 0.2.2(hono@4.12.2)(zod@3.25.76)
+        specifier: ^0.8.0
+        version: 0.8.0(hono@4.12.2)(zod@3.25.76)
       hono:
         specifier: ^4.5.1
         version: 4.12.2
@@ -496,11 +496,11 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@hono/zod-validator@0.2.2':
-    resolution: {integrity: sha512-dSDxaPV70Py8wuIU2QNpoVEIOSzSXZ/6/B/h4xA7eOMz7+AarKTSGV8E6QwrdcCbBLkpqfJ4Q2TmBO0eP1tCBQ==}
+  '@hono/zod-validator@0.8.0':
+    resolution: {integrity: sha512-5uS4S1/LKtZQYvD4BtpPUFkOv8d1wNxHHrChm26buMiEYc1FrHWvDUaKVBwkiVtvSExHSpLGDvcnpI2Copyj9w==}
     peerDependencies:
-      hono: '>=3.9.0'
-      zod: ^3.19.1
+      hono: '>=4.10.0'
+      zod: ^3.25.0 || ^4.0.0
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -1727,6 +1727,11 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  semver@7.8.0:
+    resolution: {integrity: sha512-AcM7dV/5ul4EekoQ29Agm5vri8JNqRyj39o0qpX6vDF2GZrtutZl5RwgD1XnZjiTAfncsJhMI48QQH3sN87YNA==}
+    engines: {node: '>=10'}
+    hasBin: true
+
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
     engines: {node: '>=8'}
@@ -2272,7 +2277,7 @@ snapshots:
     dependencies:
       hono: 4.12.2
 
-  '@hono/zod-validator@0.2.2(hono@4.12.2)(zod@3.25.76)':
+  '@hono/zod-validator@0.8.0(hono@4.12.2)(zod@3.25.76)':
     dependencies:
       hono: 4.12.2
       zod: 3.25.76
@@ -3611,6 +3616,8 @@ snapshots:
 
   semver@7.7.4: {}
 
+  semver@7.8.0: {}
+
   shebang-command@2.0.0:
     dependencies:
       shebang-regex: 3.0.0
@@ -3883,7 +3890,7 @@ snapshots:
       eslint-visitor-keys: 5.0.1
       espree: 11.2.0
       esquery: 1.7.0
-      semver: 7.7.4
+      semver: 7.8.0
     transitivePeerDependencies:
       - supports-color
 

@@ -50,6 +50,12 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
+		XSSProtection:         "1; mode=block",
+		ContentTypeNosniff:    "nosniff",
+		XFrameOptions:         "DENY",
+		ContentSecurityPolicy: "default-src 'self'",
+	}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: cfg.CORSOrigins,
 		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE},

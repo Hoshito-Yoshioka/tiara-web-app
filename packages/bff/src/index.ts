@@ -1,6 +1,7 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { secureHeaders } from 'hono/secure-headers'
 import { shopRoutes } from './routes/shop'
 import { staffRoutes } from './routes/staff'
 import { scheduleRoutes } from './routes/schedule'
@@ -15,6 +16,9 @@ import { adminReviewRoutes } from './routes/admin/review'
 import { adminAccountRoutes } from './routes/admin/account'
 
 const app = new Hono()
+
+// Security headers
+app.use('/*', secureHeaders())
 
 // CORS: Frontend からのアクセスを許可（環境変数で設定可能）
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173'
