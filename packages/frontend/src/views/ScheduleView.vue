@@ -255,7 +255,7 @@
         <div
           v-motion
           :initial="{ opacity: 0 }"
-          :visible="{ opacity: 1, transition: { duration: 500, delay: 400 } }"
+          :visibleOnce="{ opacity: 1, transition: { duration: 500, delay: 400 } }"
           class="mt-6 flex items-center justify-center gap-6 text-[11px] text-muted-foreground tracking-wide"
         >
           <div class="flex items-center gap-2">

@@ -65,7 +65,7 @@
           :key="shop.id"
           v-motion
           :initial="{ opacity: 0, y: 40 }"
-          :visible="{ opacity: 1, y: 0, transition: { duration: 600, delay: index * 200 } }"
+          :visibleOnce="{ opacity: 1, y: 0, transition: { duration: 600, delay: index * 200 } }"
           class="max-w-3xl mx-auto"
         >
           <!-- 店舗名 -->

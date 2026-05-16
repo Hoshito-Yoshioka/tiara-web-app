@@ -76,7 +76,7 @@
       <div
         v-motion
         :initial="{ opacity: 0, y: 20 }"
-        :visible="{ opacity: 1, y: 0, transition: { duration: 700 } }"
+        :visibleOnce="{ opacity: 1, y: 0, transition: { duration: 700 } }"
         class="flex flex-col items-center mb-16"
       >
         <span class="text-primary text-[11px] tracking-[0.4em] uppercase mb-4">Our Club</span>
@@ -91,7 +91,7 @@
         v-if="shop"
         v-motion
         :initial="{ opacity: 0, y: 30 }"
-        :visible="{ opacity: 1, y: 0, transition: { duration: 600 } }"
+        :visibleOnce="{ opacity: 1, y: 0, transition: { duration: 600 } }"
         class="max-w-2xl mx-auto"
       >
         <div

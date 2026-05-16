@@ -43,7 +43,7 @@
           :key="entry.category.id"
           v-motion
           :initial="{ opacity: 0, y: 30 }"
-          :visible="{ opacity: 1, y: 0, transition: { duration: 600, delay: catIdx * 150 } }"
+          :visibleOnce="{ opacity: 1, y: 0, transition: { duration: 600, delay: catIdx * 150 } }"
         >
           <!-- カテゴリヘッダー -->
           <div class="flex items-center gap-3 mb-8">
@@ -88,7 +88,7 @@
       <div
         v-motion
         :initial="{ opacity: 0 }"
-        :visible="{ opacity: 1, transition: { duration: 500, delay: 600 } }"
+        :visibleOnce="{ opacity: 1, transition: { duration: 500, delay: 600 } }"
         class="max-w-3xl mx-auto mt-16 text-center"
       >
         <p class="text-[11px] text-muted-foreground tracking-wide leading-relaxed">
