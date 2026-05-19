@@ -10,7 +10,7 @@ INSERT INTO admins (username, password_hash) VALUES
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO shops (id, name, address, opening_time, closing_time) VALUES
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'TEST New Club TIARA', '北海道函館市本町１－２８ 第５大栄ビル', '20:00:00', '02:00:00')
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'TEST New Club TIARA', '北海道函館市本町１－２８ 第５大栄ビル 1F 右', '20:00:00', '02:00:00')
 ON CONFLICT (id) DO NOTHING;
 
 -- スタッフデータ

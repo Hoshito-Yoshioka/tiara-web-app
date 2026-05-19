@@ -5,7 +5,7 @@
   const shopInfo = {
     name: 'New Club TIARA',
     postalCode: '〒040-0011',
-    address: '北海道函館市本町１−２８ 第５大栄ビル',
+    address: '北海道函館市本町１−２８ 第５大栄ビル 1F 右',
     mapEmbedUrl:
       'https://maps.google.com/maps?q=%E5%8C%97%E6%B5%B7%E9%81%93%E5%87%BD%E9%A4%A8%E5%B8%82%E6%9C%AC%E7%94%BA1-28+%E7%AC%AC5%E5%A4%A7%E6%A0%84%E3%83%93%E3%83%AB&t=m&z=17&output=embed&iwloc=',
     mapLinkUrl:
