@@ -11,7 +11,11 @@ ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO shops (id, name, address, opening_time, closing_time) VALUES
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'TEST New Club TIARA', '北海道函館市本町１－２８ 第５大栄ビル 1F 右', '20:00:00', '02:00:00')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  address = EXCLUDED.address,
+  opening_time = EXCLUDED.opening_time,
+  closing_time = EXCLUDED.closing_time;
 
 -- スタッフデータ
 INSERT INTO staffs (id, shop_id, name, role, bio, image_url, sort_order) VALUES
