@@ -51,10 +51,10 @@
       <!-- ロゴ -->
       <RouterLink
         to="/"
-        class="tracking-[0.5em] text-base font-light text-foreground hover:text-primary transition-colors duration-500 uppercase"
+        class="flex items-center hover:opacity-80 transition-opacity duration-500"
         @click="closeMenu"
       >
-        TIARA
+        <img src="/Tiara-logo-transparent.png" alt="TIARA" class="h-8 w-auto" />
       </RouterLink>
 
       <!-- デスクトップナビ -->

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { computed, onMounted } from 'vue'
   import Button from '@/components/ui/button.vue'
-  import { MapPin, Clock } from 'lucide-vue-next'
+  import { MapPin, Phone } from 'lucide-vue-next'
   import { useShopApi } from '@/composables/useShopApi'
 
   const { shops, fetchShops } = useShopApi()
@@ -12,14 +12,6 @@
 
   /** 一店舗のみ想定 */
   const shop = computed(() => shops.value[0] ?? null)
-
-  /** TIME型のISO文字列から "HH:MM" を抽出 */
-  function formatTime(raw: string): string {
-    const date = new Date(raw)
-    const hours = date.getUTCHours().toString().padStart(2, '0')
-    const minutes = date.getUTCMinutes().toString().padStart(2, '0')
-    return `${hours}:${minutes}`
-  }
 </script>
 
 <template>
@@ -114,9 +106,11 @@
               </p>
             </div>
             <div class="flex items-start gap-4">
-              <Clock class="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <Phone class="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
               <p class="text-sm text-muted-foreground">
-                {{ formatTime(shop.openingTime) }} – {{ formatTime(shop.closingTime) }}
+                <a href="tel:0138-83-6040" class="hover:text-primary transition-colors duration-300"
+                  >0138-83-6040</a
+                >
               </p>
             </div>
           </div>
