@@ -54,7 +54,7 @@
         class="flex items-center hover:opacity-80 transition-opacity duration-500"
         @click="closeMenu"
       >
-        <img src="/Tiara-logo-transparent.png" alt="TIARA" class="h-8 w-auto" />
+        <img src="/Tiara-logo-transparent.png" alt="TIARA" class="h-20 w-auto" />
       </RouterLink>
 
       <!-- デスクトップナビ -->
