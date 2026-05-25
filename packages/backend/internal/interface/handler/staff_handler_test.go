@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"tiara-web-app/backend/internal/domain"
+	"tiara-web-app/backend/internal/testutil"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,14 +59,11 @@ func (m *mockStaffUsecase) UpdateImageCropPosition(_ context.Context, _ string, 
 
 func TestStaffHandler_ListStaffs(t *testing.T) {
 	t.Run("正常系: スタッフ一覧を返す", func(t *testing.T) {
-		mock := &mockStaffUsecase{
-			staffs: []domain.Staff{{ID: uuid.New(), Name: "Yuki"}},
-		}
+		staff := testutil.NewStaff()
+		mock := &mockStaffUsecase{staffs: []domain.Staff{staff}}
 		h := NewStaffHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/staffs", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/staffs")
 
 		err := h.ListStaffs(c)
 		assert.NoError(t, err)
@@ -79,9 +74,7 @@ func TestStaffHandler_ListStaffs(t *testing.T) {
 		mock := &mockStaffUsecase{err: domain.ErrInternal}
 		h := NewStaffHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/staffs", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/staffs")
 
 		_ = h.ListStaffs(c)
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -93,22 +86,16 @@ func TestStaffHandler_ListStaffs(t *testing.T) {
 // ============================================================
 
 func TestStaffHandler_GetStaffWithSchedules(t *testing.T) {
-	staffID := uuid.New()
+	staff := testutil.NewStaff()
 
 	t.Run("正常系: スタッフ詳細を返す", func(t *testing.T) {
 		mock := &mockStaffUsecase{
-			staffDetail: domain.StaffWithSchedules{
-				Staff: domain.Staff{ID: staffID, Name: "Yuki"},
-			},
+			staffDetail: domain.StaffWithSchedules{Staff: staff},
 		}
 		h := NewStaffHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/staffs/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(staffID.String())
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/staffs/:id")
+		testutil.SetPathParams(c, "id", staff.ID.String())
 
 		err := h.GetStaffWithSchedules(c)
 		assert.NoError(t, err)
@@ -118,12 +105,8 @@ func TestStaffHandler_GetStaffWithSchedules(t *testing.T) {
 	t.Run("異常系: id パラメータが空 → 400", func(t *testing.T) {
 		h := NewStaffHandler(&mockStaffUsecase{})
 
-		req := httptest.NewRequest(http.MethodGet, "/staffs/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("")
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/staffs/:id")
+		testutil.SetPathParams(c, "id", "")
 
 		_ = h.GetStaffWithSchedules(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -133,12 +116,8 @@ func TestStaffHandler_GetStaffWithSchedules(t *testing.T) {
 		mock := &mockStaffUsecase{err: domain.ErrNotFound}
 		h := NewStaffHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/staffs/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/staffs/:id")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.GetStaffWithSchedules(c)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -151,18 +130,14 @@ func TestStaffHandler_GetStaffWithSchedules(t *testing.T) {
 
 func TestStaffHandler_CreateStaff(t *testing.T) {
 	t.Run("正常系: スタッフ作成 → 201", func(t *testing.T) {
+		staff := testutil.NewStaff()
 		mock := &mockStaffUsecase{
-			staffDetail: domain.StaffWithSchedules{
-				Staff: domain.Staff{ID: uuid.New(), Name: "Yuki"},
-			},
+			staffDetail: domain.StaffWithSchedules{Staff: staff},
 		}
 		h := NewStaffHandler(mock)
 
 		body := `{"shopId":"` + uuid.New().String() + `","name":"Yuki","role":"Cast","bio":"","imageUrl":"","imageCropPosition":"center","sortOrder":1,"schedules":[]}`
-		req := httptest.NewRequest(http.MethodPost, "/admin/staffs", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/staffs", body)
 
 		err := h.CreateStaff(c)
 		assert.NoError(t, err)
@@ -172,10 +147,7 @@ func TestStaffHandler_CreateStaff(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewStaffHandler(&mockStaffUsecase{})
 
-		req := httptest.NewRequest(http.MethodPost, "/admin/staffs", strings.NewReader("bad"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/staffs", "bad")
 
 		_ = h.CreateStaff(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -187,24 +159,18 @@ func TestStaffHandler_CreateStaff(t *testing.T) {
 // ============================================================
 
 func TestStaffHandler_UpdateStaff(t *testing.T) {
-	staffID := uuid.New()
+	staff := testutil.NewStaff()
+	staff.Name = "Updated"
 
 	t.Run("正常系: スタッフ更新 → 200", func(t *testing.T) {
 		mock := &mockStaffUsecase{
-			staffDetail: domain.StaffWithSchedules{
-				Staff: domain.Staff{ID: staffID, Name: "Updated"},
-			},
+			staffDetail: domain.StaffWithSchedules{Staff: staff},
 		}
 		h := NewStaffHandler(mock)
 
 		body := `{"name":"Updated","role":"Cast","bio":"","imageUrl":"","imageCropPosition":"center","sortOrder":1,"schedules":[]}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/staffs/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(staffID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/staffs/:id", body)
+		testutil.SetPathParams(c, "id", staff.ID.String())
 
 		err := h.UpdateStaff(c)
 		assert.NoError(t, err)
@@ -215,13 +181,8 @@ func TestStaffHandler_UpdateStaff(t *testing.T) {
 		h := NewStaffHandler(&mockStaffUsecase{})
 
 		body := `{"name":"X","role":"","bio":"","imageUrl":"","imageCropPosition":"","sortOrder":0,"schedules":[]}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/staffs/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("")
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/staffs/:id", body)
+		testutil.SetPathParams(c, "id", "")
 
 		_ = h.UpdateStaff(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -237,12 +198,8 @@ func TestStaffHandler_DeleteStaff(t *testing.T) {
 		mock := &mockStaffUsecase{}
 		h := NewStaffHandler(mock)
 
-		req := httptest.NewRequest(http.MethodDelete, "/admin/staffs/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodDelete, "/admin/staffs/:id")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		err := h.DeleteStaff(c)
 		assert.NoError(t, err)
@@ -252,12 +209,8 @@ func TestStaffHandler_DeleteStaff(t *testing.T) {
 	t.Run("異常系: id が空 → 400", func(t *testing.T) {
 		h := NewStaffHandler(&mockStaffUsecase{})
 
-		req := httptest.NewRequest(http.MethodDelete, "/admin/staffs/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("")
+		c, rec := testutil.NewEchoContext(http.MethodDelete, "/admin/staffs/:id")
+		testutil.SetPathParams(c, "id", "")
 
 		_ = h.DeleteStaff(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -267,12 +220,8 @@ func TestStaffHandler_DeleteStaff(t *testing.T) {
 		mock := &mockStaffUsecase{err: domain.ErrNotFound}
 		h := NewStaffHandler(mock)
 
-		req := httptest.NewRequest(http.MethodDelete, "/admin/staffs/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodDelete, "/admin/staffs/:id")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.DeleteStaff(c)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -285,22 +234,16 @@ func TestStaffHandler_DeleteStaff(t *testing.T) {
 
 func TestStaffHandler_SetMainImage(t *testing.T) {
 	staffID := uuid.New()
-	imageID := uuid.New()
+	image := testutil.NewStaffImage()
+	image.StaffID = staffID
 
 	t.Run("正常系: メイン画像設定 → 200", func(t *testing.T) {
-		mock := &mockStaffUsecase{
-			image: domain.StaffImage{ID: imageID, StaffID: staffID, IsMain: true},
-		}
+		mock := &mockStaffUsecase{image: image}
 		h := NewStaffHandler(mock)
 
-		body := `{"imageId":"` + imageID.String() + `"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/staffs/:id/main-image", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(staffID.String())
+		body := `{"imageId":"` + image.ID.String() + `"}`
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/staffs/:id/main-image", body)
+		testutil.SetPathParams(c, "id", staffID.String())
 
 		err := h.SetMainImage(c)
 		assert.NoError(t, err)
@@ -315,14 +258,9 @@ func TestStaffHandler_SetMainImage(t *testing.T) {
 	t.Run("異常系: staffID が空 → 400", func(t *testing.T) {
 		h := NewStaffHandler(&mockStaffUsecase{})
 
-		body := `{"imageId":"` + imageID.String() + `"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/staffs/:id/main-image", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("")
+		body := `{"imageId":"` + image.ID.String() + `"}`
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/staffs/:id/main-image", body)
+		testutil.SetPathParams(c, "id", "")
 
 		_ = h.SetMainImage(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -334,22 +272,15 @@ func TestStaffHandler_SetMainImage(t *testing.T) {
 // ============================================================
 
 func TestStaffHandler_UpdateImageCropPosition(t *testing.T) {
-	imageID := uuid.New()
+	image := testutil.NewStaffImage()
+	image.CropPosition = "top"
 
 	t.Run("正常系: クロップ位置更新 → 200", func(t *testing.T) {
-		mock := &mockStaffUsecase{
-			image: domain.StaffImage{ID: imageID, CropPosition: "top"},
-		}
+		mock := &mockStaffUsecase{image: image}
 		h := NewStaffHandler(mock)
 
-		body := `{"cropPosition":"top"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/staffs/images/:imageId/crop", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("imageId")
-		c.SetParamValues(imageID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/staffs/images/:imageId/crop", `{"cropPosition":"top"}`)
+		testutil.SetPathParams(c, "imageId", image.ID.String())
 
 		err := h.UpdateImageCropPosition(c)
 		assert.NoError(t, err)
@@ -359,14 +290,8 @@ func TestStaffHandler_UpdateImageCropPosition(t *testing.T) {
 	t.Run("異常系: imageId が空 → 400", func(t *testing.T) {
 		h := NewStaffHandler(&mockStaffUsecase{})
 
-		body := `{"cropPosition":"center"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/staffs/images/:imageId/crop", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("imageId")
-		c.SetParamValues("")
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/staffs/images/:imageId/crop", `{"cropPosition":"center"}`)
+		testutil.SetPathParams(c, "imageId", "")
 
 		_ = h.UpdateImageCropPosition(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)

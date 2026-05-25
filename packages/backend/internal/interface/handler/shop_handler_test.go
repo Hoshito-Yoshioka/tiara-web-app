@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"tiara-web-app/backend/internal/domain"
+	"tiara-web-app/backend/internal/testutil"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,14 +36,13 @@ func (m *mockShopUsecase) UpdateShop(_ context.Context, _ string, _ domain.Updat
 
 func TestShopHandler_ListShops(t *testing.T) {
 	t.Run("正常系: 店舗一覧を返す", func(t *testing.T) {
+		shop := testutil.NewShop()
 		mock := &mockShopUsecase{
-			shops: []domain.Shop{{ID: uuid.New(), Name: "Tiara"}},
+			shops: []domain.Shop{shop},
 		}
 		h := NewShopHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/shops", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/shops")
 
 		err := h.ListShops(c)
 		assert.NoError(t, err)
@@ -56,9 +53,7 @@ func TestShopHandler_ListShops(t *testing.T) {
 		mock := &mockShopUsecase{err: domain.ErrInternal}
 		h := NewShopHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/shops", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/shops")
 
 		_ = h.ListShops(c)
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -71,18 +66,12 @@ func TestShopHandler_ListShops(t *testing.T) {
 
 func TestShopHandler_GetShopByID(t *testing.T) {
 	t.Run("正常系: 店舗詳細を返す", func(t *testing.T) {
-		shopID := uuid.New()
-		mock := &mockShopUsecase{
-			shop: domain.Shop{ID: shopID, Name: "Tiara"},
-		}
+		shop := testutil.NewShop()
+		mock := &mockShopUsecase{shop: shop}
 		h := NewShopHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/shops/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(shopID.String())
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/shops/:id")
+		testutil.SetPathParams(c, "id", shop.ID.String())
 
 		err := h.GetShopByID(c)
 		assert.NoError(t, err)
@@ -97,12 +86,8 @@ func TestShopHandler_GetShopByID(t *testing.T) {
 	t.Run("異常系: id パラメータが空 → 400", func(t *testing.T) {
 		h := NewShopHandler(&mockShopUsecase{})
 
-		req := httptest.NewRequest(http.MethodGet, "/shops/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("")
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/shops/:id")
+		testutil.SetPathParams(c, "id", "")
 
 		_ = h.GetShopByID(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -112,12 +97,8 @@ func TestShopHandler_GetShopByID(t *testing.T) {
 		mock := &mockShopUsecase{err: domain.ErrNotFound}
 		h := NewShopHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/shops/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/shops/:id")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.GetShopByID(c)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -130,20 +111,14 @@ func TestShopHandler_GetShopByID(t *testing.T) {
 
 func TestShopHandler_UpdateShop(t *testing.T) {
 	t.Run("正常系: 店舗更新 → 200", func(t *testing.T) {
-		shopID := uuid.New()
-		mock := &mockShopUsecase{
-			shop: domain.Shop{ID: shopID, Name: "Updated Tiara"},
-		}
+		shop := testutil.NewShop()
+		shop.Name = "Updated Tiara"
+		mock := &mockShopUsecase{shop: shop}
 		h := NewShopHandler(mock)
 
 		body := `{"name":"Updated Tiara","address":"Tokyo","openingTime":"20:00","closingTime":"05:00"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/shops/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(shopID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/shops/:id", body)
+		testutil.SetPathParams(c, "id", shop.ID.String())
 
 		err := h.UpdateShop(c)
 		assert.NoError(t, err)
@@ -154,13 +129,8 @@ func TestShopHandler_UpdateShop(t *testing.T) {
 		h := NewShopHandler(&mockShopUsecase{})
 
 		body := `{"name":"X","address":"","openingTime":"","closingTime":""}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/shops/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("")
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/shops/:id", body)
+		testutil.SetPathParams(c, "id", "")
 
 		_ = h.UpdateShop(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -169,13 +139,8 @@ func TestShopHandler_UpdateShop(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewShopHandler(&mockShopUsecase{})
 
-		req := httptest.NewRequest(http.MethodPut, "/admin/shops/:id", strings.NewReader("bad"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/shops/:id", "bad")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.UpdateShop(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -186,13 +151,8 @@ func TestShopHandler_UpdateShop(t *testing.T) {
 		h := NewShopHandler(mock)
 
 		body := `{"name":"X","address":"","openingTime":"","closingTime":""}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/shops/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/shops/:id", body)
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.UpdateShop(c)
 		assert.Equal(t, http.StatusNotFound, rec.Code)

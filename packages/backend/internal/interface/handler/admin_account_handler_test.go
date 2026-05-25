@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"tiara-web-app/backend/internal/domain"
+	"tiara-web-app/backend/internal/testutil"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,16 +38,12 @@ func (m *mockAdminAccountUsecase) DeleteStaffAccount(_ context.Context, _ uuid.U
 
 func TestAdminAccountHandler_ListStaffAccounts(t *testing.T) {
 	t.Run("正常系: アカウント一覧を返す", func(t *testing.T) {
-		mock := &mockAdminAccountUsecase{
-			accounts: []domain.StaffAccount{
-				{ID: uuid.New(), StaffID: uuid.New(), Username: "staff1"},
-			},
-		}
+		account := testutil.NewStaffAccount()
+		account.Username = "staff1"
+		mock := &mockAdminAccountUsecase{accounts: []domain.StaffAccount{account}}
 		h := NewAdminAccountHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/staff-accounts", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/staff-accounts")
 
 		err := h.ListStaffAccounts(c)
 		assert.NoError(t, err)
@@ -66,9 +60,7 @@ func TestAdminAccountHandler_ListStaffAccounts(t *testing.T) {
 		mock := &mockAdminAccountUsecase{err: domain.ErrInternal}
 		h := NewAdminAccountHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/staff-accounts", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/staff-accounts")
 
 		_ = h.ListStaffAccounts(c)
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -79,17 +71,14 @@ func TestAdminAccountHandler_GetStaffAccountByStaffID(t *testing.T) {
 	staffID := uuid.New()
 
 	t.Run("正常系: スタッフIDでアカウントを返す", func(t *testing.T) {
-		mock := &mockAdminAccountUsecase{
-			account: domain.StaffAccount{ID: uuid.New(), StaffID: staffID, Username: "staff1"},
-		}
+		account := testutil.NewStaffAccount()
+		account.StaffID = staffID
+		account.Username = "staff1"
+		mock := &mockAdminAccountUsecase{account: account}
 		h := NewAdminAccountHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/staff-accounts/staff/:staffId", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("staffId")
-		c.SetParamValues(staffID.String())
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/staff-accounts/staff/:staffId")
+		testutil.SetPathParams(c, "staffId", staffID.String())
 
 		err := h.GetStaffAccountByStaffID(c)
 		assert.NoError(t, err)
@@ -99,12 +88,8 @@ func TestAdminAccountHandler_GetStaffAccountByStaffID(t *testing.T) {
 	t.Run("異常系: 不正なスタッフID → 400", func(t *testing.T) {
 		h := NewAdminAccountHandler(&mockAdminAccountUsecase{})
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/staff-accounts/staff/:staffId", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("staffId")
-		c.SetParamValues("invalid-uuid")
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/staff-accounts/staff/:staffId")
+		testutil.SetPathParams(c, "staffId", "invalid-uuid")
 
 		_ = h.GetStaffAccountByStaffID(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -114,12 +99,8 @@ func TestAdminAccountHandler_GetStaffAccountByStaffID(t *testing.T) {
 		mock := &mockAdminAccountUsecase{err: domain.ErrNotFound}
 		h := NewAdminAccountHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/staff-accounts/staff/:staffId", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("staffId")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/staff-accounts/staff/:staffId")
+		testutil.SetPathParams(c, "staffId", uuid.New().String())
 
 		err := h.GetStaffAccountByStaffID(c)
 		assert.NoError(t, err)
@@ -131,16 +112,14 @@ func TestAdminAccountHandler_CreateStaffAccount(t *testing.T) {
 	staffID := uuid.New()
 
 	t.Run("正常系: アカウント作成 → 201", func(t *testing.T) {
-		mock := &mockAdminAccountUsecase{
-			account: domain.StaffAccount{ID: uuid.New(), StaffID: staffID, Username: "newuser"},
-		}
+		account := testutil.NewStaffAccount()
+		account.StaffID = staffID
+		account.Username = "newuser"
+		mock := &mockAdminAccountUsecase{account: account}
 		h := NewAdminAccountHandler(mock)
 
 		body := `{"staffId":"` + staffID.String() + `","username":"newuser","password":"pass1234"}`
-		req := httptest.NewRequest(http.MethodPost, "/admin/staff-accounts", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/staff-accounts", body)
 
 		err := h.CreateStaffAccount(c)
 		assert.NoError(t, err)
@@ -155,10 +134,7 @@ func TestAdminAccountHandler_CreateStaffAccount(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewAdminAccountHandler(&mockAdminAccountUsecase{})
 
-		req := httptest.NewRequest(http.MethodPost, "/admin/staff-accounts", strings.NewReader("bad"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/staff-accounts", "bad")
 
 		_ = h.CreateStaffAccount(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -167,11 +143,7 @@ func TestAdminAccountHandler_CreateStaffAccount(t *testing.T) {
 	t.Run("異常系: 不正なスタッフID → 400", func(t *testing.T) {
 		h := NewAdminAccountHandler(&mockAdminAccountUsecase{})
 
-		body := `{"staffId":"invalid","username":"user","password":"pass"}`
-		req := httptest.NewRequest(http.MethodPost, "/admin/staff-accounts", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/staff-accounts", `{"staffId":"invalid","username":"user","password":"pass"}`)
 
 		_ = h.CreateStaffAccount(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -182,10 +154,7 @@ func TestAdminAccountHandler_CreateStaffAccount(t *testing.T) {
 		h := NewAdminAccountHandler(mock)
 
 		body := `{"staffId":"` + staffID.String() + `","username":"dup","password":"pass"}`
-		req := httptest.NewRequest(http.MethodPost, "/admin/staff-accounts", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/staff-accounts", body)
 
 		_ = h.CreateStaffAccount(c)
 		assert.Equal(t, http.StatusConflict, rec.Code)
@@ -201,14 +170,8 @@ func TestAdminAccountHandler_UpdateStaffAccount(t *testing.T) {
 		}
 		h := NewAdminAccountHandler(mock)
 
-		body := `{"username":"updated","password":"newpass"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/staff-accounts/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(accountID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/staff-accounts/:id", `{"username":"updated","password":"newpass"}`)
+		testutil.SetPathParams(c, "id", accountID.String())
 
 		err := h.UpdateStaffAccount(c)
 		assert.NoError(t, err)
@@ -218,14 +181,8 @@ func TestAdminAccountHandler_UpdateStaffAccount(t *testing.T) {
 	t.Run("異常系: 不正なID → 400", func(t *testing.T) {
 		h := NewAdminAccountHandler(&mockAdminAccountUsecase{})
 
-		body := `{"username":"u","password":"p"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/staff-accounts/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("bad-uuid")
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/staff-accounts/:id", `{"username":"u","password":"p"}`)
+		testutil.SetPathParams(c, "id", "bad-uuid")
 
 		_ = h.UpdateStaffAccount(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -234,13 +191,8 @@ func TestAdminAccountHandler_UpdateStaffAccount(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewAdminAccountHandler(&mockAdminAccountUsecase{})
 
-		req := httptest.NewRequest(http.MethodPut, "/admin/staff-accounts/:id", strings.NewReader("bad"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(accountID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/staff-accounts/:id", "bad")
+		testutil.SetPathParams(c, "id", accountID.String())
 
 		_ = h.UpdateStaffAccount(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -254,12 +206,8 @@ func TestAdminAccountHandler_DeleteStaffAccount(t *testing.T) {
 		mock := &mockAdminAccountUsecase{}
 		h := NewAdminAccountHandler(mock)
 
-		req := httptest.NewRequest(http.MethodDelete, "/admin/staff-accounts/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(accountID.String())
+		c, rec := testutil.NewEchoContext(http.MethodDelete, "/admin/staff-accounts/:id")
+		testutil.SetPathParams(c, "id", accountID.String())
 
 		err := h.DeleteStaffAccount(c)
 		assert.NoError(t, err)
@@ -269,12 +217,8 @@ func TestAdminAccountHandler_DeleteStaffAccount(t *testing.T) {
 	t.Run("異常系: 不正なID → 400", func(t *testing.T) {
 		h := NewAdminAccountHandler(&mockAdminAccountUsecase{})
 
-		req := httptest.NewRequest(http.MethodDelete, "/admin/staff-accounts/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("bad")
+		c, rec := testutil.NewEchoContext(http.MethodDelete, "/admin/staff-accounts/:id")
+		testutil.SetPathParams(c, "id", "bad")
 
 		_ = h.DeleteStaffAccount(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -284,12 +228,8 @@ func TestAdminAccountHandler_DeleteStaffAccount(t *testing.T) {
 		mock := &mockAdminAccountUsecase{err: domain.ErrNotFound}
 		h := NewAdminAccountHandler(mock)
 
-		req := httptest.NewRequest(http.MethodDelete, "/admin/staff-accounts/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodDelete, "/admin/staff-accounts/:id")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.DeleteStaffAccount(c)
 		assert.Equal(t, http.StatusNotFound, rec.Code)

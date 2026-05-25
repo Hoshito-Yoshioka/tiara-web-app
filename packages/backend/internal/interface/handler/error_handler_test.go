@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"tiara-web-app/backend/internal/domain"
+	"tiara-web-app/backend/internal/testutil"
 
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,10 +65,7 @@ func TestHandleError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, rec := testutil.NewEchoContext(http.MethodGet, "/")
 
 			_ = handleError(c, tt.err)
 
