@@ -4,15 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
 	"tiara-web-app/backend/internal/domain"
+	"tiara-web-app/backend/internal/testutil"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,18 +70,23 @@ func TestAdminReviewHandler_ListPendingProfileDrafts(t *testing.T) {
 
 	t.Run("正常系: 承認待ちプロフィール一覧を返す", func(t *testing.T) {
 		now := time.Now()
+		draft := testutil.NewStaffProfileDraft()
+		draft.StaffID = staffID
+		draft.Name = "Yuki"
+		draft.Status = domain.DraftStatusPending
+		draft.SubmittedAt = &now
+		draft.CreatedAt = now
+		image := testutil.NewStaffImage()
+		image.StaffID = staffID
+
 		mock := &mockAdminReviewUsecase{
-			profileDrafts: []domain.StaffProfileDraft{
-				{ID: uuid.New(), StaffID: staffID, Name: "Yuki", Status: domain.DraftStatusPending, SubmittedAt: &now, CreatedAt: now},
-			},
-			staffName: "Yuki",
-			images:    []domain.StaffImage{{ID: uuid.New(), StaffID: staffID, ImageURL: "/img.jpg"}},
+			profileDrafts: []domain.StaffProfileDraft{draft},
+			staffName:     "Yuki",
+			images:        []domain.StaffImage{image},
 		}
 		h := NewAdminReviewHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/reviews/profiles", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/reviews/profiles")
 
 		err := h.ListPendingProfileDrafts(c)
 		assert.NoError(t, err)
@@ -101,9 +104,7 @@ func TestAdminReviewHandler_ListPendingProfileDrafts(t *testing.T) {
 		mock := &mockAdminReviewUsecase{err: domain.ErrInternal}
 		h := NewAdminReviewHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/reviews/profiles", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/reviews/profiles")
 
 		_ = h.ListPendingProfileDrafts(c)
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -119,14 +120,8 @@ func TestAdminReviewHandler_ReviewProfileDraft(t *testing.T) {
 		}
 		h := NewAdminReviewHandler(mock)
 
-		body := `{"status":"approved","adminComment":"OK"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/profiles/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/profiles/:id", `{"status":"approved","adminComment":"OK"}`)
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		err := h.ReviewProfileDraft(c)
 		assert.NoError(t, err)
@@ -136,14 +131,8 @@ func TestAdminReviewHandler_ReviewProfileDraft(t *testing.T) {
 	t.Run("異常系: 不正なドラフトID → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		body := `{"status":"approved","adminComment":"OK"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/profiles/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("bad")
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/profiles/:id", `{"status":"approved","adminComment":"OK"}`)
+		testutil.SetPathParams(c, "id", "bad")
 
 		_ = h.ReviewProfileDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -152,13 +141,8 @@ func TestAdminReviewHandler_ReviewProfileDraft(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/profiles/:id", strings.NewReader("bad"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/profiles/:id", "bad")
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		_ = h.ReviewProfileDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -168,14 +152,8 @@ func TestAdminReviewHandler_ReviewProfileDraft(t *testing.T) {
 		mock := &mockAdminReviewUsecase{err: domain.ErrNotFound}
 		h := NewAdminReviewHandler(mock)
 
-		body := `{"status":"approved","adminComment":"OK"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/profiles/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/profiles/:id", `{"status":"approved","adminComment":"OK"}`)
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.ReviewProfileDraft(c)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -191,12 +169,8 @@ func TestAdminReviewHandler_GetProfileDraft(t *testing.T) {
 		}
 		h := NewAdminReviewHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/reviews/profiles/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/reviews/profiles/:id")
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		err := h.GetProfileDraft(c)
 		assert.NoError(t, err)
@@ -206,12 +180,8 @@ func TestAdminReviewHandler_GetProfileDraft(t *testing.T) {
 	t.Run("異常系: 不正なID → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/reviews/profiles/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("bad")
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/reviews/profiles/:id")
+		testutil.SetPathParams(c, "id", "bad")
 
 		_ = h.GetProfileDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -227,14 +197,8 @@ func TestAdminReviewHandler_UpdateProfileDraftContent(t *testing.T) {
 		}
 		h := NewAdminReviewHandler(mock)
 
-		body := `{"name":"Updated","role":"Cast","bio":"bio","imageUrl":"","imageCropPosition":""}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/profiles/:id/content", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/profiles/:id/content", `{"name":"Updated","role":"Cast","bio":"bio","imageUrl":"","imageCropPosition":""}`)
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		err := h.UpdateProfileDraftContent(c)
 		assert.NoError(t, err)
@@ -244,14 +208,8 @@ func TestAdminReviewHandler_UpdateProfileDraftContent(t *testing.T) {
 	t.Run("異常系: 不正なID → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		body := `{"name":"X","role":"Cast","bio":"","imageUrl":"","imageCropPosition":""}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/profiles/:id/content", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("bad")
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/profiles/:id/content", `{"name":"X","role":"Cast","bio":"","imageUrl":"","imageCropPosition":""}`)
+		testutil.SetPathParams(c, "id", "bad")
 
 		_ = h.UpdateProfileDraftContent(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -260,13 +218,8 @@ func TestAdminReviewHandler_UpdateProfileDraftContent(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/profiles/:id/content", strings.NewReader("bad"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/profiles/:id/content", "bad")
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		_ = h.UpdateProfileDraftContent(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -296,9 +249,7 @@ func TestAdminReviewHandler_ListPendingScheduleDrafts(t *testing.T) {
 		}
 		h := NewAdminReviewHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/reviews/schedules", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/reviews/schedules")
 
 		err := h.ListPendingScheduleDrafts(c)
 		assert.NoError(t, err)
@@ -317,9 +268,7 @@ func TestAdminReviewHandler_ListPendingScheduleDrafts(t *testing.T) {
 		mock := &mockAdminReviewUsecase{err: domain.ErrInternal}
 		h := NewAdminReviewHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/reviews/schedules", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/reviews/schedules")
 
 		_ = h.ListPendingScheduleDrafts(c)
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -334,9 +283,7 @@ func TestAdminReviewHandler_ListApprovedScheduleDrafts(t *testing.T) {
 		}
 		h := NewAdminReviewHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/reviews/schedules/approved", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/reviews/schedules/approved")
 
 		err := h.ListApprovedScheduleDrafts(c)
 		assert.NoError(t, err)
@@ -351,12 +298,8 @@ func TestAdminReviewHandler_PublishScheduleDraft(t *testing.T) {
 		mock := &mockAdminReviewUsecase{}
 		h := NewAdminReviewHandler(mock)
 
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id/publish", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id/publish")
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		err := h.PublishScheduleDraft(c)
 		assert.NoError(t, err)
@@ -366,12 +309,8 @@ func TestAdminReviewHandler_PublishScheduleDraft(t *testing.T) {
 	t.Run("異常系: 不正なドラフトID → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id/publish", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("bad")
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id/publish")
+		testutil.SetPathParams(c, "id", "bad")
 
 		_ = h.PublishScheduleDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -381,12 +320,8 @@ func TestAdminReviewHandler_PublishScheduleDraft(t *testing.T) {
 		mock := &mockAdminReviewUsecase{publishErr: domain.ErrNotFound}
 		h := NewAdminReviewHandler(mock)
 
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id/publish", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id/publish")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.PublishScheduleDraft(c)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -402,14 +337,8 @@ func TestAdminReviewHandler_ReviewScheduleDraft(t *testing.T) {
 		}
 		h := NewAdminReviewHandler(mock)
 
-		body := `{"status":"approved","adminComment":"OK"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id", `{"status":"approved","adminComment":"OK"}`)
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		err := h.ReviewScheduleDraft(c)
 		assert.NoError(t, err)
@@ -419,14 +348,8 @@ func TestAdminReviewHandler_ReviewScheduleDraft(t *testing.T) {
 	t.Run("異常系: 不正なID → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		body := `{"status":"approved","adminComment":"OK"}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("bad")
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id", `{"status":"approved","adminComment":"OK"}`)
+		testutil.SetPathParams(c, "id", "bad")
 
 		_ = h.ReviewScheduleDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -435,13 +358,8 @@ func TestAdminReviewHandler_ReviewScheduleDraft(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id", strings.NewReader("bad"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id", "bad")
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		_ = h.ReviewScheduleDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -457,12 +375,8 @@ func TestAdminReviewHandler_GetScheduleDraft(t *testing.T) {
 		}
 		h := NewAdminReviewHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/reviews/schedules/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/reviews/schedules/:id")
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		err := h.GetScheduleDraft(c)
 		assert.NoError(t, err)
@@ -472,12 +386,8 @@ func TestAdminReviewHandler_GetScheduleDraft(t *testing.T) {
 	t.Run("異常系: 不正なID → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		req := httptest.NewRequest(http.MethodGet, "/admin/reviews/schedules/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("bad")
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/admin/reviews/schedules/:id")
+		testutil.SetPathParams(c, "id", "bad")
 
 		_ = h.GetScheduleDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -493,14 +403,8 @@ func TestAdminReviewHandler_UpdateScheduleDraftContent(t *testing.T) {
 		}
 		h := NewAdminReviewHandler(mock)
 
-		body := `{"items":[{"dayOfWeek":1,"startTime":"20:00","endTime":"02:00"}]}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id/content", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id/content", `{"items":[{"dayOfWeek":1,"startTime":"20:00","endTime":"02:00"}]}`)
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		err := h.UpdateScheduleDraftContent(c)
 		assert.NoError(t, err)
@@ -510,14 +414,8 @@ func TestAdminReviewHandler_UpdateScheduleDraftContent(t *testing.T) {
 	t.Run("異常系: 不正なID → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		body := `{"items":[]}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id/content", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues("bad")
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id/content", `{"items":[]}`)
+		testutil.SetPathParams(c, "id", "bad")
 
 		_ = h.UpdateScheduleDraftContent(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -526,13 +424,8 @@ func TestAdminReviewHandler_UpdateScheduleDraftContent(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id/content", strings.NewReader("bad"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id/content", "bad")
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		_ = h.UpdateScheduleDraftContent(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -541,14 +434,8 @@ func TestAdminReviewHandler_UpdateScheduleDraftContent(t *testing.T) {
 	t.Run("異常系: 不正な時刻フォーマット → 400", func(t *testing.T) {
 		h := NewAdminReviewHandler(&mockAdminReviewUsecase{})
 
-		body := `{"items":[{"dayOfWeek":1,"startTime":"invalid","endTime":"02:00"}]}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/reviews/schedules/:id/content", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(draftID.String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/reviews/schedules/:id/content", `{"items":[{"dayOfWeek":1,"startTime":"invalid","endTime":"02:00"}]}`)
+		testutil.SetPathParams(c, "id", draftID.String())
 
 		_ = h.UpdateScheduleDraftContent(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)

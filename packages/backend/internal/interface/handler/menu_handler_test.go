@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"tiara-web-app/backend/internal/domain"
+	"tiara-web-app/backend/internal/testutil"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,22 +52,17 @@ func (m *mockMenuUsecase) DeleteMenuItem(_ context.Context, _ string) error {
 // ============================================================
 
 func TestMenuHandler_ListMenuCategoriesWithItems(t *testing.T) {
-	catID := uuid.New()
-
 	t.Run("正常系: カテゴリ＋アイテム一覧を返す", func(t *testing.T) {
+		cat := testutil.NewMenuCategory()
+		item := testutil.NewMenuItem()
 		mock := &mockMenuUsecase{
 			categories: []domain.MenuCategoryWithItems{
-				{
-					Category: domain.MenuCategory{ID: catID, Name: "Cocktails"},
-					Items:    []domain.MenuItem{{ID: uuid.New(), Name: "Mojito", Price: "800"}},
-				},
+				{Category: cat, Items: []domain.MenuItem{item}},
 			},
 		}
 		h := NewMenuHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/menus", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/menus")
 
 		err := h.ListMenuCategoriesWithItems(c)
 		assert.NoError(t, err)
@@ -80,9 +73,7 @@ func TestMenuHandler_ListMenuCategoriesWithItems(t *testing.T) {
 		mock := &mockMenuUsecase{err: domain.ErrInternal}
 		h := NewMenuHandler(mock)
 
-		req := httptest.NewRequest(http.MethodGet, "/menus", nil)
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodGet, "/menus")
 
 		_ = h.ListMenuCategoriesWithItems(c)
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -95,16 +86,12 @@ func TestMenuHandler_ListMenuCategoriesWithItems(t *testing.T) {
 
 func TestMenuHandler_CreateMenuCategory(t *testing.T) {
 	t.Run("正常系: カテゴリ作成 → 201", func(t *testing.T) {
-		mock := &mockMenuUsecase{
-			category: domain.MenuCategory{ID: uuid.New(), Name: "Whisky"},
-		}
+		cat := testutil.NewMenuCategory()
+		cat.Name = "Whisky"
+		mock := &mockMenuUsecase{category: cat}
 		h := NewMenuHandler(mock)
 
-		body := `{"name":"Whisky","description":"Single malt","sortOrder":1}`
-		req := httptest.NewRequest(http.MethodPost, "/admin/menu/categories", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/menu/categories", `{"name":"Whisky","description":"Single malt","sortOrder":1}`)
 
 		err := h.CreateMenuCategory(c)
 		assert.NoError(t, err)
@@ -119,10 +106,7 @@ func TestMenuHandler_CreateMenuCategory(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewMenuHandler(&mockMenuUsecase{})
 
-		req := httptest.NewRequest(http.MethodPost, "/admin/menu/categories", strings.NewReader("invalid"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/menu/categories", "invalid")
 
 		_ = h.CreateMenuCategory(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -132,11 +116,7 @@ func TestMenuHandler_CreateMenuCategory(t *testing.T) {
 		mock := &mockMenuUsecase{err: domain.ErrConflict}
 		h := NewMenuHandler(mock)
 
-		body := `{"name":"Whisky","description":"","sortOrder":1}`
-		req := httptest.NewRequest(http.MethodPost, "/admin/menu/categories", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/menu/categories", `{"name":"Whisky","description":"","sortOrder":1}`)
 
 		_ = h.CreateMenuCategory(c)
 		assert.Equal(t, http.StatusConflict, rec.Code)
@@ -149,19 +129,13 @@ func TestMenuHandler_CreateMenuCategory(t *testing.T) {
 
 func TestMenuHandler_UpdateMenuCategory(t *testing.T) {
 	t.Run("正常系: カテゴリ更新 → 200", func(t *testing.T) {
-		mock := &mockMenuUsecase{
-			category: domain.MenuCategory{ID: uuid.New(), Name: "Updated"},
-		}
+		cat := testutil.NewMenuCategory()
+		cat.Name = "Updated"
+		mock := &mockMenuUsecase{category: cat}
 		h := NewMenuHandler(mock)
 
-		body := `{"name":"Updated","description":"desc","sortOrder":2}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/menu/categories/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/menu/categories/:id", `{"name":"Updated","description":"desc","sortOrder":2}`)
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		err := h.UpdateMenuCategory(c)
 		assert.NoError(t, err)
@@ -172,14 +146,8 @@ func TestMenuHandler_UpdateMenuCategory(t *testing.T) {
 		mock := &mockMenuUsecase{err: domain.ErrNotFound}
 		h := NewMenuHandler(mock)
 
-		body := `{"name":"X","description":"","sortOrder":1}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/menu/categories/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/menu/categories/:id", `{"name":"X","description":"","sortOrder":1}`)
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.UpdateMenuCategory(c)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -195,12 +163,8 @@ func TestMenuHandler_DeleteMenuCategory(t *testing.T) {
 		mock := &mockMenuUsecase{}
 		h := NewMenuHandler(mock)
 
-		req := httptest.NewRequest(http.MethodDelete, "/admin/menu/categories/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodDelete, "/admin/menu/categories/:id")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		err := h.DeleteMenuCategory(c)
 		assert.NoError(t, err)
@@ -211,12 +175,8 @@ func TestMenuHandler_DeleteMenuCategory(t *testing.T) {
 		mock := &mockMenuUsecase{err: domain.ErrNotFound}
 		h := NewMenuHandler(mock)
 
-		req := httptest.NewRequest(http.MethodDelete, "/admin/menu/categories/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodDelete, "/admin/menu/categories/:id")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		_ = h.DeleteMenuCategory(c)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -229,16 +189,12 @@ func TestMenuHandler_DeleteMenuCategory(t *testing.T) {
 
 func TestMenuHandler_CreateMenuItem(t *testing.T) {
 	t.Run("正常系: アイテム作成 → 201", func(t *testing.T) {
-		mock := &mockMenuUsecase{
-			item: domain.MenuItem{ID: uuid.New(), Name: "Mojito", Price: "800"},
-		}
+		item := testutil.NewMenuItem()
+		mock := &mockMenuUsecase{item: item}
 		h := NewMenuHandler(mock)
 
 		body := `{"categoryId":"` + uuid.New().String() + `","name":"Mojito","price":"800","description":"","sortOrder":1}`
-		req := httptest.NewRequest(http.MethodPost, "/admin/menu/items", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/menu/items", body)
 
 		err := h.CreateMenuItem(c)
 		assert.NoError(t, err)
@@ -248,10 +204,7 @@ func TestMenuHandler_CreateMenuItem(t *testing.T) {
 	t.Run("異常系: 不正なボディ → 400", func(t *testing.T) {
 		h := NewMenuHandler(&mockMenuUsecase{})
 
-		req := httptest.NewRequest(http.MethodPost, "/admin/menu/items", strings.NewReader("bad"))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		c := echo.New().NewContext(req, rec)
+		c, rec := testutil.NewEchoContext(http.MethodPost, "/admin/menu/items", "bad")
 
 		_ = h.CreateMenuItem(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -264,19 +217,13 @@ func TestMenuHandler_CreateMenuItem(t *testing.T) {
 
 func TestMenuHandler_UpdateMenuItem(t *testing.T) {
 	t.Run("正常系: アイテム更新 → 200", func(t *testing.T) {
-		mock := &mockMenuUsecase{
-			item: domain.MenuItem{ID: uuid.New(), Name: "Updated"},
-		}
+		item := testutil.NewMenuItem()
+		item.Name = "Updated"
+		mock := &mockMenuUsecase{item: item}
 		h := NewMenuHandler(mock)
 
-		body := `{"name":"Updated","price":"900","description":"desc","sortOrder":1}`
-		req := httptest.NewRequest(http.MethodPut, "/admin/menu/items/:id", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodPut, "/admin/menu/items/:id", `{"name":"Updated","price":"900","description":"desc","sortOrder":1}`)
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		err := h.UpdateMenuItem(c)
 		assert.NoError(t, err)
@@ -293,12 +240,8 @@ func TestMenuHandler_DeleteMenuItem(t *testing.T) {
 		mock := &mockMenuUsecase{}
 		h := NewMenuHandler(mock)
 
-		req := httptest.NewRequest(http.MethodDelete, "/admin/menu/items/:id", nil)
-		rec := httptest.NewRecorder()
-		e := echo.New()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(uuid.New().String())
+		c, rec := testutil.NewEchoContext(http.MethodDelete, "/admin/menu/items/:id")
+		testutil.SetPathParams(c, "id", uuid.New().String())
 
 		err := h.DeleteMenuItem(c)
 		assert.NoError(t, err)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"tiara-web-app/backend/internal/domain"
+	"tiara-web-app/backend/internal/testutil"
 	"tiara-web-app/backend/internal/usecase"
 
 	"github.com/google/uuid"
@@ -58,11 +59,6 @@ func (m *mockStaffPortalUsecase) SubmitScheduleDraft(_ context.Context, _ uuid.U
 // newPortalHandler はテスト用の StaffPortalHandler を生成するヘルパー。
 func newPortalHandler(auth usecase.StaffAuthUsecase, portal usecase.StaffPortalUsecase, staff usecase.StaffUsecase) *StaffPortalHandler {
 	return NewStaffPortalHandler(auth, portal, staff, "test-secret", 2, "/tmp/test-uploads")
-}
-
-// setStaffIDContext は Echo コンテキストに staff_id をセットするヘルパー。
-func setStaffIDContext(c echo.Context, staffID uuid.UUID) {
-	c.Set("staff_id", staffID.String())
 }
 
 // --- Auth Tests ---
@@ -155,7 +151,7 @@ func TestStaffPortalHandler_Verify(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/portal/auth/verify", nil)
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.Verify(c)
 		assert.NoError(t, err)
@@ -197,7 +193,7 @@ func TestStaffPortalHandler_GetMyProfileDraft(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/portal/profile", nil)
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.GetMyProfileDraft(c)
 		assert.NoError(t, err)
@@ -222,7 +218,7 @@ func TestStaffPortalHandler_GetMyProfileDraft(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/portal/profile", nil)
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.GetMyProfileDraft(c)
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -243,7 +239,7 @@ func TestStaffPortalHandler_SaveMyProfileDraft(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.SaveMyProfileDraft(c)
 		assert.NoError(t, err)
@@ -257,7 +253,7 @@ func TestStaffPortalHandler_SaveMyProfileDraft(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.SaveMyProfileDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -280,7 +276,7 @@ func TestStaffPortalHandler_SubmitMyProfileDraft(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("id")
 		c.SetParamValues(draftID.String())
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.SubmitMyProfileDraft(c)
 		assert.NoError(t, err)
@@ -296,7 +292,7 @@ func TestStaffPortalHandler_SubmitMyProfileDraft(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("id")
 		c.SetParamValues("bad")
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.SubmitMyProfileDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -324,7 +320,7 @@ func TestStaffPortalHandler_GetMyScheduleDraft(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/portal/schedule", nil)
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.GetMyScheduleDraft(c)
 		assert.NoError(t, err)
@@ -352,7 +348,7 @@ func TestStaffPortalHandler_SaveMyScheduleDraft(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.SaveMyScheduleDraft(c)
 		assert.NoError(t, err)
@@ -366,7 +362,7 @@ func TestStaffPortalHandler_SaveMyScheduleDraft(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.SaveMyScheduleDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -380,7 +376,7 @@ func TestStaffPortalHandler_SaveMyScheduleDraft(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.SaveMyScheduleDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -403,7 +399,7 @@ func TestStaffPortalHandler_SubmitMyScheduleDraft(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("id")
 		c.SetParamValues(draftID.String())
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.SubmitMyScheduleDraft(c)
 		assert.NoError(t, err)
@@ -419,7 +415,7 @@ func TestStaffPortalHandler_SubmitMyScheduleDraft(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("id")
 		c.SetParamValues("bad")
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.SubmitMyScheduleDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -443,7 +439,7 @@ func TestStaffPortalHandler_ListMyImages(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/portal/images", nil)
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.ListMyImages(c)
 		assert.NoError(t, err)
@@ -457,7 +453,7 @@ func TestStaffPortalHandler_ListMyImages(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/portal/images", nil)
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.ListMyImages(c)
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -483,7 +479,7 @@ func TestStaffPortalHandler_DeleteMyImage(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("imageId")
 		c.SetParamValues(imageID.String())
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.DeleteMyImage(c)
 		assert.NoError(t, err)
@@ -499,7 +495,7 @@ func TestStaffPortalHandler_DeleteMyImage(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("imageId")
 		c.SetParamValues("")
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.DeleteMyImage(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -521,7 +517,7 @@ func TestStaffPortalHandler_DeleteMyImage(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("imageId")
 		c.SetParamValues(otherImageID.String())
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.DeleteMyImage(c)
 		assert.Equal(t, http.StatusForbidden, rec.Code)
@@ -543,7 +539,7 @@ func TestStaffPortalHandler_SetMyMainImage(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.SetMyMainImage(c)
 		assert.NoError(t, err)
@@ -557,7 +553,7 @@ func TestStaffPortalHandler_SetMyMainImage(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		c := echo.New().NewContext(req, rec)
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.SetMyMainImage(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -586,7 +582,7 @@ func TestStaffPortalHandler_UpdateMyImageCropPosition(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("imageId")
 		c.SetParamValues(imageID.String())
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		err := h.UpdateMyImageCropPosition(c)
 		assert.NoError(t, err)
@@ -604,7 +600,7 @@ func TestStaffPortalHandler_UpdateMyImageCropPosition(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("imageId")
 		c.SetParamValues("")
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.UpdateMyImageCropPosition(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -628,7 +624,7 @@ func TestStaffPortalHandler_UpdateMyImageCropPosition(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("imageId")
 		c.SetParamValues(otherImageID.String())
-		setStaffIDContext(c, staffID)
+		testutil.SetStaffID(c, staffID)
 
 		_ = h.UpdateMyImageCropPosition(c)
 		assert.Equal(t, http.StatusForbidden, rec.Code)
