@@ -1,0 +1,15 @@
+pnpm exec lint-staged
+
+# Go lint (only if Go files are staged)
+GO_STAGED=$(git diff --cached --name-only --diff-filter=ACM -- '*.go')
+if [ -n "$GO_STAGED" ]; then
+  # Ensure GOBIN is in PATH
+  GOBIN=$(go env GOBIN 2>/dev/null)
+  if [ -n "$GOBIN" ]; then
+    export PATH="$GOBIN:$PATH"
+  fi
+
+  cd packages/backend
+  golangci-lint run --new-from-rev=HEAD ./...
+  cd -
+fi
