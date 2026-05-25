@@ -51,7 +51,7 @@ func convertToProfileDraftDomain(row StaffProfileDraft) domain.StaffProfileDraft
 		Bio:               row.Bio,
 		ImageURL:          row.ImageUrl,
 		ImageCropPosition: row.ImageCropPosition,
-		Status:            row.Status,
+		Status:            domain.DraftStatus(row.Status),
 		AdminComment:      row.AdminComment,
 		SubmittedAt:       convertNullableTimestamptz(row.SubmittedAt),
 		ReviewedAt:        convertNullableTimestamptz(row.ReviewedAt),
@@ -100,7 +100,7 @@ func (r *staffDraftRepository) CreateProfileDraft(ctx context.Context, staffID u
 		Bio:               input.Bio,
 		ImageUrl:          input.ImageURL,
 		ImageCropPosition: input.ImageCropPosition,
-		Status:            domain.DraftStatusDraft,
+		Status:            string(domain.DraftStatusDraft),
 	})
 	if err != nil {
 		return domain.StaffProfileDraft{}, err
@@ -117,7 +117,7 @@ func (r *staffDraftRepository) UpdateProfileDraft(ctx context.Context, id uuid.U
 		Bio:               input.Bio,
 		ImageUrl:          input.ImageURL,
 		ImageCropPosition: input.ImageCropPosition,
-		Status:            domain.DraftStatusDraft,
+		Status:            string(domain.DraftStatusDraft),
 	})
 	if err != nil {
 		return domain.StaffProfileDraft{}, err
@@ -138,7 +138,7 @@ func (r *staffDraftRepository) SubmitProfileDraft(ctx context.Context, id uuid.U
 func (r *staffDraftRepository) ReviewProfileDraft(ctx context.Context, id uuid.UUID, input domain.ReviewDraftInput) (domain.StaffProfileDraft, error) {
 	row, err := r.q.ReviewProfileDraft(ctx, ReviewProfileDraftParams{
 		ID:           uuidToPgtype(id),
-		Status:       input.Status,
+		Status:       string(input.Status),
 		AdminComment: input.AdminComment,
 	})
 	if err != nil {
@@ -159,7 +159,7 @@ func convertToScheduleDraftDomain(row StaffScheduleDraft) domain.StaffScheduleDr
 	return domain.StaffScheduleDraft{
 		ID:           uuid.UUID(row.ID.Bytes),
 		StaffID:      uuid.UUID(row.StaffID.Bytes),
-		Status:       row.Status,
+		Status:       domain.DraftStatus(row.Status),
 		AdminComment: row.AdminComment,
 		SubmittedAt:  convertNullableTimestamptz(row.SubmittedAt),
 		ReviewedAt:   convertNullableTimestamptz(row.ReviewedAt),
@@ -273,7 +273,7 @@ func (r *staffDraftRepository) CreateScheduleDraft(ctx context.Context, staffID 
 
 	row, err := qtx.CreateScheduleDraft(ctx, CreateScheduleDraftParams{
 		StaffID: uuidToPgtype(staffID),
-		Status:  domain.DraftStatusDraft,
+		Status:  string(domain.DraftStatusDraft),
 	})
 	if err != nil {
 		return domain.StaffScheduleDraft{}, err
@@ -314,7 +314,7 @@ func (r *staffDraftRepository) UpdateScheduleDraftItems(ctx context.Context, dra
 	// ステータスをdraftに戻す
 	row, err := qtx.UpdateScheduleDraftStatus(ctx, UpdateScheduleDraftStatusParams{
 		ID:     uuidToPgtype(draftID),
-		Status: domain.DraftStatusDraft,
+		Status: string(domain.DraftStatusDraft),
 	})
 	if err != nil {
 		return domain.StaffScheduleDraft{}, err
@@ -371,7 +371,7 @@ func (r *staffDraftRepository) SubmitScheduleDraft(ctx context.Context, id uuid.
 func (r *staffDraftRepository) ReviewScheduleDraft(ctx context.Context, id uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error) {
 	row, err := r.q.ReviewScheduleDraft(ctx, ReviewScheduleDraftParams{
 		ID:           uuidToPgtype(id),
-		Status:       input.Status,
+		Status:       string(input.Status),
 		AdminComment: input.AdminComment,
 	})
 	if err != nil {

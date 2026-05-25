@@ -141,7 +141,7 @@ func toProfileDraftResponse(d domain.StaffProfileDraft) ProfileDraftResponse {
 		Bio:               d.Bio,
 		ImageURL:          d.ImageURL,
 		ImageCropPosition: d.ImageCropPosition,
-		Status:            d.Status,
+		Status:            string(d.Status),
 		AdminComment:      d.AdminComment,
 	}
 	if d.ID != uuid.Nil {
@@ -276,7 +276,7 @@ type ScheduleDraftResponse struct {
 func toScheduleDraftResponse(d domain.StaffScheduleDraft) ScheduleDraftResponse {
 	resp := ScheduleDraftResponse{
 		StaffID:      d.StaffID.String(),
-		Status:       d.Status,
+		Status:       string(d.Status),
 		AdminComment: d.AdminComment,
 		Items:        make([]ScheduleDraftItemResponse, len(d.Items)),
 	}
