@@ -6,16 +6,17 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 const shopRoutes = new Hono()
 
 /**
- * Backend のレスポンス（PascalCase）を Frontend 向け（camelCase）に変換する。
- * BFF の責務の一つである「データ整形」をここで担う。
+ * Backend のレスポンスを Frontend 向けに変換する。
+ * Backend が handler DTO で camelCase + "HH:MM" 形式を返すため、
+ * BFF はフィールド選択のみ行う。
  */
 function toShop(raw: ShopResponse): Shop {
   return {
-    id: raw.ID,
-    name: raw.Name,
-    address: raw.Address,
-    openingTime: raw.OpeningTime,
-    closingTime: raw.ClosingTime,
+    id: raw.id,
+    name: raw.name,
+    address: raw.address,
+    openingTime: raw.openingTime,
+    closingTime: raw.closingTime,
   }
 }
 

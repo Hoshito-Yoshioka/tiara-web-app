@@ -44,7 +44,7 @@ type PendingProfileDraftResponse struct {
 	ImageURL          string           `json:"imageUrl"`
 	ImageCropPosition string           `json:"imageCropPosition"`
 	Status            string           `json:"status"`
-	AdminComment      string           `json:"adminComment"`
+	AdminComment      string           `json:"adminComment,omitempty"`
 	SubmittedAt       *string          `json:"submittedAt,omitempty"`
 	CreatedAt         string           `json:"createdAt"`
 	Images            []StaffImageJSON `json:"images"`
@@ -147,7 +147,7 @@ type PendingScheduleDraftResponse struct {
 	StaffID      string                      `json:"staffId"`
 	StaffName    string                      `json:"staffName"`
 	Status       string                      `json:"status"`
-	AdminComment string                      `json:"adminComment"`
+	AdminComment string                      `json:"adminComment,omitempty"`
 	SubmittedAt  *string                     `json:"submittedAt,omitempty"`
 	CreatedAt    string                      `json:"createdAt"`
 	Items        []ScheduleDraftItemResponse `json:"items"`
