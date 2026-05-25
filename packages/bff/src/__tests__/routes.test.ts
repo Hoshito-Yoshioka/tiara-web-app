@@ -266,16 +266,16 @@ describe('shopRoutes', () => {
   app.route('/api/shops', shopRoutes)
 
   describe('GET /api/shops', () => {
-    it('PascalCase → camelCase 変換を行う', async () => {
+    it('Backend レスポンスのフィールド選択を行う', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [
           {
-            ID: 'shop-1',
-            Name: 'New Club TIARA',
-            Address: '北海道函館市本町１−２８',
-            OpeningTime: '20:00',
-            ClosingTime: '05:00',
+            id: 'shop-1',
+            name: 'New Club TIARA',
+            address: '北海道函館市本町１−２８',
+            openingTime: '20:00',
+            closingTime: '05:00',
           },
         ],
       })
@@ -302,15 +302,15 @@ describe('shopRoutes', () => {
   })
 
   describe('GET /api/shops/:id', () => {
-    it('単一店舗の camelCase 変換を行う', async () => {
+    it('単一店舗のフィールド選択を行う', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          ID: 'shop-1',
-          Name: 'New Club TIARA',
-          Address: '函館',
-          OpeningTime: '20:00',
-          ClosingTime: '05:00',
+          id: 'shop-1',
+          name: 'New Club TIARA',
+          address: '函館',
+          openingTime: '20:00',
+          closingTime: '05:00',
         }),
       })
 

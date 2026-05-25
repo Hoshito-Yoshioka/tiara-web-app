@@ -11,14 +11,14 @@ const adminShopRoutes = new Hono<AuthEnv>()
 // 全ルートに認証ミドルウェアを適用
 adminShopRoutes.use('/*', authMiddleware)
 
-/** Backend の ShopResponse（PascalCase）を Frontend 向け（camelCase）に変換 */
+/** Backend のレスポンスを Frontend 向けに変換（フィールド選択） */
 function toShop(raw: ShopResponse): Shop {
   return {
-    id: raw.ID,
-    name: raw.Name,
-    address: raw.Address,
-    openingTime: raw.OpeningTime,
-    closingTime: raw.ClosingTime,
+    id: raw.id,
+    name: raw.name,
+    address: raw.address,
+    openingTime: raw.openingTime,
+    closingTime: raw.closingTime,
   }
 }
 

@@ -1,12 +1,10 @@
-/** Shop のレスポンス型（Backend API のレスポンスに対応） */
+/** Backend API のレスポンス型（handler DTOにより camelCase + "HH:MM" 形式） */
 export interface ShopResponse {
-  ID: string
-  Name: string
-  Address: string
-  OpeningTime: string
-  ClosingTime: string
-  CreatedAt: string
-  UpdatedAt: string
+  id: string
+  name: string
+  address: string
+  openingTime: string
+  closingTime: string
 }
 
 /** BFF から Frontend へ返す Shop 型 */
