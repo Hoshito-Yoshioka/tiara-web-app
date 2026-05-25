@@ -8,6 +8,8 @@ import (
 // StaffRepository はスタッフデータの永続化を抽象化するインターフェース。
 type StaffRepository interface {
 	ListStaffs(ctx context.Context) ([]domain.Staff, error)
+	ListStaffsPaginated(ctx context.Context, limit, offset int) ([]domain.Staff, error)
+	CountStaffs(ctx context.Context) (int, error)
 	GetStaffByID(ctx context.Context, id string) (domain.Staff, error)
 	ListSchedulesByStaffID(ctx context.Context, staffID string) ([]domain.StaffSchedule, error)
 	ListAllSchedules(ctx context.Context) ([]domain.StaffSchedule, error)
@@ -27,6 +29,7 @@ type StaffRepository interface {
 // StaffUsecase はスタッフに関するビジネスロジックを定義するインターフェース。
 type StaffUsecase interface {
 	ListStaffs(ctx context.Context) ([]domain.Staff, error)
+	ListStaffsPaginated(ctx context.Context, page, perPage int) (domain.PaginatedStaffs, error)
 	GetStaffWithSchedules(ctx context.Context, id string) (domain.StaffWithSchedules, error)
 	ListAllStaffsWithSchedules(ctx context.Context) ([]domain.StaffWithSchedules, error)
 	CreateStaff(ctx context.Context, input domain.CreateStaffInput) (domain.StaffWithSchedules, error)
@@ -51,6 +54,39 @@ func NewStaffUsecase(repo StaffRepository) StaffUsecase {
 // ListStaffs はすべてのスタッフを取得する。
 func (u *staffUsecase) ListStaffs(ctx context.Context) ([]domain.Staff, error) {
 	return u.staffRepo.ListStaffs(ctx)
+}
+
+// ListStaffsPaginated はページネーション付きでスタッフ一覧を取得する。
+func (u *staffUsecase) ListStaffsPaginated(ctx context.Context, page, perPage int) (domain.PaginatedStaffs, error) {
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * perPage
+
+	totalCount, err := u.staffRepo.CountStaffs(ctx)
+	if err != nil {
+		return domain.PaginatedStaffs{}, err
+	}
+
+	staffs, err := u.staffRepo.ListStaffsPaginated(ctx, perPage, offset)
+	if err != nil {
+		return domain.PaginatedStaffs{}, err
+	}
+
+	totalPages := totalCount / perPage
+	if totalCount%perPage != 0 {
+		totalPages++
+	}
+
+	return domain.PaginatedStaffs{
+		Data: staffs,
+		Pagination: domain.Pagination{
+			Page:       page,
+			PerPage:    perPage,
+			TotalCount: totalCount,
+			TotalPages: totalPages,
+		},
+	}, nil
 }
 
 // GetStaffWithSchedules はスタッフ詳細と出勤スケジュール、画像を合わせて取得する。

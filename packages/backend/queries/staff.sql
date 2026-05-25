@@ -1,6 +1,12 @@
 -- name: ListStaffs :many
 SELECT * FROM staffs ORDER BY sort_order ASC;
 
+-- name: ListStaffsPaginated :many
+SELECT * FROM staffs ORDER BY sort_order ASC LIMIT $1 OFFSET $2;
+
+-- name: CountStaffs :one
+SELECT count(*) FROM staffs;
+
 -- name: GetStaffByID :one
 SELECT * FROM staffs WHERE id = $1;
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"tiara-web-app/backend/internal/domain"
 	"tiara-web-app/backend/internal/usecase"
@@ -25,7 +26,24 @@ func NewStaffHandler(us usecase.StaffUsecase) *StaffHandler {
 }
 
 // ListStaffs はスタッフ一覧を返すハンドラー。
+// page クエリパラメータが指定された場合はページネーション付きレスポンスを返す。
+// 未指定の場合は全件を配列で返す（後方互換）。
 func (h *StaffHandler) ListStaffs(c echo.Context) error {
+	pageStr := c.QueryParam("page")
+	if pageStr != "" {
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "page must be a positive integer"})
+		}
+
+		const perPage = 10
+		result, err := h.staffUsecase.ListStaffsPaginated(c.Request().Context(), page, perPage)
+		if err != nil {
+			return handleError(c, err)
+		}
+		return c.JSON(http.StatusOK, result)
+	}
+
 	staffs, err := h.staffUsecase.ListStaffs(c.Request().Context())
 	if err != nil {
 		return handleError(c, err)

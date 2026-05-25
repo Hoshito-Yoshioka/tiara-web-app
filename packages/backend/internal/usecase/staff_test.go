@@ -78,6 +78,23 @@ func (m *mockStaffRepository) UpdateImageCropPosition(_ context.Context, _ strin
 	return m.image, m.err
 }
 
+func (m *mockStaffRepository) ListStaffsPaginated(_ context.Context, limit, offset int) ([]domain.Staff, error) {
+	// ページネーションをシミュレート
+	start := offset
+	end := offset + limit
+	if start >= len(m.staffs) {
+		return []domain.Staff{}, m.err
+	}
+	if end > len(m.staffs) {
+		end = len(m.staffs)
+	}
+	return m.staffs[start:end], m.err
+}
+
+func (m *mockStaffRepository) CountStaffs(_ context.Context) (int, error) {
+	return len(m.staffs), m.err
+}
+
 func TestStaffUsecase_ListStaffs_Success(t *testing.T) {
 	staffs := []domain.Staff{
 		{ID: uuid.New(), Name: "Staff A"},

@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countStaffs = `-- name: CountStaffs :one
+SELECT count(*) FROM staffs
+`
+
+func (q *Queries) CountStaffs(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countStaffs)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createSchedule = `-- name: CreateSchedule :one
 INSERT INTO staff_schedules (staff_id, day_of_week, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING id, staff_id, day_of_week, start_time, end_time, created_at, updated_at
 `
@@ -227,6 +238,46 @@ SELECT id, shop_id, name, role, bio, image_url, image_crop_position, sort_order,
 
 func (q *Queries) ListStaffsByShopID(ctx context.Context, shopID pgtype.UUID) ([]Staff, error) {
 	rows, err := q.db.Query(ctx, listStaffsByShopID, shopID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Staff
+	for rows.Next() {
+		var i Staff
+		if err := rows.Scan(
+			&i.ID,
+			&i.ShopID,
+			&i.Name,
+			&i.Role,
+			&i.Bio,
+			&i.ImageUrl,
+			&i.ImageCropPosition,
+			&i.SortOrder,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStaffsPaginated = `-- name: ListStaffsPaginated :many
+SELECT id, shop_id, name, role, bio, image_url, image_crop_position, sort_order, created_at, updated_at FROM staffs ORDER BY sort_order ASC LIMIT $1 OFFSET $2
+`
+
+type ListStaffsPaginatedParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) ListStaffsPaginated(ctx context.Context, arg ListStaffsPaginatedParams) ([]Staff, error) {
+	rows, err := q.db.Query(ctx, listStaffsPaginated, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

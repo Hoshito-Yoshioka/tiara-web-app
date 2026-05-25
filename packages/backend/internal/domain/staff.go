@@ -81,3 +81,17 @@ type ScheduleInput struct {
 	StartTime string
 	EndTime   string
 }
+
+// Pagination はページネーションのメタ情報。
+type Pagination struct {
+	Page       int `json:"page"`
+	PerPage    int `json:"perPage"`
+	TotalCount int `json:"totalCount"`
+	TotalPages int `json:"totalPages"`
+}
+
+// PaginatedStaffs はページネーション付きスタッフ一覧。
+type PaginatedStaffs struct {
+	Data       []Staff    `json:"data"`
+	Pagination Pagination `json:"pagination"`
+}

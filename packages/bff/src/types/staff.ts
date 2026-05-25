@@ -79,3 +79,23 @@ export interface StaffWithSchedules {
   schedules: StaffSchedule[]
   images: StaffImage[]
 }
+
+/** ページネーションメタ情報 */
+export interface Pagination {
+  page: number
+  perPage: number
+  totalCount: number
+  totalPages: number
+}
+
+/** Backend のページネーション付きスタッフレスポンス */
+export interface PaginatedStaffsResponse {
+  data: StaffResponse[]
+  pagination: Pagination
+}
+
+/** BFF → Frontend 向けページネーション付きスタッフ */
+export interface PaginatedStaffs {
+  data: Staff[]
+  pagination: Pagination
+}
