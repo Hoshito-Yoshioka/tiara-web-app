@@ -60,7 +60,7 @@ func toPendingProfileDraftResponse(d domain.StaffProfileDraft) PendingProfileDra
 		Bio:               d.Bio,
 		ImageURL:          d.ImageURL,
 		ImageCropPosition: d.ImageCropPosition,
-		Status:            d.Status,
+		Status:            string(d.Status),
 		AdminComment:      d.AdminComment,
 		CreatedAt:         d.CreatedAt.Format(time.RFC3339),
 	}
@@ -127,7 +127,7 @@ func (h *AdminReviewHandler) ReviewProfileDraft(c echo.Context) error {
 	}
 
 	input := domain.ReviewDraftInput{
-		Status:       req.Status,
+		Status:       domain.DraftStatus(req.Status),
 		AdminComment: req.AdminComment,
 	}
 
@@ -158,7 +158,7 @@ func toPendingScheduleDraftResponse(d domain.StaffScheduleDraft) PendingSchedule
 	resp := PendingScheduleDraftResponse{
 		ID:           d.ID.String(),
 		StaffID:      d.StaffID.String(),
-		Status:       d.Status,
+		Status:       string(d.Status),
 		AdminComment: d.AdminComment,
 		CreatedAt:    d.CreatedAt.Format(time.RFC3339),
 		Items:        make([]ScheduleDraftItemResponse, len(d.Items)),
@@ -243,7 +243,7 @@ func (h *AdminReviewHandler) ReviewScheduleDraft(c echo.Context) error {
 	}
 
 	input := domain.ReviewDraftInput{
-		Status:       req.Status,
+		Status:       domain.DraftStatus(req.Status),
 		AdminComment: req.AdminComment,
 	}
 

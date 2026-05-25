@@ -152,7 +152,7 @@ func (u *staffPortalUsecase) SubmitProfileDraft(ctx context.Context, staffID uui
 		return domain.StaffProfileDraft{}, fmt.Errorf("他のスタッフの下書きは操作できません: %w", domain.ErrForbidden)
 	}
 
-	if draft.Status != domain.DraftStatusDraft && draft.Status != domain.DraftStatusRejected {
+	if !draft.Status.IsEditable() {
 		return domain.StaffProfileDraft{}, fmt.Errorf("draft または rejected 状態の下書きのみ申請できます: %w", domain.ErrInvalidInput)
 	}
 
@@ -208,7 +208,7 @@ func (u *staffPortalUsecase) SubmitScheduleDraft(ctx context.Context, staffID uu
 		return domain.StaffScheduleDraft{}, fmt.Errorf("他のスタッフの下書きは操作できません: %w", domain.ErrForbidden)
 	}
 
-	if draft.Status != domain.DraftStatusDraft && draft.Status != domain.DraftStatusRejected {
+	if !draft.Status.IsEditable() {
 		return domain.StaffScheduleDraft{}, fmt.Errorf("draft または rejected 状態の下書きのみ申請できます: %w", domain.ErrInvalidInput)
 	}
 

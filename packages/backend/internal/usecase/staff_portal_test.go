@@ -222,7 +222,7 @@ func TestStaffPortalUsecase_GetMyProfileDraft_NotExists_FallbackToStaff(t *testi
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Current Name", result.Name)
-	assert.Equal(t, "", result.Status) // 未作成を示す
+	assert.Equal(t, domain.DraftStatus(""), result.Status) // 未作成を示す
 }
 
 func TestStaffPortalUsecase_GetMyProfileDraft_StaffNotFound(t *testing.T) {
@@ -380,7 +380,7 @@ func TestStaffPortalUsecase_GetMyScheduleDraft_NotExists_FallbackToSchedules(t *
 	result, err := uc.GetMyScheduleDraft(context.Background(), staffID)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "", result.Status)
+	assert.Equal(t, domain.DraftStatus(""), result.Status)
 	assert.Len(t, result.Items, 1)
 	assert.Equal(t, 2, result.Items[0].DayOfWeek)
 }
@@ -561,7 +561,7 @@ func TestAdminReviewUsecase_ReviewProfileDraft_InvalidStatus(t *testing.T) {
 	uc := NewAdminReviewUsecase(draftRepo, staffRepo)
 
 	_, err := uc.ReviewProfileDraft(context.Background(), uuid.New(), domain.ReviewDraftInput{
-		Status: "invalid",
+		Status: domain.DraftStatus("invalid"),
 	})
 
 	assert.Error(t, err)
@@ -624,7 +624,7 @@ func TestAdminReviewUsecase_ReviewScheduleDraft_InvalidStatus(t *testing.T) {
 	uc := NewAdminReviewUsecase(draftRepo, staffRepo)
 
 	_, err := uc.ReviewScheduleDraft(context.Background(), uuid.New(), domain.ReviewDraftInput{
-		Status: "pending",
+		Status: domain.DraftStatusPending, // pending is not a valid review action
 	})
 
 	assert.Error(t, err)

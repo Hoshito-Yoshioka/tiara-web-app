@@ -6,13 +6,35 @@ import (
 	"github.com/google/uuid"
 )
 
+// DraftStatus はドラフトの状態を表す値オブジェクト。
+type DraftStatus string
+
 // ドラフトステータス定数
 const (
-	DraftStatusDraft    = "draft"
-	DraftStatusPending  = "pending"
-	DraftStatusApproved = "approved"
-	DraftStatusRejected = "rejected"
+	DraftStatusDraft    DraftStatus = "draft"
+	DraftStatusPending  DraftStatus = "pending"
+	DraftStatusApproved DraftStatus = "approved"
+	DraftStatusRejected DraftStatus = "rejected"
 )
+
+// IsValid は DraftStatus が有効な値かを検証する。
+func (s DraftStatus) IsValid() bool {
+	switch s {
+	case DraftStatusDraft, DraftStatusPending, DraftStatusApproved, DraftStatusRejected:
+		return true
+	}
+	return false
+}
+
+// IsEditable は下書きが編集・再申請可能な状態かを返す（draft または rejected）。
+func (s DraftStatus) IsEditable() bool {
+	return s == DraftStatusDraft || s == DraftStatusRejected
+}
+
+// String は DraftStatus の文字列表現を返す。
+func (s DraftStatus) String() string {
+	return string(s)
+}
 
 // StaffAccount はスタッフポータル用のアカウント情報。
 type StaffAccount struct {
@@ -33,7 +55,7 @@ type StaffProfileDraft struct {
 	Bio               string
 	ImageURL          string
 	ImageCropPosition string
-	Status            string
+	Status            DraftStatus
 	AdminComment      string
 	SubmittedAt       *time.Time
 	ReviewedAt        *time.Time
@@ -45,7 +67,7 @@ type StaffProfileDraft struct {
 type StaffScheduleDraft struct {
 	ID           uuid.UUID
 	StaffID      uuid.UUID
-	Status       string
+	Status       DraftStatus
 	AdminComment string
 	SubmittedAt  *time.Time
 	ReviewedAt   *time.Time
@@ -75,6 +97,6 @@ type SaveProfileDraftInput struct {
 
 // ReviewDraftInput は管理者がドラフトをレビューする際の入力構造体。
 type ReviewDraftInput struct {
-	Status       string
+	Status       DraftStatus
 	AdminComment string
 }
