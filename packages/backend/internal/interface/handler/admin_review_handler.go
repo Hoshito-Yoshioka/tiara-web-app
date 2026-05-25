@@ -111,6 +111,7 @@ func toStaffImageJSONList(images []domain.StaffImage) []StaffImageJSON {
 type ReviewDraftRequest struct {
 	Status       string `json:"status"`
 	AdminComment string `json:"adminComment"`
+	UpdatedAt    string `json:"updatedAt"`
 }
 
 // ReviewProfileDraft は管理者がプロフィール下書きをレビューする。
@@ -131,7 +132,8 @@ func (h *AdminReviewHandler) ReviewProfileDraft(c echo.Context) error {
 		AdminComment: req.AdminComment,
 	}
 
-	draft, err := h.reviewUsecase.ReviewProfileDraft(c.Request().Context(), draftID, input)
+	updatedAt, _ := time.Parse(time.RFC3339, req.UpdatedAt)
+	draft, err := h.reviewUsecase.ReviewProfileDraft(c.Request().Context(), draftID, input, updatedAt)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -247,7 +249,8 @@ func (h *AdminReviewHandler) ReviewScheduleDraft(c echo.Context) error {
 		AdminComment: req.AdminComment,
 	}
 
-	draft, err := h.reviewUsecase.ReviewScheduleDraft(c.Request().Context(), draftID, input)
+	schedUpdatedAt, _ := time.Parse(time.RFC3339, req.UpdatedAt)
+	draft, err := h.reviewUsecase.ReviewScheduleDraft(c.Request().Context(), draftID, input, schedUpdatedAt)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -294,7 +297,8 @@ func (h *AdminReviewHandler) UpdateProfileDraftContent(c echo.Context) error {
 		ImageCropPosition: req.ImageCropPosition,
 	}
 
-	draft, err := h.reviewUsecase.UpdateProfileDraftContent(c.Request().Context(), draftID, input)
+	contentUpdatedAt, _ := time.Parse(time.RFC3339, req.UpdatedAt)
+	draft, err := h.reviewUsecase.UpdateProfileDraftContent(c.Request().Context(), draftID, input, contentUpdatedAt)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -320,7 +324,8 @@ func (h *AdminReviewHandler) GetScheduleDraft(c echo.Context) error {
 
 // UpdateScheduleDraftContentRequest はスケジュール下書き内容修正リクエストのボディ型。
 type UpdateScheduleDraftContentRequest struct {
-	Items []ScheduleDraftItemRequest `json:"items"`
+	Items     []ScheduleDraftItemRequest `json:"items"`
+	UpdatedAt string                     `json:"updatedAt"`
 }
 
 // UpdateScheduleDraftContent は管理者がスケジュール下書きの内容を修正する（ステータス変更なし）。
@@ -353,7 +358,8 @@ func (h *AdminReviewHandler) UpdateScheduleDraftContent(c echo.Context) error {
 		}
 	}
 
-	draft, err := h.reviewUsecase.UpdateScheduleDraftContent(c.Request().Context(), draftID, items)
+	schedContentUpdatedAt, _ := time.Parse(time.RFC3339, req.UpdatedAt)
+	draft, err := h.reviewUsecase.UpdateScheduleDraftContent(c.Request().Context(), draftID, items, schedContentUpdatedAt)
 	if err != nil {
 		return handleError(c, err)
 	}

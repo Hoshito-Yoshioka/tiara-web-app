@@ -186,6 +186,7 @@ type SaveProfileDraftRequest struct {
 	Bio               string `json:"bio"`
 	ImageURL          string `json:"imageUrl"`
 	ImageCropPosition string `json:"imageCropPosition"`
+	UpdatedAt         string `json:"updatedAt"`
 }
 
 // SaveMyProfileDraft はプロフィール下書きを保存する。
@@ -208,12 +209,18 @@ func (h *StaffPortalHandler) SaveMyProfileDraft(c echo.Context) error {
 		ImageCropPosition: req.ImageCropPosition,
 	}
 
-	draft, err := h.portalUsecase.SaveProfileDraft(c.Request().Context(), staffID, input)
+	updatedAt, _ := time.Parse(time.RFC3339, req.UpdatedAt)
+	draft, err := h.portalUsecase.SaveProfileDraft(c.Request().Context(), staffID, input, updatedAt)
 	if err != nil {
 		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, toProfileDraftResponse(draft))
+}
+
+// SubmitDraftRequest は下書き承認申請リクエストのボディ型。
+type SubmitDraftRequest struct {
+	UpdatedAt string `json:"updatedAt"`
 }
 
 // SubmitMyProfileDraft はプロフィール下書きを承認申請する。
@@ -229,7 +236,11 @@ func (h *StaffPortalHandler) SubmitMyProfileDraft(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid draft ID"})
 	}
 
-	draft, err := h.portalUsecase.SubmitProfileDraft(c.Request().Context(), staffID, draftID)
+	var req SubmitDraftRequest
+	_ = c.Bind(&req)
+	updatedAt, _ := time.Parse(time.RFC3339, req.UpdatedAt)
+
+	draft, err := h.portalUsecase.SubmitProfileDraft(c.Request().Context(), staffID, draftID, updatedAt)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -248,7 +259,8 @@ type ScheduleDraftItemRequest struct {
 
 // SaveScheduleDraftRequest はスケジュール下書き保存リクエストのボディ型。
 type SaveScheduleDraftRequest struct {
-	Items []ScheduleDraftItemRequest `json:"items"`
+	Items     []ScheduleDraftItemRequest `json:"items"`
+	UpdatedAt string                     `json:"updatedAt"`
 }
 
 // ScheduleDraftItemResponse はスケジュール下書きアイテムのレスポンス型。
@@ -354,7 +366,8 @@ func (h *StaffPortalHandler) SaveMyScheduleDraft(c echo.Context) error {
 		}
 	}
 
-	draft, err := h.portalUsecase.SaveScheduleDraft(c.Request().Context(), staffID, items)
+	updatedAt, _ := time.Parse(time.RFC3339, req.UpdatedAt)
+	draft, err := h.portalUsecase.SaveScheduleDraft(c.Request().Context(), staffID, items, updatedAt)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -375,7 +388,11 @@ func (h *StaffPortalHandler) SubmitMyScheduleDraft(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid draft ID"})
 	}
 
-	draft, err := h.portalUsecase.SubmitScheduleDraft(c.Request().Context(), staffID, draftID)
+	var submitReq SubmitDraftRequest
+	_ = c.Bind(&submitReq)
+	submitUpdatedAt, _ := time.Parse(time.RFC3339, submitReq.UpdatedAt)
+
+	draft, err := h.portalUsecase.SubmitScheduleDraft(c.Request().Context(), staffID, draftID, submitUpdatedAt)
 	if err != nil {
 		return handleError(c, err)
 	}

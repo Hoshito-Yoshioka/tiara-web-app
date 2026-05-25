@@ -222,17 +222,23 @@ func (q *Queries) ListScheduleDraftItems(ctx context.Context, draftID pgtype.UUI
 }
 
 const reviewScheduleDraft = `-- name: ReviewScheduleDraft :one
-UPDATE staff_schedule_drafts SET status = $2, admin_comment = $3, reviewed_at = NOW() WHERE id = $1 RETURNING id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+UPDATE staff_schedule_drafts SET status = $2, admin_comment = $3, reviewed_at = NOW() WHERE id = $1 AND updated_at = $4 RETURNING id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type ReviewScheduleDraftParams struct {
 	ID           pgtype.UUID
 	Status       string
 	AdminComment string
+	UpdatedAt    pgtype.Timestamptz
 }
 
 func (q *Queries) ReviewScheduleDraft(ctx context.Context, arg ReviewScheduleDraftParams) (StaffScheduleDraft, error) {
-	row := q.db.QueryRow(ctx, reviewScheduleDraft, arg.ID, arg.Status, arg.AdminComment)
+	row := q.db.QueryRow(ctx, reviewScheduleDraft,
+		arg.ID,
+		arg.Status,
+		arg.AdminComment,
+		arg.UpdatedAt,
+	)
 	var i StaffScheduleDraft
 	err := row.Scan(
 		&i.ID,
@@ -248,11 +254,16 @@ func (q *Queries) ReviewScheduleDraft(ctx context.Context, arg ReviewScheduleDra
 }
 
 const submitScheduleDraft = `-- name: SubmitScheduleDraft :one
-UPDATE staff_schedule_drafts SET status = 'pending', submitted_at = NOW() WHERE id = $1 RETURNING id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+UPDATE staff_schedule_drafts SET status = 'pending', submitted_at = NOW() WHERE id = $1 AND updated_at = $2 RETURNING id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
-func (q *Queries) SubmitScheduleDraft(ctx context.Context, id pgtype.UUID) (StaffScheduleDraft, error) {
-	row := q.db.QueryRow(ctx, submitScheduleDraft, id)
+type SubmitScheduleDraftParams struct {
+	ID        pgtype.UUID
+	UpdatedAt pgtype.Timestamptz
+}
+
+func (q *Queries) SubmitScheduleDraft(ctx context.Context, arg SubmitScheduleDraftParams) (StaffScheduleDraft, error) {
+	row := q.db.QueryRow(ctx, submitScheduleDraft, arg.ID, arg.UpdatedAt)
 	var i StaffScheduleDraft
 	err := row.Scan(
 		&i.ID,
@@ -268,16 +279,17 @@ func (q *Queries) SubmitScheduleDraft(ctx context.Context, id pgtype.UUID) (Staf
 }
 
 const updateScheduleDraftStatus = `-- name: UpdateScheduleDraftStatus :one
-UPDATE staff_schedule_drafts SET status = $2 WHERE id = $1 RETURNING id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+UPDATE staff_schedule_drafts SET status = $2 WHERE id = $1 AND updated_at = $3 RETURNING id, staff_id, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type UpdateScheduleDraftStatusParams struct {
-	ID     pgtype.UUID
-	Status string
+	ID        pgtype.UUID
+	Status    string
+	UpdatedAt pgtype.Timestamptz
 }
 
 func (q *Queries) UpdateScheduleDraftStatus(ctx context.Context, arg UpdateScheduleDraftStatusParams) (StaffScheduleDraft, error) {
-	row := q.db.QueryRow(ctx, updateScheduleDraftStatus, arg.ID, arg.Status)
+	row := q.db.QueryRow(ctx, updateScheduleDraftStatus, arg.ID, arg.Status, arg.UpdatedAt)
 	var i StaffScheduleDraft
 	err := row.Scan(
 		&i.ID,

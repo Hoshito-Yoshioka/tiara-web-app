@@ -73,7 +73,7 @@ adminReviewRoutes.put('/profiles/:id', zValidator('json', reviewDraftSchema), as
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error, res.status as 400 | 401 | 409)
   }
 
   const data: ProfileDraftResponse = await res.json()
@@ -98,7 +98,7 @@ adminReviewRoutes.put('/profiles/:id/content', async (c) => {
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error, res.status as 400 | 401 | 409)
   }
 
   const data: ProfileDraftResponse = await res.json()
@@ -178,7 +178,7 @@ adminReviewRoutes.put('/schedules/:id', zValidator('json', reviewDraftSchema), a
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error, res.status as 400 | 401 | 409)
   }
 
   const data: ScheduleDraftResponse = await res.json()
@@ -203,7 +203,7 @@ adminReviewRoutes.put('/schedules/:id/content', async (c) => {
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error, res.status as 400 | 401 | 409)
   }
 
   const data: ScheduleDraftResponse = await res.json()

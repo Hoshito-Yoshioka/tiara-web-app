@@ -35,10 +35,10 @@ func (m *mockAdminReviewUsecase) ListPendingScheduleDrafts(_ context.Context) ([
 func (m *mockAdminReviewUsecase) ListApprovedScheduleDrafts(_ context.Context) ([]domain.StaffScheduleDraft, error) {
 	return m.scheduleDrafts, m.err
 }
-func (m *mockAdminReviewUsecase) ReviewProfileDraft(_ context.Context, _ uuid.UUID, _ domain.ReviewDraftInput) (domain.StaffProfileDraft, error) {
+func (m *mockAdminReviewUsecase) ReviewProfileDraft(_ context.Context, _ uuid.UUID, _ domain.ReviewDraftInput, _ time.Time) (domain.StaffProfileDraft, error) {
 	return m.profileDraft, m.err
 }
-func (m *mockAdminReviewUsecase) ReviewScheduleDraft(_ context.Context, _ uuid.UUID, _ domain.ReviewDraftInput) (domain.StaffScheduleDraft, error) {
+func (m *mockAdminReviewUsecase) ReviewScheduleDraft(_ context.Context, _ uuid.UUID, _ domain.ReviewDraftInput, _ time.Time) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
 func (m *mockAdminReviewUsecase) PublishScheduleDraft(_ context.Context, _ uuid.UUID) error {
@@ -50,10 +50,10 @@ func (m *mockAdminReviewUsecase) GetProfileDraft(_ context.Context, _ uuid.UUID)
 func (m *mockAdminReviewUsecase) GetScheduleDraft(_ context.Context, _ uuid.UUID) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
-func (m *mockAdminReviewUsecase) UpdateProfileDraftContent(_ context.Context, _ uuid.UUID, _ domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
+func (m *mockAdminReviewUsecase) UpdateProfileDraftContent(_ context.Context, _ uuid.UUID, _ domain.SaveProfileDraftInput, _ time.Time) (domain.StaffProfileDraft, error) {
 	return m.profileDraft, m.err
 }
-func (m *mockAdminReviewUsecase) UpdateScheduleDraftContent(_ context.Context, _ uuid.UUID, _ []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error) {
+func (m *mockAdminReviewUsecase) UpdateScheduleDraftContent(_ context.Context, _ uuid.UUID, _ []domain.ScheduleDraftItem, _ time.Time) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
 func (m *mockAdminReviewUsecase) GetStaffName(_ context.Context, _ uuid.UUID) (string, error) {

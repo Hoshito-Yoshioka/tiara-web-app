@@ -15,13 +15,13 @@ INSERT INTO staff_schedule_drafts (staff_id, status)
 VALUES ($1, $2) RETURNING *;
 
 -- name: UpdateScheduleDraftStatus :one
-UPDATE staff_schedule_drafts SET status = $2 WHERE id = $1 RETURNING *;
+UPDATE staff_schedule_drafts SET status = $2 WHERE id = $1 AND updated_at = $3 RETURNING *;
 
 -- name: SubmitScheduleDraft :one
-UPDATE staff_schedule_drafts SET status = 'pending', submitted_at = NOW() WHERE id = $1 RETURNING *;
+UPDATE staff_schedule_drafts SET status = 'pending', submitted_at = NOW() WHERE id = $1 AND updated_at = $2 RETURNING *;
 
 -- name: ReviewScheduleDraft :one
-UPDATE staff_schedule_drafts SET status = $2, admin_comment = $3, reviewed_at = NOW() WHERE id = $1 RETURNING *;
+UPDATE staff_schedule_drafts SET status = $2, admin_comment = $3, reviewed_at = NOW() WHERE id = $1 AND updated_at = $4 RETURNING *;
 
 -- name: DeleteScheduleDraft :exec
 DELETE FROM staff_schedule_drafts WHERE id = $1;

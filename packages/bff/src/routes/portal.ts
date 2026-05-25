@@ -5,6 +5,7 @@ import type { StaffImageResponse, StaffImage } from '../types/staff'
 import {
   saveProfileDraftSchema,
   saveScheduleDraftSchema,
+  submitDraftSchema,
   setMainImageSchema,
   updateCropPositionSchema,
 } from '../schemas'
@@ -73,7 +74,7 @@ portalRoutes.put('/profile', zValidator('json', saveProfileDraftSchema), async (
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error, res.status as 400 | 401 | 409)
   }
 
   const data: ProfileDraftResponse = await res.json()
@@ -81,22 +82,27 @@ portalRoutes.put('/profile', zValidator('json', saveProfileDraftSchema), async (
 })
 
 /** POST /api/portal/profile/:id/submit — プロフィール下書きを承認申請 */
-portalRoutes.post('/profile/:id/submit', async (c) => {
+portalRoutes.post('/profile/:id/submit', zValidator('json', submitDraftSchema), async (c) => {
   const authHeader = c.req.header('Authorization')
   if (!authHeader) {
     return c.json({ error: 'Authorization header is required' }, 401)
   }
 
   const id = c.req.param('id')
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/portal/profile/${id}/submit`, {
     method: 'POST',
-    headers: { Authorization: authHeader },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authHeader,
+    },
+    body: JSON.stringify(body),
   })
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error, res.status as 400 | 401 | 409)
   }
 
   const data: ProfileDraftResponse = await res.json()
@@ -145,7 +151,7 @@ portalRoutes.put('/schedule', zValidator('json', saveScheduleDraftSchema), async
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error, res.status as 400 | 401 | 409)
   }
 
   const data: ScheduleDraftResponse = await res.json()
@@ -153,22 +159,27 @@ portalRoutes.put('/schedule', zValidator('json', saveScheduleDraftSchema), async
 })
 
 /** POST /api/portal/schedule/:id/submit — スケジュール下書きを承認申請 */
-portalRoutes.post('/schedule/:id/submit', async (c) => {
+portalRoutes.post('/schedule/:id/submit', zValidator('json', submitDraftSchema), async (c) => {
   const authHeader = c.req.header('Authorization')
   if (!authHeader) {
     return c.json({ error: 'Authorization header is required' }, 401)
   }
 
   const id = c.req.param('id')
+  const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/portal/schedule/${id}/submit`, {
     method: 'POST',
-    headers: { Authorization: authHeader },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authHeader,
+    },
+    body: JSON.stringify(body),
   })
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error, res.status as 400 | 401 | 409)
   }
 
   const data: ScheduleDraftResponse = await res.json()
