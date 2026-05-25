@@ -74,15 +74,15 @@ func (m *mockStaffDraftRepository) CreateProfileDraft(_ context.Context, _ uuid.
 	return m.profileDraft, m.err
 }
 
-func (m *mockStaffDraftRepository) UpdateProfileDraft(_ context.Context, _ uuid.UUID, _ domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
+func (m *mockStaffDraftRepository) UpdateProfileDraft(_ context.Context, _ uuid.UUID, _ domain.SaveProfileDraftInput, _ time.Time) (domain.StaffProfileDraft, error) {
 	return m.profileDraft, m.err
 }
 
-func (m *mockStaffDraftRepository) SubmitProfileDraft(_ context.Context, _ uuid.UUID) (domain.StaffProfileDraft, error) {
+func (m *mockStaffDraftRepository) SubmitProfileDraft(_ context.Context, _ uuid.UUID, _ time.Time) (domain.StaffProfileDraft, error) {
 	return m.profileDraft, m.err
 }
 
-func (m *mockStaffDraftRepository) ReviewProfileDraft(_ context.Context, _ uuid.UUID, _ domain.ReviewDraftInput) (domain.StaffProfileDraft, error) {
+func (m *mockStaffDraftRepository) ReviewProfileDraft(_ context.Context, _ uuid.UUID, _ domain.ReviewDraftInput, _ time.Time) (domain.StaffProfileDraft, error) {
 	return m.profileDraft, m.err
 }
 
@@ -113,15 +113,15 @@ func (m *mockStaffDraftRepository) CreateScheduleDraft(_ context.Context, _ uuid
 	return m.scheduleDraft, m.err
 }
 
-func (m *mockStaffDraftRepository) UpdateScheduleDraftItems(_ context.Context, _ uuid.UUID, _ []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error) {
+func (m *mockStaffDraftRepository) UpdateScheduleDraftItems(_ context.Context, _ uuid.UUID, _ []domain.ScheduleDraftItem, _ time.Time) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
 
-func (m *mockStaffDraftRepository) SubmitScheduleDraft(_ context.Context, _ uuid.UUID) (domain.StaffScheduleDraft, error) {
+func (m *mockStaffDraftRepository) SubmitScheduleDraft(_ context.Context, _ uuid.UUID, _ time.Time) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
 
-func (m *mockStaffDraftRepository) ReviewScheduleDraft(_ context.Context, _ uuid.UUID, _ domain.ReviewDraftInput) (domain.StaffScheduleDraft, error) {
+func (m *mockStaffDraftRepository) ReviewScheduleDraft(_ context.Context, _ uuid.UUID, _ domain.ReviewDraftInput, _ time.Time) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
 
@@ -129,11 +129,11 @@ func (m *mockStaffDraftRepository) DeleteScheduleDraft(_ context.Context, _ uuid
 	return m.err
 }
 
-func (m *mockStaffDraftRepository) UpdateProfileDraftContent(_ context.Context, _ uuid.UUID, _ domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
+func (m *mockStaffDraftRepository) UpdateProfileDraftContent(_ context.Context, _ uuid.UUID, _ domain.SaveProfileDraftInput, _ time.Time) (domain.StaffProfileDraft, error) {
 	return m.profileDraft, m.err
 }
 
-func (m *mockStaffDraftRepository) ReplaceScheduleDraftItems(_ context.Context, _ uuid.UUID, _ []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error) {
+func (m *mockStaffDraftRepository) ReplaceScheduleDraftItems(_ context.Context, _ uuid.UUID, _ []domain.ScheduleDraftItem, _ time.Time) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
 
@@ -256,7 +256,7 @@ func TestStaffPortalUsecase_SaveProfileDraft_Create(t *testing.T) {
 	result, err := uc.SaveProfileDraft(context.Background(), staffID, domain.SaveProfileDraftInput{
 		Name: "New Name",
 		Role: "キャスト",
-	})
+	}, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, "New Name", result.Name)
@@ -283,7 +283,7 @@ func TestStaffPortalUsecase_SaveProfileDraft_Update(t *testing.T) {
 
 	result, err := uc.SaveProfileDraft(context.Background(), staffID, domain.SaveProfileDraftInput{
 		Name: "Updated Name",
-	})
+	}, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Updated Name", result.Name)
@@ -302,7 +302,7 @@ func TestStaffPortalUsecase_SubmitProfileDraft_Success(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewStaffPortalUsecase(draftRepo, staffRepo)
 
-	result, err := uc.SubmitProfileDraft(context.Background(), staffID, draftID)
+	result, err := uc.SubmitProfileDraft(context.Background(), staffID, draftID, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, draftID, result.ID)
@@ -322,7 +322,7 @@ func TestStaffPortalUsecase_SubmitProfileDraft_Forbidden(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewStaffPortalUsecase(draftRepo, staffRepo)
 
-	_, err := uc.SubmitProfileDraft(context.Background(), staffID, draftID)
+	_, err := uc.SubmitProfileDraft(context.Background(), staffID, draftID, time.Time{})
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrForbidden))
@@ -341,7 +341,7 @@ func TestStaffPortalUsecase_SubmitProfileDraft_InvalidStatus(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewStaffPortalUsecase(draftRepo, staffRepo)
 
-	_, err := uc.SubmitProfileDraft(context.Background(), staffID, draftID)
+	_, err := uc.SubmitProfileDraft(context.Background(), staffID, draftID, time.Time{})
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
@@ -400,7 +400,7 @@ func TestStaffPortalUsecase_SaveScheduleDraft_Create(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewStaffPortalUsecase(draftRepo, staffRepo)
 
-	result, err := uc.SaveScheduleDraft(context.Background(), staffID, []domain.ScheduleDraftItem{})
+	result, err := uc.SaveScheduleDraft(context.Background(), staffID, []domain.ScheduleDraftItem{}, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, domain.DraftStatusDraft, result.Status)
@@ -418,7 +418,7 @@ func TestStaffPortalUsecase_SaveScheduleDraft_Update(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewStaffPortalUsecase(draftRepo, staffRepo)
 
-	result, err := uc.SaveScheduleDraft(context.Background(), staffID, []domain.ScheduleDraftItem{})
+	result, err := uc.SaveScheduleDraft(context.Background(), staffID, []domain.ScheduleDraftItem{}, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, staffID, result.StaffID)
@@ -437,7 +437,7 @@ func TestStaffPortalUsecase_SubmitScheduleDraft_Success(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewStaffPortalUsecase(draftRepo, staffRepo)
 
-	result, err := uc.SubmitScheduleDraft(context.Background(), staffID, draftID)
+	result, err := uc.SubmitScheduleDraft(context.Background(), staffID, draftID, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, draftID, result.ID)
@@ -456,7 +456,7 @@ func TestStaffPortalUsecase_SubmitScheduleDraft_Forbidden(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewStaffPortalUsecase(draftRepo, staffRepo)
 
-	_, err := uc.SubmitScheduleDraft(context.Background(), staffID, draftID)
+	_, err := uc.SubmitScheduleDraft(context.Background(), staffID, draftID, time.Time{})
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrForbidden))
@@ -475,7 +475,7 @@ func TestStaffPortalUsecase_SubmitScheduleDraft_InvalidStatus(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewStaffPortalUsecase(draftRepo, staffRepo)
 
-	_, err := uc.SubmitScheduleDraft(context.Background(), staffID, draftID)
+	_, err := uc.SubmitScheduleDraft(context.Background(), staffID, draftID, time.Time{})
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
@@ -549,7 +549,7 @@ func TestAdminReviewUsecase_ReviewProfileDraft_Approve(t *testing.T) {
 
 	result, err := uc.ReviewProfileDraft(context.Background(), draftID, domain.ReviewDraftInput{
 		Status: domain.DraftStatusApproved,
-	})
+	}, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, draftID, result.ID)
@@ -562,7 +562,7 @@ func TestAdminReviewUsecase_ReviewProfileDraft_InvalidStatus(t *testing.T) {
 
 	_, err := uc.ReviewProfileDraft(context.Background(), uuid.New(), domain.ReviewDraftInput{
 		Status: domain.DraftStatus("invalid"),
-	})
+	}, time.Time{})
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
@@ -580,7 +580,7 @@ func TestAdminReviewUsecase_ReviewProfileDraft_NotPending(t *testing.T) {
 
 	_, err := uc.ReviewProfileDraft(context.Background(), draft.ID, domain.ReviewDraftInput{
 		Status: domain.DraftStatusApproved,
-	})
+	}, time.Time{})
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
@@ -593,7 +593,7 @@ func TestAdminReviewUsecase_ReviewProfileDraft_NotFound(t *testing.T) {
 
 	_, err := uc.ReviewProfileDraft(context.Background(), uuid.New(), domain.ReviewDraftInput{
 		Status: domain.DraftStatusApproved,
-	})
+	}, time.Time{})
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrNotFound))
@@ -612,7 +612,7 @@ func TestAdminReviewUsecase_ReviewScheduleDraft_Approve(t *testing.T) {
 
 	result, err := uc.ReviewScheduleDraft(context.Background(), draftID, domain.ReviewDraftInput{
 		Status: domain.DraftStatusApproved,
-	})
+	}, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, draftID, result.ID)
@@ -625,7 +625,7 @@ func TestAdminReviewUsecase_ReviewScheduleDraft_InvalidStatus(t *testing.T) {
 
 	_, err := uc.ReviewScheduleDraft(context.Background(), uuid.New(), domain.ReviewDraftInput{
 		Status: domain.DraftStatusPending, // pending is not a valid review action
-	})
+	}, time.Time{})
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
@@ -643,7 +643,7 @@ func TestAdminReviewUsecase_ReviewScheduleDraft_NotPending(t *testing.T) {
 
 	_, err := uc.ReviewScheduleDraft(context.Background(), draft.ID, domain.ReviewDraftInput{
 		Status: domain.DraftStatusRejected,
-	})
+	}, time.Time{})
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
@@ -731,7 +731,7 @@ func TestAdminReviewUsecase_UpdateProfileDraftContent_Success(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewAdminReviewUsecase(draftRepo, staffRepo)
 
-	result, err := uc.UpdateProfileDraftContent(context.Background(), draft.ID, domain.SaveProfileDraftInput{Name: "Admin Updated"})
+	result, err := uc.UpdateProfileDraftContent(context.Background(), draft.ID, domain.SaveProfileDraftInput{Name: "Admin Updated"}, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Admin Updated", result.Name)
@@ -744,7 +744,7 @@ func TestAdminReviewUsecase_UpdateScheduleDraftContent_Success(t *testing.T) {
 	staffRepo := &mockStaffRepository{}
 	uc := NewAdminReviewUsecase(draftRepo, staffRepo)
 
-	result, err := uc.UpdateScheduleDraftContent(context.Background(), draft.ID, []domain.ScheduleDraftItem{})
+	result, err := uc.UpdateScheduleDraftContent(context.Background(), draft.ID, []domain.ScheduleDraftItem{}, time.Time{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, draft.ID, result.ID)

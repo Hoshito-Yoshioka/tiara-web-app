@@ -2,11 +2,14 @@ package db
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"tiara-web-app/backend/internal/domain"
 	"tiara-web-app/backend/internal/usecase"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -25,6 +28,15 @@ func NewStaffDraftRepository(q *Queries, pool *pgxpool.Pool) usecase.StaffDraftR
 
 // --- Helper ---
 
+// detectConflict は pgx.ErrNoRows を楽観的ロックの競合エラー（ErrConflict）に変換する。
+// :one クエリで WHERE updated_at = $N が一致しない場合、pgx は ErrNoRows を返す。
+func detectConflict(err error) error {
+	if errors.Is(err, pgx.ErrNoRows) {
+		return fmt.Errorf("他のユーザーによって更新されています: %w", domain.ErrConflict)
+	}
+	return err
+}
+
 // convertNullableTimestamptz は pgtype.Timestamptz（nullable）を *time.Time に変換する。
 func convertNullableTimestamptz(ts pgtype.Timestamptz) *time.Time {
 	if !ts.Valid {
@@ -37,6 +49,11 @@ func convertNullableTimestamptz(ts pgtype.Timestamptz) *time.Time {
 // uuidToPgtype は uuid.UUID を pgtype.UUID に変換する。
 func uuidToPgtype(id uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: id, Valid: true}
+}
+
+// timeToPgTimestamptz は time.Time を pgtype.Timestamptz に変換する。
+func timeToPgTimestamptz(t time.Time) pgtype.Timestamptz {
+	return pgtype.Timestamptz{Time: t, Valid: true}
 }
 
 // --- Profile Draft ---
@@ -109,7 +126,8 @@ func (r *staffDraftRepository) CreateProfileDraft(ctx context.Context, staffID u
 }
 
 // UpdateProfileDraft はプロフィール下書きを更新する。
-func (r *staffDraftRepository) UpdateProfileDraft(ctx context.Context, id uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
+// 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
+func (r *staffDraftRepository) UpdateProfileDraft(ctx context.Context, id uuid.UUID, input domain.SaveProfileDraftInput, updatedAt time.Time) (domain.StaffProfileDraft, error) {
 	row, err := r.q.UpdateProfileDraft(ctx, UpdateProfileDraftParams{
 		ID:                uuidToPgtype(id),
 		Name:              input.Name,
@@ -118,31 +136,38 @@ func (r *staffDraftRepository) UpdateProfileDraft(ctx context.Context, id uuid.U
 		ImageUrl:          input.ImageURL,
 		ImageCropPosition: input.ImageCropPosition,
 		Status:            string(domain.DraftStatusDraft),
+		UpdatedAt:         timeToPgTimestamptz(updatedAt),
 	})
 	if err != nil {
-		return domain.StaffProfileDraft{}, err
+		return domain.StaffProfileDraft{}, detectConflict(err)
 	}
 	return convertToProfileDraftDomain(row), nil
 }
 
 // SubmitProfileDraft はプロフィール下書きを承認申請（pending）に変更する。
-func (r *staffDraftRepository) SubmitProfileDraft(ctx context.Context, id uuid.UUID) (domain.StaffProfileDraft, error) {
-	row, err := r.q.SubmitProfileDraft(ctx, uuidToPgtype(id))
+// 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
+func (r *staffDraftRepository) SubmitProfileDraft(ctx context.Context, id uuid.UUID, updatedAt time.Time) (domain.StaffProfileDraft, error) {
+	row, err := r.q.SubmitProfileDraft(ctx, SubmitProfileDraftParams{
+		ID:        uuidToPgtype(id),
+		UpdatedAt: timeToPgTimestamptz(updatedAt),
+	})
 	if err != nil {
-		return domain.StaffProfileDraft{}, err
+		return domain.StaffProfileDraft{}, detectConflict(err)
 	}
 	return convertToProfileDraftDomain(row), nil
 }
 
 // ReviewProfileDraft は管理者がプロフィール下書きをレビューする。
-func (r *staffDraftRepository) ReviewProfileDraft(ctx context.Context, id uuid.UUID, input domain.ReviewDraftInput) (domain.StaffProfileDraft, error) {
+// 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
+func (r *staffDraftRepository) ReviewProfileDraft(ctx context.Context, id uuid.UUID, input domain.ReviewDraftInput, updatedAt time.Time) (domain.StaffProfileDraft, error) {
 	row, err := r.q.ReviewProfileDraft(ctx, ReviewProfileDraftParams{
 		ID:           uuidToPgtype(id),
 		Status:       string(input.Status),
 		AdminComment: input.AdminComment,
+		UpdatedAt:    timeToPgTimestamptz(updatedAt),
 	})
 	if err != nil {
-		return domain.StaffProfileDraft{}, err
+		return domain.StaffProfileDraft{}, detectConflict(err)
 	}
 	return convertToProfileDraftDomain(row), nil
 }
@@ -302,7 +327,8 @@ func (r *staffDraftRepository) CreateScheduleDraft(ctx context.Context, staffID 
 }
 
 // UpdateScheduleDraftItems はスケジュール下書きのアイテムを全置換する（トランザクション使用）。
-func (r *staffDraftRepository) UpdateScheduleDraftItems(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error) {
+// 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
+func (r *staffDraftRepository) UpdateScheduleDraftItems(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem, updatedAt time.Time) (domain.StaffScheduleDraft, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return domain.StaffScheduleDraft{}, err
@@ -313,11 +339,12 @@ func (r *staffDraftRepository) UpdateScheduleDraftItems(ctx context.Context, dra
 
 	// ステータスをdraftに戻す
 	row, err := qtx.UpdateScheduleDraftStatus(ctx, UpdateScheduleDraftStatusParams{
-		ID:     uuidToPgtype(draftID),
-		Status: string(domain.DraftStatusDraft),
+		ID:        uuidToPgtype(draftID),
+		Status:    string(domain.DraftStatusDraft),
+		UpdatedAt: timeToPgTimestamptz(updatedAt),
 	})
 	if err != nil {
-		return domain.StaffScheduleDraft{}, err
+		return domain.StaffScheduleDraft{}, detectConflict(err)
 	}
 
 	// 既存アイテム削除
@@ -349,10 +376,14 @@ func (r *staffDraftRepository) UpdateScheduleDraftItems(ctx context.Context, dra
 }
 
 // SubmitScheduleDraft はスケジュール下書きを承認申請（pending）に変更する。
-func (r *staffDraftRepository) SubmitScheduleDraft(ctx context.Context, id uuid.UUID) (domain.StaffScheduleDraft, error) {
-	row, err := r.q.SubmitScheduleDraft(ctx, uuidToPgtype(id))
+// 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
+func (r *staffDraftRepository) SubmitScheduleDraft(ctx context.Context, id uuid.UUID, updatedAt time.Time) (domain.StaffScheduleDraft, error) {
+	row, err := r.q.SubmitScheduleDraft(ctx, SubmitScheduleDraftParams{
+		ID:        uuidToPgtype(id),
+		UpdatedAt: timeToPgTimestamptz(updatedAt),
+	})
 	if err != nil {
-		return domain.StaffScheduleDraft{}, err
+		return domain.StaffScheduleDraft{}, detectConflict(err)
 	}
 	draft := convertToScheduleDraftDomain(row)
 	// アイテムも返す
@@ -368,14 +399,16 @@ func (r *staffDraftRepository) SubmitScheduleDraft(ctx context.Context, id uuid.
 }
 
 // ReviewScheduleDraft は管理者がスケジュール下書きをレビューする。
-func (r *staffDraftRepository) ReviewScheduleDraft(ctx context.Context, id uuid.UUID, input domain.ReviewDraftInput) (domain.StaffScheduleDraft, error) {
+// 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
+func (r *staffDraftRepository) ReviewScheduleDraft(ctx context.Context, id uuid.UUID, input domain.ReviewDraftInput, updatedAt time.Time) (domain.StaffScheduleDraft, error) {
 	row, err := r.q.ReviewScheduleDraft(ctx, ReviewScheduleDraftParams{
 		ID:           uuidToPgtype(id),
 		Status:       string(input.Status),
 		AdminComment: input.AdminComment,
+		UpdatedAt:    timeToPgTimestamptz(updatedAt),
 	})
 	if err != nil {
-		return domain.StaffScheduleDraft{}, err
+		return domain.StaffScheduleDraft{}, detectConflict(err)
 	}
 	draft := convertToScheduleDraftDomain(row)
 	items, err := r.q.ListScheduleDraftItems(ctx, row.ID)
@@ -398,7 +431,8 @@ func (r *staffDraftRepository) DeleteScheduleDraft(ctx context.Context, id uuid.
 
 // UpdateProfileDraftContent はプロフィール下書きの内容のみ更新する（ステータス変更なし）。
 // 管理者がレビュー時に内容を修正する際に使用する。
-func (r *staffDraftRepository) UpdateProfileDraftContent(ctx context.Context, id uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
+// 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
+func (r *staffDraftRepository) UpdateProfileDraftContent(ctx context.Context, id uuid.UUID, input domain.SaveProfileDraftInput, updatedAt time.Time) (domain.StaffProfileDraft, error) {
 	row, err := r.q.UpdateProfileDraftContent(ctx, UpdateProfileDraftContentParams{
 		ID:                uuidToPgtype(id),
 		Name:              input.Name,
@@ -406,16 +440,18 @@ func (r *staffDraftRepository) UpdateProfileDraftContent(ctx context.Context, id
 		Bio:               input.Bio,
 		ImageUrl:          input.ImageURL,
 		ImageCropPosition: input.ImageCropPosition,
+		UpdatedAt:         timeToPgTimestamptz(updatedAt),
 	})
 	if err != nil {
-		return domain.StaffProfileDraft{}, err
+		return domain.StaffProfileDraft{}, detectConflict(err)
 	}
 	return convertToProfileDraftDomain(row), nil
 }
 
 // ReplaceScheduleDraftItems はスケジュール下書きのアイテムのみ全置換する（ステータス変更なし）。
 // 管理者がレビュー時にスケジュールを修正する際に使用する。
-func (r *staffDraftRepository) ReplaceScheduleDraftItems(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error) {
+// 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
+func (r *staffDraftRepository) ReplaceScheduleDraftItems(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem, updatedAt time.Time) (domain.StaffScheduleDraft, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return domain.StaffScheduleDraft{}, err
@@ -424,16 +460,20 @@ func (r *staffDraftRepository) ReplaceScheduleDraftItems(ctx context.Context, dr
 
 	qtx := r.q.WithTx(tx)
 
+	// ドラフト本体を取得し、楽観的ロックを検証
+	row, err := qtx.GetScheduleDraftByID(ctx, uuidToPgtype(draftID))
+	if err != nil {
+		return domain.StaffScheduleDraft{}, err
+	}
+	if !row.UpdatedAt.Time.Equal(updatedAt) {
+		return domain.StaffScheduleDraft{}, fmt.Errorf("他のユーザーによって更新されています: %w", domain.ErrConflict)
+	}
+
 	// 既存アイテム削除
 	if err := qtx.DeleteScheduleDraftItems(ctx, uuidToPgtype(draftID)); err != nil {
 		return domain.StaffScheduleDraft{}, err
 	}
 
-	// ドラフト本体を取得
-	row, err := qtx.GetScheduleDraftByID(ctx, uuidToPgtype(draftID))
-	if err != nil {
-		return domain.StaffScheduleDraft{}, err
-	}
 	draft := convertToScheduleDraftDomain(row)
 	draft.Items = make([]domain.ScheduleDraftItem, 0, len(items))
 

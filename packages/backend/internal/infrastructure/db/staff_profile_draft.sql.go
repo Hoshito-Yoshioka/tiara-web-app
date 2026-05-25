@@ -153,17 +153,23 @@ func (q *Queries) ListPendingProfileDrafts(ctx context.Context) ([]StaffProfileD
 }
 
 const reviewProfileDraft = `-- name: ReviewProfileDraft :one
-UPDATE staff_profile_drafts SET status = $2, admin_comment = $3, reviewed_at = NOW() WHERE id = $1 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+UPDATE staff_profile_drafts SET status = $2, admin_comment = $3, reviewed_at = NOW() WHERE id = $1 AND updated_at = $4 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type ReviewProfileDraftParams struct {
 	ID           pgtype.UUID
 	Status       string
 	AdminComment string
+	UpdatedAt    pgtype.Timestamptz
 }
 
 func (q *Queries) ReviewProfileDraft(ctx context.Context, arg ReviewProfileDraftParams) (StaffProfileDraft, error) {
-	row := q.db.QueryRow(ctx, reviewProfileDraft, arg.ID, arg.Status, arg.AdminComment)
+	row := q.db.QueryRow(ctx, reviewProfileDraft,
+		arg.ID,
+		arg.Status,
+		arg.AdminComment,
+		arg.UpdatedAt,
+	)
 	var i StaffProfileDraft
 	err := row.Scan(
 		&i.ID,
@@ -184,11 +190,16 @@ func (q *Queries) ReviewProfileDraft(ctx context.Context, arg ReviewProfileDraft
 }
 
 const submitProfileDraft = `-- name: SubmitProfileDraft :one
-UPDATE staff_profile_drafts SET status = 'pending', submitted_at = NOW() WHERE id = $1 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+UPDATE staff_profile_drafts SET status = 'pending', submitted_at = NOW() WHERE id = $1 AND updated_at = $2 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
-func (q *Queries) SubmitProfileDraft(ctx context.Context, id pgtype.UUID) (StaffProfileDraft, error) {
-	row := q.db.QueryRow(ctx, submitProfileDraft, id)
+type SubmitProfileDraftParams struct {
+	ID        pgtype.UUID
+	UpdatedAt pgtype.Timestamptz
+}
+
+func (q *Queries) SubmitProfileDraft(ctx context.Context, arg SubmitProfileDraftParams) (StaffProfileDraft, error) {
+	row := q.db.QueryRow(ctx, submitProfileDraft, arg.ID, arg.UpdatedAt)
 	var i StaffProfileDraft
 	err := row.Scan(
 		&i.ID,
@@ -211,7 +222,7 @@ func (q *Queries) SubmitProfileDraft(ctx context.Context, id pgtype.UUID) (Staff
 const updateProfileDraft = `-- name: UpdateProfileDraft :one
 UPDATE staff_profile_drafts
 SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6, status = $7
-WHERE id = $1 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+WHERE id = $1 AND updated_at = $8 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type UpdateProfileDraftParams struct {
@@ -222,6 +233,7 @@ type UpdateProfileDraftParams struct {
 	ImageUrl          string
 	ImageCropPosition string
 	Status            string
+	UpdatedAt         pgtype.Timestamptz
 }
 
 func (q *Queries) UpdateProfileDraft(ctx context.Context, arg UpdateProfileDraftParams) (StaffProfileDraft, error) {
@@ -233,6 +245,7 @@ func (q *Queries) UpdateProfileDraft(ctx context.Context, arg UpdateProfileDraft
 		arg.ImageUrl,
 		arg.ImageCropPosition,
 		arg.Status,
+		arg.UpdatedAt,
 	)
 	var i StaffProfileDraft
 	err := row.Scan(
@@ -256,7 +269,7 @@ func (q *Queries) UpdateProfileDraft(ctx context.Context, arg UpdateProfileDraft
 const updateProfileDraftContent = `-- name: UpdateProfileDraftContent :one
 UPDATE staff_profile_drafts
 SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6
-WHERE id = $1 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+WHERE id = $1 AND updated_at = $7 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type UpdateProfileDraftContentParams struct {
@@ -266,6 +279,7 @@ type UpdateProfileDraftContentParams struct {
 	Bio               string
 	ImageUrl          string
 	ImageCropPosition string
+	UpdatedAt         pgtype.Timestamptz
 }
 
 func (q *Queries) UpdateProfileDraftContent(ctx context.Context, arg UpdateProfileDraftContentParams) (StaffProfileDraft, error) {
@@ -276,6 +290,7 @@ func (q *Queries) UpdateProfileDraftContent(ctx context.Context, arg UpdateProfi
 		arg.Bio,
 		arg.ImageUrl,
 		arg.ImageCropPosition,
+		arg.UpdatedAt,
 	)
 	var i StaffProfileDraft
 	err := row.Scan(

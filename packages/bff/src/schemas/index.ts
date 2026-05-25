@@ -82,6 +82,7 @@ export const saveProfileDraftSchema = z.object({
   bio: z.string(),
   imageUrl: z.string(),
   imageCropPosition: z.string(),
+  updatedAt: z.string().optional(),
 })
 
 const scheduleDraftItemSchema = z.object({
@@ -92,6 +93,11 @@ const scheduleDraftItemSchema = z.object({
 
 export const saveScheduleDraftSchema = z.object({
   items: z.array(scheduleDraftItemSchema),
+  updatedAt: z.string().optional(),
+})
+
+export const submitDraftSchema = z.object({
+  updatedAt: z.string().optional(),
 })
 
 // --- Admin Review ---
@@ -101,6 +107,7 @@ export const reviewDraftSchema = z.object({
     errorMap: () => ({ message: 'ステータスは approved または rejected を指定してください' }),
   }),
   adminComment: z.string(),
+  updatedAt: z.string().optional(),
 })
 
 // --- Staff Account ---

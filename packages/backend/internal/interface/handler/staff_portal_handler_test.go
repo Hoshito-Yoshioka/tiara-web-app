@@ -40,19 +40,19 @@ type mockStaffPortalUsecase struct {
 func (m *mockStaffPortalUsecase) GetMyProfileDraft(_ context.Context, _ uuid.UUID) (domain.StaffProfileDraft, error) {
 	return m.profileDraft, m.err
 }
-func (m *mockStaffPortalUsecase) SaveProfileDraft(_ context.Context, _ uuid.UUID, _ domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
+func (m *mockStaffPortalUsecase) SaveProfileDraft(_ context.Context, _ uuid.UUID, _ domain.SaveProfileDraftInput, _ time.Time) (domain.StaffProfileDraft, error) {
 	return m.profileDraft, m.err
 }
-func (m *mockStaffPortalUsecase) SubmitProfileDraft(_ context.Context, _ uuid.UUID, _ uuid.UUID) (domain.StaffProfileDraft, error) {
+func (m *mockStaffPortalUsecase) SubmitProfileDraft(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ time.Time) (domain.StaffProfileDraft, error) {
 	return m.profileDraft, m.err
 }
 func (m *mockStaffPortalUsecase) GetMyScheduleDraft(_ context.Context, _ uuid.UUID) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
-func (m *mockStaffPortalUsecase) SaveScheduleDraft(_ context.Context, _ uuid.UUID, _ []domain.ScheduleDraftItem) (domain.StaffScheduleDraft, error) {
+func (m *mockStaffPortalUsecase) SaveScheduleDraft(_ context.Context, _ uuid.UUID, _ []domain.ScheduleDraftItem, _ time.Time) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
-func (m *mockStaffPortalUsecase) SubmitScheduleDraft(_ context.Context, _ uuid.UUID, _ uuid.UUID) (domain.StaffScheduleDraft, error) {
+func (m *mockStaffPortalUsecase) SubmitScheduleDraft(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ time.Time) (domain.StaffScheduleDraft, error) {
 	return m.scheduleDraft, m.err
 }
 
