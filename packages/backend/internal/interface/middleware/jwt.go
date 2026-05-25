@@ -44,9 +44,15 @@ func parseToken(c echo.Context, jwtSecret string) (*TokenClaims, error) {
 		return nil, echo.NewHTTPError(http.StatusUnauthorized, "invalid token claims")
 	}
 
-	sub, _ := claims["sub"].(string)
+	sub, ok := claims["sub"].(string)
+	if !ok || sub == "" {
+		return nil, echo.NewHTTPError(http.StatusUnauthorized, "missing or invalid sub claim")
+	}
+	tokenType, ok := claims["type"].(string)
+	if !ok || tokenType == "" {
+		return nil, echo.NewHTTPError(http.StatusUnauthorized, "missing or invalid type claim")
+	}
 	username, _ := claims["username"].(string)
-	tokenType, _ := claims["type"].(string)
 
 	return &TokenClaims{
 		Subject:  sub,
