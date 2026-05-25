@@ -52,6 +52,17 @@ func (m *mockStaffUsecase) SetMainImage(_ context.Context, _ string, _ string) (
 func (m *mockStaffUsecase) UpdateImageCropPosition(_ context.Context, _ string, _ string) (domain.StaffImage, error) {
 	return m.image, m.err
 }
+func (m *mockStaffUsecase) ListStaffsPaginated(_ context.Context, page, perPage int) (domain.PaginatedStaffs, error) {
+	return domain.PaginatedStaffs{
+		Data: m.staffs,
+		Pagination: domain.Pagination{
+			Page:       page,
+			PerPage:    perPage,
+			TotalCount: len(m.staffs),
+			TotalPages: 1,
+		},
+	}, m.err
+}
 
 // ============================================================
 // ListStaffs

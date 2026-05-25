@@ -65,6 +65,32 @@ func (r *staffRepository) ListStaffs(ctx context.Context) ([]domain.Staff, error
 	return staffs, nil
 }
 
+// ListStaffsPaginated はページネーション付きでスタッフ一覧を取得する。
+func (r *staffRepository) ListStaffsPaginated(ctx context.Context, limit, offset int) ([]domain.Staff, error) {
+	rows, err := r.q.ListStaffsPaginated(ctx, ListStaffsPaginatedParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	staffs := make([]domain.Staff, len(rows))
+	for i, row := range rows {
+		staffs[i] = convertToStaffDomain(row)
+	}
+	return staffs, nil
+}
+
+// CountStaffs はスタッフの総数を取得する。
+func (r *staffRepository) CountStaffs(ctx context.Context) (int, error) {
+	count, err := r.q.CountStaffs(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+
 // GetStaffByID は指定されたIDのスタッフをデータベースから取得する。
 func (r *staffRepository) GetStaffByID(ctx context.Context, id string) (domain.Staff, error) {
 	uid, err := uuid.Parse(id)

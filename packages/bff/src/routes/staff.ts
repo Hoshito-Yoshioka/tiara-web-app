@@ -8,6 +8,8 @@ import type {
   StaffScheduleResponse,
   StaffWithSchedules,
   StaffWithSchedulesResponse,
+  PaginatedStaffs,
+  PaginatedStaffsResponse,
 } from '../types/staff'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
@@ -51,18 +53,32 @@ function toImage(raw: StaffImageResponse): StaffImage {
   }
 }
 
-/** GET /api/staffs — スタッフ一覧を取得 */
+/** GET /api/staffs — スタッフ一覧を取得（page パラメータ指定時はページネーション付き） */
 staffRoutes.get('/', async (c) => {
-  const res = await fetch(`${BACKEND_URL}/staffs`)
+  const page = c.req.query('page')
+  const url = page ? `${BACKEND_URL}/staffs?page=${page}` : `${BACKEND_URL}/staffs`
+
+  const res = await fetch(url)
 
   if (!res.ok) {
-    return c.json({ error: 'Failed to fetch staffs from backend' }, 502)
+    const error =
+      typeof res.json === 'function'
+        ? await res.json().catch(() => ({ error: 'Failed to fetch staffs from backend' }))
+        : { error: 'Failed to fetch staffs from backend' }
+    return c.json(error, res.status >= 500 ? 502 : (res.status as 400))
+  }
+
+  if (page) {
+    const data: PaginatedStaffsResponse = await res.json()
+    const result: PaginatedStaffs = {
+      data: data.data.map(toStaff),
+      pagination: data.pagination,
+    }
+    return c.json(result)
   }
 
   const data: StaffResponse[] = await res.json()
-  const staffs: Staff[] = data.map(toStaff)
-
-  return c.json(staffs)
+  return c.json(data.map(toStaff))
 })
 
 /** GET /api/staffs/:id — スタッフ詳細（スケジュール付き）を取得 */
