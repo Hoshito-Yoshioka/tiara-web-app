@@ -21,6 +21,7 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level=critical
       - run: pnpm lint
       - run: pnpm test
 
@@ -43,5 +44,9 @@ jobs:
           version: v2.12.2
           working-directory: packages/backend
 
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: Vulnerability check
+        run: govulncheck ./...
+        continue-on-error: true
       - run: go build ./...
       - run: go test ./internal/... -v
