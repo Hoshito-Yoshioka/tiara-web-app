@@ -25,7 +25,7 @@ adminMenuRoutes.post('/categories', zValidator('json', createMenuCategorySchema)
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/menu/categories`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/menu/categories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: authHeader },
     body: JSON.stringify(body),
@@ -43,7 +43,7 @@ adminMenuRoutes.put('/categories/:id', zValidator('json', updateMenuCategorySche
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/menu/categories/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/menu/categories/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: authHeader },
     body: JSON.stringify(body),
@@ -60,7 +60,7 @@ adminMenuRoutes.delete('/categories/:id', async (c) => {
   const id = c.req.param('id')
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/menu/categories/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/menu/categories/${id}`, {
     method: 'DELETE',
     headers: { Authorization: authHeader },
   })
@@ -80,7 +80,7 @@ adminMenuRoutes.post('/items', zValidator('json', createMenuItemSchema), async (
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/menu/items`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/menu/items`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: authHeader },
     body: JSON.stringify(body),
@@ -98,7 +98,7 @@ adminMenuRoutes.put('/items/:id', zValidator('json', updateMenuItemSchema), asyn
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/menu/items/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/menu/items/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: authHeader },
     body: JSON.stringify(body),
@@ -115,7 +115,7 @@ adminMenuRoutes.delete('/items/:id', async (c) => {
   const id = c.req.param('id')
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/menu/items/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/menu/items/${id}`, {
     method: 'DELETE',
     headers: { Authorization: authHeader },
   })

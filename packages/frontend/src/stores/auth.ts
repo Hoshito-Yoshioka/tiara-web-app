@@ -16,7 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   /** ユーザー名とパスワードでログインし、JWT トークンを取得・保存する */
   async function login(username: string, password: string): Promise<void> {
-    const data = await apiFetch<LoginResponse>('/api/auth/login', {
+    const data = await apiFetch<LoginResponse>('/api/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     })
@@ -35,7 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return false
 
     try {
-      await apiFetch('/api/auth/verify', {
+      await apiFetch('/api/v1/auth/verify', {
         headers: {
           Authorization: `Bearer ${token.value}`,
         },

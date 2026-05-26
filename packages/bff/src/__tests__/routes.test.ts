@@ -17,9 +17,9 @@ beforeEach(() => {
 
 describe('staffRoutes', () => {
   const app = new Hono()
-  app.route('/api/staffs', staffRoutes)
+  app.route('/api/v1/staffs', staffRoutes)
 
-  describe('GET /api/staffs', () => {
+  describe('GET /api/v1/staffs', () => {
     it('PascalCase → camelCase 変換を行う', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -37,7 +37,7 @@ describe('staffRoutes', () => {
         ],
       })
 
-      const res = await app.request('/api/staffs')
+      const res = await app.request('/api/v1/staffs')
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -57,12 +57,12 @@ describe('staffRoutes', () => {
     it('Backend エラー時 → 502', async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
 
-      const res = await app.request('/api/staffs')
+      const res = await app.request('/api/v1/staffs')
       expect(res.status).toBe(502)
     })
   })
 
-  describe('GET /api/staffs/:id', () => {
+  describe('GET /api/v1/staffs/:id', () => {
     it('StaffWithSchedules の PascalCase → camelCase 変換を行う', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -93,7 +93,7 @@ describe('staffRoutes', () => {
         }),
       })
 
-      const res = await app.request('/api/staffs/staff-1')
+      const res = await app.request('/api/v1/staffs/staff-1')
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -125,7 +125,7 @@ describe('staffRoutes', () => {
         }),
       })
 
-      const res = await app.request('/api/staffs/s1')
+      const res = await app.request('/api/v1/staffs/s1')
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -161,7 +161,7 @@ describe('staffRoutes', () => {
         }),
       })
 
-      const res = await app.request('/api/staffs/s1')
+      const res = await app.request('/api/v1/staffs/s1')
       const body = await res.json()
       expect(body.images[0].cropPosition).toBe('50 50')
     })
@@ -169,7 +169,7 @@ describe('staffRoutes', () => {
     it('Backend 404 → 404', async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
 
-      const res = await app.request('/api/staffs/nonexistent')
+      const res = await app.request('/api/v1/staffs/nonexistent')
       expect(res.status).toBe(404)
     })
   })
@@ -179,9 +179,9 @@ describe('staffRoutes', () => {
 
 describe('menuRoutes', () => {
   const app = new Hono()
-  app.route('/api/menus', menuRoutes)
+  app.route('/api/v1/menus', menuRoutes)
 
-  describe('GET /api/menus', () => {
+  describe('GET /api/v1/menus', () => {
     it('カテゴリ＋アイテムの PascalCase → camelCase 変換を行う', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -202,7 +202,7 @@ describe('menuRoutes', () => {
         ],
       })
 
-      const res = await app.request('/api/menus')
+      const res = await app.request('/api/v1/menus')
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -234,7 +234,7 @@ describe('menuRoutes', () => {
         ],
       })
 
-      const res = await app.request('/api/menus')
+      const res = await app.request('/api/v1/menus')
       const body = await res.json()
       expect(body[0].items).toEqual([])
     })
@@ -245,7 +245,7 @@ describe('menuRoutes', () => {
         json: async () => null,
       })
 
-      const res = await app.request('/api/menus')
+      const res = await app.request('/api/v1/menus')
       const body = await res.json()
       expect(body).toEqual([])
     })
@@ -253,7 +253,7 @@ describe('menuRoutes', () => {
     it('Backend エラー時 → 502', async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
 
-      const res = await app.request('/api/menus')
+      const res = await app.request('/api/v1/menus')
       expect(res.status).toBe(502)
     })
   })
@@ -263,9 +263,9 @@ describe('menuRoutes', () => {
 
 describe('shopRoutes', () => {
   const app = new Hono()
-  app.route('/api/shops', shopRoutes)
+  app.route('/api/v1/shops', shopRoutes)
 
-  describe('GET /api/shops', () => {
+  describe('GET /api/v1/shops', () => {
     it('Backend レスポンスのフィールド選択を行う', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -280,7 +280,7 @@ describe('shopRoutes', () => {
         ],
       })
 
-      const res = await app.request('/api/shops')
+      const res = await app.request('/api/v1/shops')
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -296,12 +296,12 @@ describe('shopRoutes', () => {
     it('Backend エラー時 → 502', async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
 
-      const res = await app.request('/api/shops')
+      const res = await app.request('/api/v1/shops')
       expect(res.status).toBe(502)
     })
   })
 
-  describe('GET /api/shops/:id', () => {
+  describe('GET /api/v1/shops/:id', () => {
     it('単一店舗のフィールド選択を行う', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -314,7 +314,7 @@ describe('shopRoutes', () => {
         }),
       })
 
-      const res = await app.request('/api/shops/shop-1')
+      const res = await app.request('/api/v1/shops/shop-1')
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -325,7 +325,7 @@ describe('shopRoutes', () => {
     it('Backend 404 → 404', async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
 
-      const res = await app.request('/api/shops/nonexistent')
+      const res = await app.request('/api/v1/shops/nonexistent')
       expect(res.status).toBe(404)
     })
   })
@@ -335,9 +335,9 @@ describe('shopRoutes', () => {
 
 describe('scheduleRoutes', () => {
   const app = new Hono()
-  app.route('/api/schedules', scheduleRoutes)
+  app.route('/api/v1/schedules', scheduleRoutes)
 
-  describe('GET /api/schedules', () => {
+  describe('GET /api/v1/schedules', () => {
     it('全スタッフスケジュールの PascalCase → camelCase 変換を行う', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -370,7 +370,7 @@ describe('scheduleRoutes', () => {
         ],
       })
 
-      const res = await app.request('/api/schedules')
+      const res = await app.request('/api/v1/schedules')
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -383,7 +383,7 @@ describe('scheduleRoutes', () => {
     it('Backend エラー時 → 502', async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
 
-      const res = await app.request('/api/schedules')
+      const res = await app.request('/api/v1/schedules')
       expect(res.status).toBe(502)
     })
   })

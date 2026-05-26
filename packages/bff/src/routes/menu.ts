@@ -41,7 +41,7 @@ function toMenuCategoryWithItems(raw: MenuCategoryWithItemsResponse): MenuCatego
 
 /** GET /api/menus — カテゴリ＋アイテム一覧（公開） */
 menuRoutes.get('/', async (c) => {
-  const res = await fetch(`${BACKEND_URL}/menus`)
+  const res = await fetch(`${BACKEND_URL}/api/v1/menus`)
   if (!res.ok) {
     return c.json({ error: 'Failed to fetch menus from backend' }, 502)
   }

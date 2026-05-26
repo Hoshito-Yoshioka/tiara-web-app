@@ -29,7 +29,7 @@ interface StaffAccountResponse {
 adminAccountRoutes.get('/', async (c) => {
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/staff-accounts`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts`, {
     headers: { Authorization: authHeader },
   })
 
@@ -47,7 +47,7 @@ adminAccountRoutes.get('/staff/:staffId', async (c) => {
   const authHeader = c.get('authHeader')
 
   const staffId = c.req.param('staffId')
-  const res = await fetch(`${BACKEND_URL}/admin/staff-accounts/staff/${staffId}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts/staff/${staffId}`, {
     headers: { Authorization: authHeader },
   })
 
@@ -66,7 +66,7 @@ adminAccountRoutes.post('/', zValidator('json', createStaffAccountSchema), async
 
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/admin/staff-accounts`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ adminAccountRoutes.put('/:id', zValidator('json', updateStaffAccountSchema), asy
   const id = c.req.param('id')
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/admin/staff-accounts/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ adminAccountRoutes.delete('/:id', async (c) => {
 
   const id = c.req.param('id')
 
-  const res = await fetch(`${BACKEND_URL}/admin/staff-accounts/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts/${id}`, {
     method: 'DELETE',
     headers: { Authorization: authHeader },
   })

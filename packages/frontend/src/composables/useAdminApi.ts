@@ -36,7 +36,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      return await apiFetch<Shop>(`/api/admin/shops/${id}`, {
+      return await apiFetch<Shop>(`/api/v1/admin/shops/${id}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(input),
@@ -54,7 +54,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      return await apiFetch<StaffWithSchedules>('/api/admin/staffs', {
+      return await apiFetch<StaffWithSchedules>('/api/v1/admin/staffs', {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(input),
@@ -75,7 +75,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      return await apiFetch<StaffWithSchedules>(`/api/admin/staffs/${id}`, {
+      return await apiFetch<StaffWithSchedules>(`/api/v1/admin/staffs/${id}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(input),
@@ -93,7 +93,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      await apiFetch(`/api/admin/staffs/${id}`, {
+      await apiFetch(`/api/v1/admin/staffs/${id}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })
@@ -115,7 +115,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      return await apiFetch<MenuCategory>('/api/admin/menu/categories', {
+      return await apiFetch<MenuCategory>('/api/v1/admin/menu/categories', {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(input),
@@ -136,7 +136,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      return await apiFetch<MenuCategory>(`/api/admin/menu/categories/${id}`, {
+      return await apiFetch<MenuCategory>(`/api/v1/admin/menu/categories/${id}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(input),
@@ -154,7 +154,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      await apiFetch(`/api/admin/menu/categories/${id}`, {
+      await apiFetch(`/api/v1/admin/menu/categories/${id}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })
@@ -176,7 +176,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      return await apiFetch<MenuItem>('/api/admin/menu/items', {
+      return await apiFetch<MenuItem>('/api/v1/admin/menu/items', {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(input),
@@ -194,7 +194,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      return await apiFetch<MenuItem>(`/api/admin/menu/items/${id}`, {
+      return await apiFetch<MenuItem>(`/api/v1/admin/menu/items/${id}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(input),
@@ -212,7 +212,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      await apiFetch(`/api/admin/menu/items/${id}`, {
+      await apiFetch(`/api/v1/admin/menu/items/${id}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })
@@ -236,7 +236,7 @@ export function useAdminApi() {
     try {
       const formData = new FormData()
       formData.append('image', file)
-      return await apiUpload<StaffImage>(`/api/admin/staffs/${staffId}/images`, formData, {
+      return await apiUpload<StaffImage>(`/api/v1/admin/staffs/${staffId}/images`, formData, {
         headers: authHeaders(),
       })
     } catch (e) {
@@ -252,7 +252,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      await apiFetch(`/api/admin/staffs/${staffId}/images/${imageId}`, {
+      await apiFetch(`/api/v1/admin/staffs/${staffId}/images/${imageId}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })
@@ -270,7 +270,7 @@ export function useAdminApi() {
     isLoading.value = true
     error.value = null
     try {
-      await apiFetch(`/api/admin/staffs/${staffId}/images/main`, {
+      await apiFetch(`/api/v1/admin/staffs/${staffId}/images/main`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ imageId }),
@@ -292,7 +292,7 @@ export function useAdminApi() {
   ): Promise<StaffImage | null> {
     error.value = null
     try {
-      return await apiFetch<StaffImage>(`/api/admin/staffs/${staffId}/images/${imageId}/crop`, {
+      return await apiFetch<StaffImage>(`/api/v1/admin/staffs/${staffId}/images/${imageId}/crop`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ cropPosition }),

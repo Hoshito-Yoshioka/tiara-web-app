@@ -19,7 +19,7 @@ export function useShopApi() {
     error.value = null
 
     try {
-      shops.value = await apiFetch<Shop[]>('/api/shops')
+      shops.value = await apiFetch<Shop[]>('/api/v1/shops')
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch shops'
     } finally {
@@ -33,7 +33,7 @@ export function useShopApi() {
     error.value = null
 
     try {
-      shop.value = await apiFetch<Shop>(`/api/shops/${id}`)
+      shop.value = await apiFetch<Shop>(`/api/v1/shops/${id}`)
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch shop'
     } finally {

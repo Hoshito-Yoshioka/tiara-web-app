@@ -53,7 +53,7 @@ function toImage(raw: StaffImageResponse): StaffImage {
 
 /** GET /api/schedules — 全スタッフの出勤スケジュールを取得 */
 scheduleRoutes.get('/', async (c) => {
-  const res = await fetch(`${BACKEND_URL}/schedules`)
+  const res = await fetch(`${BACKEND_URL}/api/v1/schedules`)
 
   if (!res.ok) {
     return c.json({ error: 'Failed to fetch schedules from backend' }, 502)

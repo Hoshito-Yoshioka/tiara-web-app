@@ -15,7 +15,7 @@ export function useMenuApi() {
     isLoading.value = true
     error.value = null
     try {
-      const data = await apiFetch<MenuCategoryWithItems[]>('/api/menus')
+      const data = await apiFetch<MenuCategoryWithItems[]>('/api/v1/menus')
       menuList.value = data ?? []
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'メニューの取得に失敗しました'

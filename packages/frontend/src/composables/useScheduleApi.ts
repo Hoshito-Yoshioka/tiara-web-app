@@ -17,7 +17,7 @@ export function useScheduleApi() {
     error.value = null
 
     try {
-      scheduleData.value = await apiFetch<StaffWithSchedules[]>('/api/schedules')
+      scheduleData.value = await apiFetch<StaffWithSchedules[]>('/api/v1/schedules')
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch schedules'
     } finally {

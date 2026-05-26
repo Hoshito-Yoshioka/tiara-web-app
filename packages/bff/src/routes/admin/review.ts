@@ -23,7 +23,7 @@ adminReviewRoutes.use('/*', authMiddleware)
 adminReviewRoutes.get('/profiles', async (c) => {
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/profiles`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/profiles`, {
     headers: { Authorization: authHeader },
   })
 
@@ -42,7 +42,7 @@ adminReviewRoutes.get('/profiles/:id', async (c) => {
 
   const id = c.req.param('id')
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/profiles/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/profiles/${id}`, {
     headers: { Authorization: authHeader },
   })
 
@@ -62,7 +62,7 @@ adminReviewRoutes.put('/profiles/:id', zValidator('json', reviewDraftSchema), as
   const id = c.req.param('id')
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/profiles/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/profiles/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ adminReviewRoutes.put('/profiles/:id/content', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json()
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/profiles/${id}/content`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/profiles/${id}/content`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ adminReviewRoutes.put('/profiles/:id/content', async (c) => {
 adminReviewRoutes.get('/schedules', async (c) => {
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/schedules`, {
     headers: { Authorization: authHeader },
   })
 
@@ -128,7 +128,7 @@ adminReviewRoutes.get('/schedules', async (c) => {
 adminReviewRoutes.get('/schedules/approved', async (c) => {
   const authHeader = c.get('authHeader')
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/approved`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/schedules/approved`, {
     headers: { Authorization: authHeader },
   })
 
@@ -147,7 +147,7 @@ adminReviewRoutes.get('/schedules/:id', async (c) => {
 
   const id = c.req.param('id')
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/schedules/${id}`, {
     headers: { Authorization: authHeader },
   })
 
@@ -167,7 +167,7 @@ adminReviewRoutes.put('/schedules/:id', zValidator('json', reviewDraftSchema), a
   const id = c.req.param('id')
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/schedules/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ adminReviewRoutes.put('/schedules/:id/content', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json()
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/${id}/content`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/schedules/${id}/content`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -216,7 +216,7 @@ adminReviewRoutes.post('/schedules/:id/publish', async (c) => {
 
   const id = c.req.param('id')
 
-  const res = await fetch(`${BACKEND_URL}/admin/reviews/schedules/${id}/publish`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/reviews/schedules/${id}/publish`, {
     method: 'POST',
     headers: { Authorization: authHeader },
   })
