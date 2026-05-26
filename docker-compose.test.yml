@@ -1,0 +1,16 @@
+# テスト用 DB 環境
+# 開発用 DB（docker-compose.yml / ポート5432）とは分離して、ポート5433で起動する。
+# 使い方: docker compose -f docker-compose.test.yml up -d
+
+services:
+  db-test:
+    image: postgres:16-alpine
+    restart: 'no'
+    environment:
+      POSTGRES_DB: tiara_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+    ports:
+      - '127.0.0.1:5433:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
