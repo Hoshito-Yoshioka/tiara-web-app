@@ -59,7 +59,12 @@ POSTGRES_USER=your_db_user          # 任意のユーザー名
 POSTGRES_PASSWORD=your_db_password  # 任意のパスワード
 DATABASE_URL=postgres://your_db_user:your_db_password@localhost:5432/tiara_db
 JWT_SECRET=your_jwt_secret_key      # JWT署名用の秘密鍵（必須）
+CORS_ORIGIN=http://localhost:5173   # BFF が許可するオリジン（カンマ区切りで複数指定可）
+APP_ENV=development                 # production に設定すると seed データ投入をスキップ
+VITE_ADMIN_BASE_PATH=/admin         # 管理画面のベースパス（本番では推測困難な文字列を推奨）
 ```
+
+> **本番デプロイ時:** `.env.production.example` をコピーして `.env.production` を作成し、各値を設定してください。`.env.production` は `.gitignore` に追加済みのためコミットされません。
 
 ### 3. npm パッケージをインストール
 
