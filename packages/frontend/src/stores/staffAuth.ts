@@ -15,7 +15,7 @@ export const useStaffAuthStore = defineStore('staffAuth', () => {
 
   /** スタッフのユーザー名とパスワードでログインし、JWT トークンを取得・保存する */
   async function login(username: string, password: string): Promise<void> {
-    const data = await apiFetch<StaffLoginResponse>('/api/staff-auth/login', {
+    const data = await apiFetch<StaffLoginResponse>('/api/v1/staff-auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     })
@@ -38,7 +38,7 @@ export const useStaffAuthStore = defineStore('staffAuth', () => {
     if (!token.value) return false
 
     try {
-      await apiFetch('/api/staff-auth/verify', {
+      await apiFetch('/api/v1/staff-auth/verify', {
         headers: {
           Authorization: `Bearer ${token.value}`,
         },

@@ -25,22 +25,26 @@ type handlers struct {
 
 // registerRoutes は全ルートを Echo インスタンスに登録する。
 func registerRoutes(e *echo.Echo, h *handlers, jwtSecret string) {
-	registerPublicRoutes(e, h)
-	registerAuthRoutes(e, h)
-	registerAdminRoutes(e, h, jwtSecret)
-	registerPortalRoutes(e, h, jwtSecret)
+	// ヘルスチェック（バージョニング対象外）
+	e.GET("/", healthCheck)
+
+	// API v1 グループ
+	v1 := e.Group("/api/v1")
+	registerPublicRoutes(v1, h)
+	registerAuthRoutes(v1, h)
+	registerAdminRoutes(v1, h, jwtSecret)
+	registerPortalRoutes(v1, h, jwtSecret)
 }
 
 // --- Public ---
 
-func registerPublicRoutes(e *echo.Echo, h *handlers) {
-	e.GET("/", healthCheck)
-	e.GET("/shops", h.shop.ListShops)
-	e.GET("/shops/:id", h.shop.GetShopByID)
-	e.GET("/staffs", h.staff.ListStaffs)
-	e.GET("/staffs/:id", h.staff.GetStaffWithSchedules)
-	e.GET("/schedules", h.staff.ListAllStaffsWithSchedules)
-	e.GET("/menus", h.menu.ListMenuCategoriesWithItems)
+func registerPublicRoutes(g *echo.Group, h *handlers) {
+	g.GET("/shops", h.shop.ListShops)
+	g.GET("/shops/:id", h.shop.GetShopByID)
+	g.GET("/staffs", h.staff.ListStaffs)
+	g.GET("/staffs/:id", h.staff.GetStaffWithSchedules)
+	g.GET("/schedules", h.staff.ListAllStaffsWithSchedules)
+	g.GET("/menus", h.menu.ListMenuCategoriesWithItems)
 }
 
 // --- Auth ---
@@ -51,15 +55,15 @@ var loginRateLimiter = middleware.RateLimiter(
 	middleware.NewRateLimiterMemoryStore(rate.Limit(5)),
 )
 
-func registerAuthRoutes(e *echo.Echo, h *handlers) {
-	e.POST("/auth/login", h.auth.Login, loginRateLimiter)
-	e.POST("/staff-auth/login", h.staffPortal.Login, loginRateLimiter)
+func registerAuthRoutes(g *echo.Group, h *handlers) {
+	g.POST("/auth/login", h.auth.Login, loginRateLimiter)
+	g.POST("/staff-auth/login", h.staffPortal.Login, loginRateLimiter)
 }
 
 // --- Admin (JWT Protected) ---
 
-func registerAdminRoutes(e *echo.Echo, h *handlers, jwtSecret string) {
-	admin := e.Group("/admin", authMiddleware.JWTAuth(jwtSecret))
+func registerAdminRoutes(g *echo.Group, h *handlers, jwtSecret string) {
+	admin := g.Group("/admin", authMiddleware.JWTAuth(jwtSecret))
 
 	// Auth verify
 	admin.GET("/auth/verify", h.auth.Verify)
@@ -106,8 +110,8 @@ func registerAdminRoutes(e *echo.Echo, h *handlers, jwtSecret string) {
 
 // --- Staff Portal (Staff JWT Protected) ---
 
-func registerPortalRoutes(e *echo.Echo, h *handlers, jwtSecret string) {
-	portal := e.Group("/portal", authMiddleware.StaffJWTAuth(jwtSecret))
+func registerPortalRoutes(g *echo.Group, h *handlers, jwtSecret string) {
+	portal := g.Group("/portal", authMiddleware.StaffJWTAuth(jwtSecret))
 
 	portal.GET("/auth/verify", h.staffPortal.Verify)
 	portal.GET("/profile", h.staffPortal.GetMyProfileDraft)

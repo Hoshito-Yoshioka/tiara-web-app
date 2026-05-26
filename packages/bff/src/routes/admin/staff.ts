@@ -76,7 +76,7 @@ adminStaffRoutes.post('/', zValidator('json', createStaffSchema), async (c) => {
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
-  const res = await fetch(`${BACKEND_URL}/admin/staffs`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ adminStaffRoutes.put('/:id', zValidator('json', updateStaffSchema), async (c) =>
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
-  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ adminStaffRoutes.delete('/:id', async (c) => {
   const id = c.req.param('id')
   const authHeader = c.get('authHeader') as string
 
-  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}`, {
     method: 'DELETE',
     headers: {
       Authorization: authHeader,
@@ -151,7 +151,7 @@ adminStaffRoutes.post('/:id/images', async (c) => {
   const body = await c.req.raw.arrayBuffer()
   const contentType = c.req.header('content-type') || ''
 
-  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}/images`, {
     method: 'POST',
     headers: {
       'Content-Type': contentType,
@@ -175,7 +175,7 @@ adminStaffRoutes.delete('/:id/images/:imageId', async (c) => {
   const imageId = c.req.param('imageId')
   const authHeader = c.get('authHeader') as string
 
-  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images/${imageId}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}/images/${imageId}`, {
     method: 'DELETE',
     headers: {
       Authorization: authHeader,
@@ -196,7 +196,7 @@ adminStaffRoutes.put('/:id/images/main', zValidator('json', setMainImageSchema),
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
-  const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images/main`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}/images/main`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -223,7 +223,7 @@ adminStaffRoutes.put(
     const body = c.req.valid('json')
     const authHeader = c.get('authHeader') as string
 
-    const res = await fetch(`${BACKEND_URL}/admin/staffs/${id}/images/${imageId}/crop`, {
+    const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}/images/${imageId}/crop`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

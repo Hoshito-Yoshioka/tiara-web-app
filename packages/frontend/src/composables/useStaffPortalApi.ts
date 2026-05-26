@@ -29,7 +29,7 @@ export function useStaffPortalApi() {
     error.value = null
 
     try {
-      profileDraft.value = await apiFetch<ProfileDraft>('/api/portal/profile', {
+      profileDraft.value = await apiFetch<ProfileDraft>('/api/v1/portal/profile', {
         headers: authHeaders(),
       })
     } catch (e) {
@@ -50,7 +50,7 @@ export function useStaffPortalApi() {
     saveError.value = null
 
     try {
-      const result = await apiFetch<ProfileDraft>('/api/portal/profile', {
+      const result = await apiFetch<ProfileDraft>('/api/v1/portal/profile', {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(data),
@@ -68,7 +68,7 @@ export function useStaffPortalApi() {
     saveError.value = null
 
     try {
-      const result = await apiFetch<ProfileDraft>(`/api/portal/profile/${draftId}/submit`, {
+      const result = await apiFetch<ProfileDraft>(`/api/v1/portal/profile/${draftId}/submit`, {
         method: 'POST',
         headers: authHeaders(),
       })
@@ -88,7 +88,7 @@ export function useStaffPortalApi() {
     error.value = null
 
     try {
-      scheduleDraft.value = await apiFetch<ScheduleDraft>('/api/portal/schedule', {
+      scheduleDraft.value = await apiFetch<ScheduleDraft>('/api/v1/portal/schedule', {
         headers: authHeaders(),
       })
     } catch (e) {
@@ -103,7 +103,7 @@ export function useStaffPortalApi() {
     saveError.value = null
 
     try {
-      const result = await apiFetch<ScheduleDraft>('/api/portal/schedule', {
+      const result = await apiFetch<ScheduleDraft>('/api/v1/portal/schedule', {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ items }),
@@ -121,7 +121,7 @@ export function useStaffPortalApi() {
     saveError.value = null
 
     try {
-      const result = await apiFetch<ScheduleDraft>(`/api/portal/schedule/${draftId}/submit`, {
+      const result = await apiFetch<ScheduleDraft>(`/api/v1/portal/schedule/${draftId}/submit`, {
         method: 'POST',
         headers: authHeaders(),
       })
@@ -138,7 +138,7 @@ export function useStaffPortalApi() {
   /** 自分の画像一覧を取得 */
   async function fetchMyImages(): Promise<StaffImage[]> {
     try {
-      return await apiFetch<StaffImage[]>('/api/portal/images', {
+      return await apiFetch<StaffImage[]>('/api/v1/portal/images', {
         headers: authHeaders(),
       })
     } catch (e) {
@@ -153,7 +153,7 @@ export function useStaffPortalApi() {
     try {
       const formData = new FormData()
       formData.append('image', file)
-      return await apiUpload<StaffImage>('/api/portal/images', formData, {
+      return await apiUpload<StaffImage>('/api/v1/portal/images', formData, {
         headers: authHeaders(),
       })
     } catch (e) {
@@ -166,7 +166,7 @@ export function useStaffPortalApi() {
   async function deleteMyImage(imageId: string): Promise<boolean> {
     saveError.value = null
     try {
-      await apiFetch(`/api/portal/images/${imageId}`, {
+      await apiFetch(`/api/v1/portal/images/${imageId}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })
@@ -181,7 +181,7 @@ export function useStaffPortalApi() {
   async function setMyMainImage(imageId: string): Promise<boolean> {
     saveError.value = null
     try {
-      await apiFetch('/api/portal/images/main', {
+      await apiFetch('/api/v1/portal/images/main', {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ imageId }),
@@ -200,7 +200,7 @@ export function useStaffPortalApi() {
   ): Promise<StaffImage | null> {
     saveError.value = null
     try {
-      return await apiFetch<StaffImage>(`/api/portal/images/${imageId}/crop`, {
+      return await apiFetch<StaffImage>(`/api/v1/portal/images/${imageId}/crop`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ cropPosition }),

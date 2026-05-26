@@ -26,7 +26,7 @@ export function useAdminReviewApi() {
     error.value = null
 
     try {
-      pendingProfiles.value = await apiFetch<ProfileDraft[]>('/api/admin/reviews/profiles', {
+      pendingProfiles.value = await apiFetch<ProfileDraft[]>('/api/v1/admin/reviews/profiles', {
         headers: authHeaders(),
       })
     } catch (e) {
@@ -42,7 +42,7 @@ export function useAdminReviewApi() {
     error.value = null
 
     try {
-      pendingSchedules.value = await apiFetch<ScheduleDraft[]>('/api/admin/reviews/schedules', {
+      pendingSchedules.value = await apiFetch<ScheduleDraft[]>('/api/v1/admin/reviews/schedules', {
         headers: authHeaders(),
       })
     } catch (e) {
@@ -55,7 +55,7 @@ export function useAdminReviewApi() {
   /** プロフィール下書き単体取得 */
   async function fetchProfileDraft(draftId: string): Promise<ProfileDraft | null> {
     try {
-      return await apiFetch<ProfileDraft>(`/api/admin/reviews/profiles/${draftId}`, {
+      return await apiFetch<ProfileDraft>(`/api/v1/admin/reviews/profiles/${draftId}`, {
         headers: authHeaders(),
       })
     } catch (e) {
@@ -67,7 +67,7 @@ export function useAdminReviewApi() {
   /** スケジュール下書き単体取得 */
   async function fetchScheduleDraft(draftId: string): Promise<ScheduleDraft | null> {
     try {
-      return await apiFetch<ScheduleDraft>(`/api/admin/reviews/schedules/${draftId}`, {
+      return await apiFetch<ScheduleDraft>(`/api/v1/admin/reviews/schedules/${draftId}`, {
         headers: authHeaders(),
       })
     } catch (e) {
@@ -82,7 +82,7 @@ export function useAdminReviewApi() {
     data: { name: string; role: string; bio: string; imageUrl: string; imageCropPosition: string }
   ): Promise<ProfileDraft | null> {
     try {
-      return await apiFetch<ProfileDraft>(`/api/admin/reviews/profiles/${draftId}/content`, {
+      return await apiFetch<ProfileDraft>(`/api/v1/admin/reviews/profiles/${draftId}/content`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(data),
@@ -99,7 +99,7 @@ export function useAdminReviewApi() {
     items: ScheduleDraftItem[]
   ): Promise<ScheduleDraft | null> {
     try {
-      return await apiFetch<ScheduleDraft>(`/api/admin/reviews/schedules/${draftId}/content`, {
+      return await apiFetch<ScheduleDraft>(`/api/v1/admin/reviews/schedules/${draftId}/content`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ items }),
@@ -117,7 +117,7 @@ export function useAdminReviewApi() {
     adminComment: string
   ): Promise<ProfileDraft | null> {
     try {
-      const result = await apiFetch<ProfileDraft>(`/api/admin/reviews/profiles/${draftId}`, {
+      const result = await apiFetch<ProfileDraft>(`/api/v1/admin/reviews/profiles/${draftId}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ status, adminComment }),
@@ -138,7 +138,7 @@ export function useAdminReviewApi() {
     adminComment: string
   ): Promise<ScheduleDraft | null> {
     try {
-      const result = await apiFetch<ScheduleDraft>(`/api/admin/reviews/schedules/${draftId}`, {
+      const result = await apiFetch<ScheduleDraft>(`/api/v1/admin/reviews/schedules/${draftId}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ status, adminComment }),
@@ -155,7 +155,7 @@ export function useAdminReviewApi() {
   async function fetchApprovedSchedules(): Promise<void> {
     try {
       approvedSchedules.value = await apiFetch<ScheduleDraft[]>(
-        '/api/admin/reviews/schedules/approved',
+        '/api/v1/admin/reviews/schedules/approved',
         {
           headers: authHeaders(),
         }
@@ -168,7 +168,7 @@ export function useAdminReviewApi() {
   /** 承認済みスケジュールを店舗ページに反映 */
   async function publishScheduleDraft(draftId: string): Promise<boolean> {
     try {
-      await apiFetch(`/api/admin/reviews/schedules/${draftId}/publish`, {
+      await apiFetch(`/api/v1/admin/reviews/schedules/${draftId}/publish`, {
         method: 'POST',
         headers: authHeaders(),
       })

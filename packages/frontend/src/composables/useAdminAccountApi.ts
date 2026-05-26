@@ -33,7 +33,7 @@ export function useAdminAccountApi() {
 
     try {
       const data = await apiFetch<StaffAccount | null>(
-        `/api/admin/staff-accounts/staff/${staffId}`,
+        `/api/v1/admin/staff-accounts/staff/${staffId}`,
         {
           headers: authHeaders(),
         }
@@ -57,7 +57,7 @@ export function useAdminAccountApi() {
     error.value = null
 
     try {
-      const data = await apiFetch<StaffAccount>('/api/admin/staff-accounts', {
+      const data = await apiFetch<StaffAccount>('/api/v1/admin/staff-accounts', {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ staffId, username, password }),
@@ -79,7 +79,7 @@ export function useAdminAccountApi() {
     error.value = null
 
     try {
-      const data = await apiFetch<StaffAccount>(`/api/admin/staff-accounts/${accountId}`, {
+      const data = await apiFetch<StaffAccount>(`/api/v1/admin/staff-accounts/${accountId}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ username, password }),
@@ -97,7 +97,7 @@ export function useAdminAccountApi() {
     error.value = null
 
     try {
-      await apiFetch(`/api/admin/staff-accounts/${accountId}`, {
+      await apiFetch(`/api/v1/admin/staff-accounts/${accountId}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })

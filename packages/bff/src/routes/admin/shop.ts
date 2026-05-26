@@ -28,7 +28,7 @@ adminShopRoutes.put('/:id', zValidator('json', updateShopSchema), async (c) => {
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
-  const res = await fetch(`${BACKEND_URL}/admin/shops/${id}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/shops/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

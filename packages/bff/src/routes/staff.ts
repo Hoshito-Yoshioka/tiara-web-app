@@ -56,7 +56,7 @@ function toImage(raw: StaffImageResponse): StaffImage {
 /** GET /api/staffs — スタッフ一覧を取得（page パラメータ指定時はページネーション付き） */
 staffRoutes.get('/', async (c) => {
   const page = c.req.query('page')
-  const url = page ? `${BACKEND_URL}/staffs?page=${page}` : `${BACKEND_URL}/staffs`
+  const url = page ? `${BACKEND_URL}/api/v1/staffs?page=${page}` : `${BACKEND_URL}/api/v1/staffs`
 
   const res = await fetch(url)
 
@@ -85,7 +85,7 @@ staffRoutes.get('/', async (c) => {
 staffRoutes.get('/:id', async (c) => {
   const id = c.req.param('id')
 
-  const res = await fetch(`${BACKEND_URL}/staffs/${id}`)
+  const res = await fetch(`${BACKEND_URL}/api/v1/staffs/${id}`)
 
   if (!res.ok) {
     return c.json({ error: 'Staff not found' }, 404)

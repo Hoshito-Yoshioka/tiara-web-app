@@ -11,7 +11,7 @@ const authRoutes = new Hono()
 authRoutes.post('/login', zValidator('json', loginSchema), async (c) => {
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/auth/login`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -34,7 +34,7 @@ authRoutes.get('/verify', async (c) => {
     return c.json({ error: 'Authorization header is required' }, 401)
   }
 
-  const res = await fetch(`${BACKEND_URL}/admin/auth/verify`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/auth/verify`, {
     headers: { Authorization: authHeader },
   })
 

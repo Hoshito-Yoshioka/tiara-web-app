@@ -22,7 +22,7 @@ function toShop(raw: ShopResponse): Shop {
 
 /** GET /api/shops — 店舗一覧を取得 */
 shopRoutes.get('/', async (c) => {
-  const res = await fetch(`${BACKEND_URL}/shops`)
+  const res = await fetch(`${BACKEND_URL}/api/v1/shops`)
 
   if (!res.ok) {
     return c.json({ error: 'Failed to fetch shops from backend' }, 502)
@@ -38,7 +38,7 @@ shopRoutes.get('/', async (c) => {
 shopRoutes.get('/:id', async (c) => {
   const id = c.req.param('id')
 
-  const res = await fetch(`${BACKEND_URL}/shops/${id}`)
+  const res = await fetch(`${BACKEND_URL}/api/v1/shops/${id}`)
 
   if (!res.ok) {
     return c.json({ error: 'Shop not found' }, 404)

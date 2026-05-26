@@ -37,24 +37,24 @@ app.get('/', (c) => {
 })
 
 // Public routes
-app.route('/api/shops', shopRoutes)
-app.route('/api/staffs', staffRoutes)
-app.route('/api/schedules', scheduleRoutes)
-app.route('/api/menus', menuRoutes)
+app.route('/api/v1/shops', shopRoutes)
+app.route('/api/v1/staffs', staffRoutes)
+app.route('/api/v1/schedules', scheduleRoutes)
+app.route('/api/v1/menus', menuRoutes)
 
 // Auth routes
-app.route('/api/auth', authRoutes)
-app.route('/api/staff-auth', staffAuthRoutes)
+app.route('/api/v1/auth', authRoutes)
+app.route('/api/v1/staff-auth', staffAuthRoutes)
 
 // Staff Portal routes (スタッフ専用)
-app.route('/api/portal', portalRoutes)
+app.route('/api/v1/portal', portalRoutes)
 
 // Admin routes (認証ミドルウェアは各ルートファイル内で適用)
-app.route('/api/admin/shops', adminShopRoutes)
-app.route('/api/admin/staffs', adminStaffRoutes)
-app.route('/api/admin/menu', adminMenuRoutes)
-app.route('/api/admin/reviews', adminReviewRoutes)
-app.route('/api/admin/staff-accounts', adminAccountRoutes)
+app.route('/api/v1/admin/shops', adminShopRoutes)
+app.route('/api/v1/admin/staffs', adminStaffRoutes)
+app.route('/api/v1/admin/menu', adminMenuRoutes)
+app.route('/api/v1/admin/reviews', adminReviewRoutes)
+app.route('/api/v1/admin/staff-accounts', adminAccountRoutes)
 
 // Static file proxy: アップロード画像を Backend から配信
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'

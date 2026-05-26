@@ -41,7 +41,7 @@ portalRoutes.get('/profile', async (c) => {
     return c.json({ error: 'Authorization header is required' }, 401)
   }
 
-  const res = await fetch(`${BACKEND_URL}/portal/profile`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/profile`, {
     headers: { Authorization: authHeader },
   })
 
@@ -63,7 +63,7 @@ portalRoutes.put('/profile', zValidator('json', saveProfileDraftSchema), async (
 
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/portal/profile`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/profile`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ portalRoutes.post('/profile/:id/submit', zValidator('json', submitDraftSchema), 
   const id = c.req.param('id')
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/portal/profile/${id}/submit`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/profile/${id}/submit`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ portalRoutes.get('/schedule', async (c) => {
     return c.json({ error: 'Authorization header is required' }, 401)
   }
 
-  const res = await fetch(`${BACKEND_URL}/portal/schedule`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/schedule`, {
     headers: { Authorization: authHeader },
   })
 
@@ -140,7 +140,7 @@ portalRoutes.put('/schedule', zValidator('json', saveScheduleDraftSchema), async
 
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/portal/schedule`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/schedule`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -168,7 +168,7 @@ portalRoutes.post('/schedule/:id/submit', zValidator('json', submitDraftSchema),
   const id = c.req.param('id')
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/portal/schedule/${id}/submit`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/schedule/${id}/submit`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -195,7 +195,7 @@ portalRoutes.get('/images', async (c) => {
     return c.json({ error: 'Authorization header is required' }, 401)
   }
 
-  const res = await fetch(`${BACKEND_URL}/portal/images`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/images`, {
     headers: { Authorization: authHeader },
   })
 
@@ -218,7 +218,7 @@ portalRoutes.post('/images', async (c) => {
   const body = await c.req.raw.arrayBuffer()
   const contentType = c.req.header('content-type') || ''
 
-  const res = await fetch(`${BACKEND_URL}/portal/images`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/images`, {
     method: 'POST',
     headers: {
       'Content-Type': contentType,
@@ -245,7 +245,7 @@ portalRoutes.delete('/images/:imageId', async (c) => {
 
   const imageId = c.req.param('imageId')
 
-  const res = await fetch(`${BACKEND_URL}/portal/images/${imageId}`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/images/${imageId}`, {
     method: 'DELETE',
     headers: { Authorization: authHeader },
   })
@@ -267,7 +267,7 @@ portalRoutes.put('/images/main', zValidator('json', setMainImageSchema), async (
 
   const body = c.req.valid('json')
 
-  const res = await fetch(`${BACKEND_URL}/portal/images/main`, {
+  const res = await fetch(`${BACKEND_URL}/api/v1/portal/images/main`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -297,7 +297,7 @@ portalRoutes.put(
     const imageId = c.req.param('imageId')
     const body = c.req.valid('json')
 
-    const res = await fetch(`${BACKEND_URL}/portal/images/${imageId}/crop`, {
+    const res = await fetch(`${BACKEND_URL}/api/v1/portal/images/${imageId}/crop`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

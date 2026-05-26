@@ -19,7 +19,7 @@ export function useStaffApi() {
     error.value = null
 
     try {
-      staffList.value = await apiFetch<Staff[]>('/api/staffs')
+      staffList.value = await apiFetch<Staff[]>('/api/v1/staffs')
       pagination.value = null
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch staffs'
@@ -34,7 +34,7 @@ export function useStaffApi() {
     error.value = null
 
     try {
-      const result = await apiFetch<PaginatedStaffs>(`/api/staffs?page=${page}`)
+      const result = await apiFetch<PaginatedStaffs>(`/api/v1/staffs?page=${page}`)
       staffList.value = result.data
       pagination.value = result.pagination
     } catch (e) {
@@ -50,7 +50,7 @@ export function useStaffApi() {
     error.value = null
 
     try {
-      staffDetail.value = await apiFetch<StaffWithSchedules>(`/api/staffs/${id}`)
+      staffDetail.value = await apiFetch<StaffWithSchedules>(`/api/v1/staffs/${id}`)
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch staff detail'
     } finally {
