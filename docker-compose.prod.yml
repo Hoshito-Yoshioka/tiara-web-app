@@ -1,0 +1,78 @@
+# ============================================================
+# 本番用 Docker Compose — Xserver VPS
+# Backend + BFF + PostgreSQL を 1 VPS で稼働させる。
+# Frontend は Nginx が静的配信するため Docker 化しない。
+#
+# 使い方:
+#   cp .env.production.example .env.production
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# ============================================================
+
+services:
+  # ==============================
+  # PostgreSQL 16
+  # ==============================
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-net
+    # ポートは外部に公開しない（Backend が app-net 経由で接続）
+
+  # ==============================
+  # Backend (Go + Echo)
+  # ==============================
+  backend:
+    build:
+      context: ./packages/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${BACKEND_CORS_ORIGIN}
+      PORT: '1323'
+      UPLOAD_DIR: uploads
+      APP_ENV: production
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - '127.0.0.1:1323:1323'
+    networks:
+      - app-net
+
+  # ==============================
+  # BFF (Hono + Node.js)
+  # ==============================
+  bff:
+    build:
+      context: .
+      dockerfile: packages/bff/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: http://backend:1323
+      CORS_ORIGIN: ${BFF_CORS_ORIGIN}
+      PORT: '3001'
+    ports:
+      - '127.0.0.1:3001:3001'
+    networks:
+      - app-net
+
+volumes:
+  db_data:
+  uploads_data:
+
+networks:
+  app-net:
+    driver: bridge
