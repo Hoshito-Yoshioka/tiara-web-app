@@ -39,7 +39,7 @@ func validateImageFile(file *multipart.FileHeader) error {
 
 	// 拡張子チェック
 	ext := strings.ToLower(filepath.Ext(file.Filename))
-	if !allowedImageExtensions[ext] {
+	if _, ok := allowedImageExtensions[ext]; !ok {
 		return fmt.Errorf("allowed file types: jpg, jpeg, png, gif, webp")
 	}
 
@@ -58,7 +58,7 @@ func validateImageFile(file *multipart.FileHeader) error {
 	}
 
 	mimeType := http.DetectContentType(buf[:n])
-	if !allowedImageMIMETypes[mimeType] {
+	if _, ok := allowedImageMIMETypes[mimeType]; !ok {
 		return fmt.Errorf("file content does not match an allowed image type")
 	}
 
