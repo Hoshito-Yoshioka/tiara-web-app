@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import type {
   Staff,
   StaffResponse,
@@ -9,10 +9,11 @@ import type {
   StaffWithSchedules,
   StaffWithSchedulesResponse,
 } from '../types/staff'
+import { StaffWithSchedulesSchema, ErrorResponseSchema } from '../schemas/responses'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
-const scheduleRoutes = new Hono()
+const scheduleRoutes = new OpenAPIHono()
 
 /** Backend の StaffResponse を Frontend 向けに変換 */
 function toStaff(raw: StaffResponse): Staff {
@@ -51,8 +52,28 @@ function toImage(raw: StaffImageResponse): StaffImage {
   }
 }
 
-/** GET /api/schedules — 全スタッフの出勤スケジュールを取得 */
-scheduleRoutes.get('/', async (c) => {
+// --- Route definition ---
+
+const listSchedulesRoute = createRoute({
+  method: 'get',
+  path: '/',
+  tags: ['スケジュール'],
+  summary: '全スタッフの出勤スケジュール取得',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.array(StaffWithSchedulesSchema) } },
+      description: '全スタッフのスケジュール一覧',
+    },
+    502: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Backend エラー',
+    },
+  },
+})
+
+// --- Handler ---
+
+scheduleRoutes.openapi(listSchedulesRoute, async (c) => {
   const res = await fetch(`${BACKEND_URL}/api/v1/schedules`)
 
   if (!res.ok) {
@@ -66,7 +87,7 @@ scheduleRoutes.get('/', async (c) => {
     images: item.Images ? item.Images.map(toImage) : [],
   }))
 
-  return c.json(result)
+  return c.json(result, 200)
 })
 
 export { scheduleRoutes }

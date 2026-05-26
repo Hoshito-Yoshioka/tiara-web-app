@@ -7,7 +7,7 @@
 | レイヤー | 技術                                                  |
 | -------- | ----------------------------------------------------- |
 | Frontend | Vue 3 / TypeScript / Vite / Tailwind CSS / shadcn-vue |
-| BFF      | Hono / Node.js / TypeScript                           |
+| BFF      | Hono / Node.js / TypeScript / @hono/zod-openapi       |
 | Backend  | Go / Echo / PostgreSQL / sqlc / pgx                   |
 | Infra    | Docker / docker-compose / pnpm workspaces             |
 
@@ -108,6 +108,8 @@ pnpm --filter bff dev
 ```
 
 > `http://localhost:3001` で BFF が起動します。
+
+> **API 仕様書:** `http://localhost:3001/api/v1/docs` で Swagger UI を確認できます。
 
 ### ④ フロントエンド（Vue / Vite）を起動
 

@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import type {
   MenuCategory,
   MenuCategoryWithItems,
@@ -7,10 +7,11 @@ import type {
   MenuCategoryResponse,
   MenuItemResponse,
 } from '../types/menu'
+import { MenuCategoryWithItemsSchema, ErrorResponseSchema } from '../schemas/responses'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
-const menuRoutes = new Hono()
+const menuRoutes = new OpenAPIHono()
 
 function toMenuCategory(raw: MenuCategoryResponse): MenuCategory {
   return {
@@ -39,15 +40,35 @@ function toMenuCategoryWithItems(raw: MenuCategoryWithItemsResponse): MenuCatego
   }
 }
 
-/** GET /api/menus — カテゴリ＋アイテム一覧（公開） */
-menuRoutes.get('/', async (c) => {
+// --- Route definition ---
+
+const listMenusRoute = createRoute({
+  method: 'get',
+  path: '/',
+  tags: ['メニュー'],
+  summary: 'メニュー一覧取得（カテゴリ＋アイテム）',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.array(MenuCategoryWithItemsSchema) } },
+      description: 'カテゴリ＋アイテム一覧',
+    },
+    502: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Backend エラー',
+    },
+  },
+})
+
+// --- Handler ---
+
+menuRoutes.openapi(listMenusRoute, async (c) => {
   const res = await fetch(`${BACKEND_URL}/api/v1/menus`)
   if (!res.ok) {
     return c.json({ error: 'Failed to fetch menus from backend' }, 502)
   }
   const data: MenuCategoryWithItemsResponse[] = await res.json()
   const menus: MenuCategoryWithItems[] = (data ?? []).map(toMenuCategoryWithItems)
-  return c.json(menus)
+  return c.json(menus, 200)
 })
 
 export { menuRoutes, toMenuCategory, toMenuItem, toMenuCategoryWithItems }

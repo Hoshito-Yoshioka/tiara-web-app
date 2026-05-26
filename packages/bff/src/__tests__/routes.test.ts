@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { Hono } from 'hono'
+import { OpenAPIHono } from '@hono/zod-openapi'
 import { staffRoutes } from '../routes/staff'
 import { menuRoutes } from '../routes/menu'
 import { shopRoutes } from '../routes/shop'
@@ -16,7 +16,7 @@ beforeEach(() => {
 // --- Staff Routes ---
 
 describe('staffRoutes', () => {
-  const app = new Hono()
+  const app = new OpenAPIHono()
   app.route('/api/v1/staffs', staffRoutes)
 
   describe('GET /api/v1/staffs', () => {
@@ -178,7 +178,7 @@ describe('staffRoutes', () => {
 // --- Menu Routes ---
 
 describe('menuRoutes', () => {
-  const app = new Hono()
+  const app = new OpenAPIHono()
   app.route('/api/v1/menus', menuRoutes)
 
   describe('GET /api/v1/menus', () => {
@@ -262,7 +262,7 @@ describe('menuRoutes', () => {
 // --- Shop Routes ---
 
 describe('shopRoutes', () => {
-  const app = new Hono()
+  const app = new OpenAPIHono()
   app.route('/api/v1/shops', shopRoutes)
 
   describe('GET /api/v1/shops', () => {
@@ -334,7 +334,7 @@ describe('shopRoutes', () => {
 // --- Schedule Routes ---
 
 describe('scheduleRoutes', () => {
-  const app = new Hono()
+  const app = new OpenAPIHono()
   app.route('/api/v1/schedules', scheduleRoutes)
 
   describe('GET /api/v1/schedules', () => {

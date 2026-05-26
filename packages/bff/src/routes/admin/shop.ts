@@ -1,12 +1,12 @@
-import { Hono } from 'hono'
-import { zValidator } from '@hono/zod-validator'
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import { authMiddleware, type AuthEnv } from '../../middleware/auth'
 import type { Shop, ShopResponse } from '../../types/shop'
 import { updateShopSchema } from '../../schemas'
+import { ShopSchema, ErrorResponseSchema } from '../../schemas/responses'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
-const adminShopRoutes = new Hono<AuthEnv>()
+const adminShopRoutes = new OpenAPIHono<AuthEnv>()
 
 // 全ルートに認証ミドルウェアを適用
 adminShopRoutes.use('/*', authMiddleware)
@@ -22,9 +22,34 @@ function toShop(raw: ShopResponse): Shop {
   }
 }
 
-/** PUT /api/admin/shops/:id — 店舗情報を更新 */
-adminShopRoutes.put('/:id', zValidator('json', updateShopSchema), async (c) => {
-  const id = c.req.param('id')
+// --- Route definition ---
+
+const updateShopRoute = createRoute({
+  method: 'put',
+  path: '/{id}',
+  tags: ['管理者 - 店舗'],
+  summary: '店舗情報更新',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string().openapi({ description: '店舗 ID' }) }),
+    body: { content: { 'application/json': { schema: updateShopSchema } }, required: true },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ShopSchema } },
+      description: '更新成功',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+// --- Handler ---
+
+adminShopRoutes.openapi(updateShopRoute, async (c) => {
+  const { id } = c.req.valid('param')
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
@@ -39,11 +64,11 @@ adminShopRoutes.put('/:id', zValidator('json', updateShopSchema), async (c) => {
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 500)
+    return c.json(error as { error: string }, 500)
   }
 
   const data: ShopResponse = await res.json()
-  return c.json(toShop(data))
+  return c.json(toShop(data), 200)
 })
 
 export { adminShopRoutes }
