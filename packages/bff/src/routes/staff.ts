@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import type {
   Staff,
   StaffResponse,
@@ -11,10 +11,16 @@ import type {
   PaginatedStaffs,
   PaginatedStaffsResponse,
 } from '../types/staff'
+import {
+  StaffSchema,
+  StaffWithSchedulesSchema,
+  PaginatedStaffsSchema,
+  ErrorResponseSchema,
+} from '../schemas/responses'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
-const staffRoutes = new Hono()
+const staffRoutes = new OpenAPIHono()
 
 /** Backend の StaffResponse（PascalCase）を Frontend 向け（camelCase）に変換 */
 function toStaff(raw: StaffResponse): Staff {
@@ -53,9 +59,63 @@ function toImage(raw: StaffImageResponse): StaffImage {
   }
 }
 
-/** GET /api/staffs — スタッフ一覧を取得（page パラメータ指定時はページネーション付き） */
-staffRoutes.get('/', async (c) => {
-  const page = c.req.query('page')
+// --- Route definitions ---
+
+const listStaffsRoute = createRoute({
+  method: 'get',
+  path: '/',
+  tags: ['スタッフ'],
+  summary: 'スタッフ一覧取得',
+  description: 'page クエリパラメータ指定時はページネーション付き',
+  request: {
+    query: z.object({
+      page: z.string().optional().openapi({ description: 'ページ番号' }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.union([z.array(StaffSchema), PaginatedStaffsSchema]),
+        },
+      },
+      description: 'スタッフ一覧（page 指定時はページネーション付き）',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'リクエストエラー',
+    },
+    502: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Backend エラー',
+    },
+  },
+})
+
+const getStaffRoute = createRoute({
+  method: 'get',
+  path: '/{id}',
+  tags: ['スタッフ'],
+  summary: 'スタッフ詳細取得（スケジュール・画像付き）',
+  request: {
+    params: z.object({ id: z.string().openapi({ description: 'スタッフ ID' }) }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StaffWithSchedulesSchema } },
+      description: 'スタッフ詳細',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'スタッフが見つからない',
+    },
+  },
+})
+
+// --- Handlers ---
+
+staffRoutes.openapi(listStaffsRoute, async (c) => {
+  const { page } = c.req.valid('query')
   const url = page ? `${BACKEND_URL}/api/v1/staffs?page=${page}` : `${BACKEND_URL}/api/v1/staffs`
 
   const res = await fetch(url)
@@ -65,7 +125,10 @@ staffRoutes.get('/', async (c) => {
       typeof res.json === 'function'
         ? await res.json().catch(() => ({ error: 'Failed to fetch staffs from backend' }))
         : { error: 'Failed to fetch staffs from backend' }
-    return c.json(error, res.status >= 500 ? 502 : (res.status as 400))
+    if (res.status >= 500) {
+      return c.json(error as { error: string }, 502)
+    }
+    return c.json(error as { error: string }, 400)
   }
 
   if (page) {
@@ -74,16 +137,15 @@ staffRoutes.get('/', async (c) => {
       data: data.data.map(toStaff),
       pagination: data.pagination,
     }
-    return c.json(result)
+    return c.json(result, 200)
   }
 
   const data: StaffResponse[] = await res.json()
-  return c.json(data.map(toStaff))
+  return c.json(data.map(toStaff), 200)
 })
 
-/** GET /api/staffs/:id — スタッフ詳細（スケジュール付き）を取得 */
-staffRoutes.get('/:id', async (c) => {
-  const id = c.req.param('id')
+staffRoutes.openapi(getStaffRoute, async (c) => {
+  const { id } = c.req.valid('param')
 
   const res = await fetch(`${BACKEND_URL}/api/v1/staffs/${id}`)
 
@@ -98,7 +160,7 @@ staffRoutes.get('/:id', async (c) => {
     images: data.Images ? data.Images.map(toImage) : [],
   }
 
-  return c.json(result)
+  return c.json(result, 200)
 })
 
 export { staffRoutes }

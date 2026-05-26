@@ -1,20 +1,148 @@
-import { Hono } from 'hono'
-import { zValidator } from '@hono/zod-validator'
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import { authMiddleware, type AuthEnv } from '../../middleware/auth'
 import { createStaffAccountSchema, updateStaffAccountSchema } from '../../schemas'
+import { StaffAccountResponseSchema, ErrorResponseSchema } from '../../schemas/responses'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
-const adminAccountRoutes = new Hono<AuthEnv>()
-
-/**
- * 管理者用スタッフアカウント管理ルート。
- * Backend の /admin/staff-accounts/* エンドポイントへプロキシする。
- * Admin JWT トークンが必要。
- */
+const adminAccountRoutes = new OpenAPIHono<AuthEnv>()
 
 // 全ルートに認証ミドルウェアを適用
 adminAccountRoutes.use('/*', authMiddleware)
+
+// ============================================================
+// Route definitions
+// ============================================================
+
+const listAccountsRoute = createRoute({
+  method: 'get',
+  path: '/',
+  tags: ['管理者 - アカウント'],
+  summary: 'スタッフアカウント一覧',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.array(StaffAccountResponseSchema) } },
+      description: 'アカウント一覧',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: '認証エラー',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+const getAccountByStaffRoute = createRoute({
+  method: 'get',
+  path: '/staff/{staffId}',
+  tags: ['管理者 - アカウント'],
+  summary: 'スタッフ ID でアカウント取得',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ staffId: z.string().openapi({ description: 'スタッフ ID' }) }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StaffAccountResponseSchema } },
+      description: 'アカウント詳細',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: '認証エラー',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+const createAccountRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['管理者 - アカウント'],
+  summary: 'スタッフアカウント作成',
+  security: [{ Bearer: [] }],
+  request: {
+    body: {
+      content: { 'application/json': { schema: createStaffAccountSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    201: {
+      content: { 'application/json': { schema: StaffAccountResponseSchema } },
+      description: '作成成功',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'リクエストエラー',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: '認証エラー',
+    },
+  },
+})
+
+const updateAccountRoute = createRoute({
+  method: 'put',
+  path: '/{id}',
+  tags: ['管理者 - アカウント'],
+  summary: 'スタッフアカウント更新',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string().openapi({ description: 'アカウント ID' }) }),
+    body: {
+      content: { 'application/json': { schema: updateStaffAccountSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StaffAccountResponseSchema } },
+      description: '更新成功',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'リクエストエラー',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: '認証エラー',
+    },
+  },
+})
+
+const deleteAccountRoute = createRoute({
+  method: 'delete',
+  path: '/{id}',
+  tags: ['管理者 - アカウント'],
+  summary: 'スタッフアカウント削除',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string().openapi({ description: 'アカウント ID' }) }),
+  },
+  responses: {
+    204: { description: '削除成功' },
+    400: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'リクエストエラー',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: '認証エラー',
+    },
+  },
+})
+
+// ============================================================
+// Handlers
+// ============================================================
 
 /** スタッフアカウントレスポンス型 */
 interface StaffAccountResponse {
@@ -25,8 +153,7 @@ interface StaffAccountResponse {
   updatedAt: string
 }
 
-/** GET /api/admin/staff-accounts — スタッフアカウント一覧 */
-adminAccountRoutes.get('/', async (c) => {
+adminAccountRoutes.openapi(listAccountsRoute, async (c) => {
   const authHeader = c.get('authHeader')
 
   const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts`, {
@@ -35,35 +162,32 @@ adminAccountRoutes.get('/', async (c) => {
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 401 | 500)
+    return c.json(error as { error: string }, res.status >= 500 ? 500 : 401)
   }
 
   const data: StaffAccountResponse[] = await res.json()
-  return c.json(data)
+  return c.json(data, 200)
 })
 
-/** GET /api/admin/staff-accounts/staff/:staffId — スタッフIDでアカウント取得 */
-adminAccountRoutes.get('/staff/:staffId', async (c) => {
+adminAccountRoutes.openapi(getAccountByStaffRoute, async (c) => {
   const authHeader = c.get('authHeader')
+  const { staffId } = c.req.valid('param')
 
-  const staffId = c.req.param('staffId')
   const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts/staff/${staffId}`, {
     headers: { Authorization: authHeader },
   })
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 401 | 500)
+    return c.json(error as { error: string }, res.status >= 500 ? 500 : 401)
   }
 
   const data = await res.json()
-  return c.json(data)
+  return c.json(data, 200)
 })
 
-/** POST /api/admin/staff-accounts — スタッフアカウント作成 */
-adminAccountRoutes.post('/', zValidator('json', createStaffAccountSchema), async (c) => {
+adminAccountRoutes.openapi(createAccountRoute, async (c) => {
   const authHeader = c.get('authHeader')
-
   const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts`, {
@@ -77,18 +201,16 @@ adminAccountRoutes.post('/', zValidator('json', createStaffAccountSchema), async
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error as { error: string }, res.status === 401 ? 401 : 400)
   }
 
   const data: StaffAccountResponse = await res.json()
   return c.json(data, 201)
 })
 
-/** PUT /api/admin/staff-accounts/:id — スタッフアカウント更新 */
-adminAccountRoutes.put('/:id', zValidator('json', updateStaffAccountSchema), async (c) => {
+adminAccountRoutes.openapi(updateAccountRoute, async (c) => {
   const authHeader = c.get('authHeader')
-
-  const id = c.req.param('id')
+  const { id } = c.req.valid('param')
   const body = c.req.valid('json')
 
   const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts/${id}`, {
@@ -102,18 +224,16 @@ adminAccountRoutes.put('/:id', zValidator('json', updateStaffAccountSchema), asy
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error as { error: string }, res.status === 401 ? 401 : 400)
   }
 
   const data: StaffAccountResponse = await res.json()
-  return c.json(data)
+  return c.json(data, 200)
 })
 
-/** DELETE /api/admin/staff-accounts/:id — スタッフアカウント削除 */
-adminAccountRoutes.delete('/:id', async (c) => {
+adminAccountRoutes.openapi(deleteAccountRoute, async (c) => {
   const authHeader = c.get('authHeader')
-
-  const id = c.req.param('id')
+  const { id } = c.req.valid('param')
 
   const res = await fetch(`${BACKEND_URL}/api/v1/admin/staff-accounts/${id}`, {
     method: 'DELETE',
@@ -122,7 +242,7 @@ adminAccountRoutes.delete('/:id', async (c) => {
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 400 | 401)
+    return c.json(error as { error: string }, res.status === 401 ? 401 : 400)
   }
 
   return c.body(null, 204)

@@ -1,5 +1,4 @@
-import { Hono } from 'hono'
-import { zValidator } from '@hono/zod-validator'
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import { authMiddleware, type AuthEnv } from '../../middleware/auth'
 import type {
   Staff,
@@ -17,10 +16,16 @@ import {
   setMainImageSchema,
   updateCropPositionSchema,
 } from '../../schemas'
+import {
+  StaffWithSchedulesSchema,
+  StaffImageSchema,
+  ErrorResponseSchema,
+  MessageResponseSchema,
+} from '../../schemas/responses'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
 
-const adminStaffRoutes = new Hono<AuthEnv>()
+const adminStaffRoutes = new OpenAPIHono<AuthEnv>()
 
 // 全ルートに認証ミドルウェアを適用
 adminStaffRoutes.use('/*', authMiddleware)
@@ -71,8 +76,168 @@ function toStaffWithSchedules(data: StaffWithSchedulesResponse): StaffWithSchedu
   }
 }
 
-/** POST /api/admin/staffs — スタッフ新規作成 */
-adminStaffRoutes.post('/', zValidator('json', createStaffSchema), async (c) => {
+// ============================================================
+// Route definitions
+// ============================================================
+
+const createStaffRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['管理者 - スタッフ'],
+  summary: 'スタッフ新規作成',
+  security: [{ Bearer: [] }],
+  request: {
+    body: { content: { 'application/json': { schema: createStaffSchema } }, required: true },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StaffWithSchedulesSchema } },
+      description: '作成成功',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+const updateStaffRoute = createRoute({
+  method: 'put',
+  path: '/{id}',
+  tags: ['管理者 - スタッフ'],
+  summary: 'スタッフ情報更新',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string().openapi({ description: 'スタッフ ID' }) }),
+    body: { content: { 'application/json': { schema: updateStaffSchema } }, required: true },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StaffWithSchedulesSchema } },
+      description: '更新成功',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+const deleteStaffRoute = createRoute({
+  method: 'delete',
+  path: '/{id}',
+  tags: ['管理者 - スタッフ'],
+  summary: 'スタッフ削除',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string().openapi({ description: 'スタッフ ID' }) }),
+  },
+  responses: {
+    204: { description: '削除成功' },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+const uploadStaffImageRoute = createRoute({
+  method: 'post',
+  path: '/{id}/images',
+  tags: ['管理者 - スタッフ画像'],
+  summary: 'スタッフ画像アップロード',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string().openapi({ description: 'スタッフ ID' }) }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StaffImageSchema } },
+      description: 'アップロード成功',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+const deleteStaffImageRoute = createRoute({
+  method: 'delete',
+  path: '/{id}/images/{imageId}',
+  tags: ['管理者 - スタッフ画像'],
+  summary: 'スタッフ画像削除',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({
+      id: z.string().openapi({ description: 'スタッフ ID' }),
+      imageId: z.string().openapi({ description: '画像 ID' }),
+    }),
+  },
+  responses: {
+    204: { description: '削除成功' },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+const setStaffMainImageRoute = createRoute({
+  method: 'put',
+  path: '/{id}/images/main',
+  tags: ['管理者 - スタッフ画像'],
+  summary: 'メイン画像設定',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string().openapi({ description: 'スタッフ ID' }) }),
+    body: { content: { 'application/json': { schema: setMainImageSchema } }, required: true },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: MessageResponseSchema } },
+      description: '設定成功',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+const updateStaffCropRoute = createRoute({
+  method: 'put',
+  path: '/{id}/images/{imageId}/crop',
+  tags: ['管理者 - スタッフ画像'],
+  summary: '画像クロップ位置更新',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({
+      id: z.string().openapi({ description: 'スタッフ ID' }),
+      imageId: z.string().openapi({ description: '画像 ID' }),
+    }),
+    body: {
+      content: { 'application/json': { schema: updateCropPositionSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StaffImageSchema } },
+      description: '更新成功',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
+    },
+  },
+})
+
+// ============================================================
+// Handlers
+// ============================================================
+
+adminStaffRoutes.openapi(createStaffRoute, async (c) => {
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
@@ -87,16 +252,15 @@ adminStaffRoutes.post('/', zValidator('json', createStaffSchema), async (c) => {
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 500)
+    return c.json(error as { error: string }, 500)
   }
 
   const data: StaffWithSchedulesResponse = await res.json()
-  return c.json(toStaffWithSchedules(data))
+  return c.json(toStaffWithSchedules(data), 200)
 })
 
-/** PUT /api/admin/staffs/:id — スタッフ情報更新 */
-adminStaffRoutes.put('/:id', zValidator('json', updateStaffSchema), async (c) => {
-  const id = c.req.param('id')
+adminStaffRoutes.openapi(updateStaffRoute, async (c) => {
+  const { id } = c.req.valid('param')
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
@@ -111,16 +275,15 @@ adminStaffRoutes.put('/:id', zValidator('json', updateStaffSchema), async (c) =>
 
   if (!res.ok) {
     const error = await res.json()
-    return c.json(error, res.status as 500)
+    return c.json(error as { error: string }, 500)
   }
 
   const data: StaffWithSchedulesResponse = await res.json()
-  return c.json(toStaffWithSchedules(data))
+  return c.json(toStaffWithSchedules(data), 200)
 })
 
-/** DELETE /api/admin/staffs/:id — スタッフ削除 */
-adminStaffRoutes.delete('/:id', async (c) => {
-  const id = c.req.param('id')
+adminStaffRoutes.openapi(deleteStaffRoute, async (c) => {
+  const { id } = c.req.valid('param')
   const authHeader = c.get('authHeader') as string
 
   const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}`, {
@@ -132,19 +295,18 @@ adminStaffRoutes.delete('/:id', async (c) => {
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Failed to delete staff' }))
-    return c.json(error, res.status as 500)
+    return c.json(error as { error: string }, 500)
   }
 
-  return new Response(null, { status: 204 })
+  return c.body(null, 204)
 })
 
 // ============================================================
 // Staff Image Management
 // ============================================================
 
-/** POST /api/admin/staffs/:id/images — 画像アップロード（multipart/form-data をそのまま Backend へ転送） */
-adminStaffRoutes.post('/:id/images', async (c) => {
-  const id = c.req.param('id')
+adminStaffRoutes.openapi(uploadStaffImageRoute, async (c) => {
+  const { id } = c.req.valid('param')
   const authHeader = c.get('authHeader') as string
 
   // multipart body をそのまま Backend へ転送
@@ -162,17 +324,15 @@ adminStaffRoutes.post('/:id/images', async (c) => {
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Failed to upload image' }))
-    return c.json(error, res.status as 500)
+    return c.json(error as { error: string }, 500)
   }
 
   const data: StaffImageResponse = await res.json()
-  return c.json(toImage(data))
+  return c.json(toImage(data), 200)
 })
 
-/** DELETE /api/admin/staffs/:id/images/:imageId — 画像を削除 */
-adminStaffRoutes.delete('/:id/images/:imageId', async (c) => {
-  const id = c.req.param('id')
-  const imageId = c.req.param('imageId')
+adminStaffRoutes.openapi(deleteStaffImageRoute, async (c) => {
+  const { id, imageId } = c.req.valid('param')
   const authHeader = c.get('authHeader') as string
 
   const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}/images/${imageId}`, {
@@ -184,15 +344,14 @@ adminStaffRoutes.delete('/:id/images/:imageId', async (c) => {
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Failed to delete image' }))
-    return c.json(error, res.status as 500)
+    return c.json(error as { error: string }, 500)
   }
 
-  return new Response(null, { status: 204 })
+  return c.body(null, 204)
 })
 
-/** PUT /api/admin/staffs/:id/images/main — メイン画像を設定 */
-adminStaffRoutes.put('/:id/images/main', zValidator('json', setMainImageSchema), async (c) => {
-  const id = c.req.param('id')
+adminStaffRoutes.openapi(setStaffMainImageRoute, async (c) => {
+  const { id } = c.req.valid('param')
   const body = c.req.valid('json')
   const authHeader = c.get('authHeader') as string
 
@@ -207,39 +366,33 @@ adminStaffRoutes.put('/:id/images/main', zValidator('json', setMainImageSchema),
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Failed to set main image' }))
-    return c.json(error, res.status as 500)
+    return c.json(error as { error: string }, 500)
   }
 
-  return c.json({ message: 'ok' })
+  return c.json({ message: 'ok' }, 200)
 })
 
-/** PUT /api/admin/staffs/:id/images/:imageId/crop — 画像のクロップ位置を更新 */
-adminStaffRoutes.put(
-  '/:id/images/:imageId/crop',
-  zValidator('json', updateCropPositionSchema),
-  async (c) => {
-    const id = c.req.param('id')
-    const imageId = c.req.param('imageId')
-    const body = c.req.valid('json')
-    const authHeader = c.get('authHeader') as string
+adminStaffRoutes.openapi(updateStaffCropRoute, async (c) => {
+  const { id, imageId } = c.req.valid('param')
+  const body = c.req.valid('json')
+  const authHeader = c.get('authHeader') as string
 
-    const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}/images/${imageId}/crop`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: authHeader,
-      },
-      body: JSON.stringify(body),
-    })
+  const res = await fetch(`${BACKEND_URL}/api/v1/admin/staffs/${id}/images/${imageId}/crop`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authHeader,
+    },
+    body: JSON.stringify(body),
+  })
 
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ error: 'Failed to update crop position' }))
-      return c.json(error, res.status as 500)
-    }
-
-    const data: StaffImageResponse = await res.json()
-    return c.json(toImage(data))
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to update crop position' }))
+    return c.json(error as { error: string }, 500)
   }
-)
+
+  const data: StaffImageResponse = await res.json()
+  return c.json(toImage(data), 200)
+})
 
 export { adminStaffRoutes }

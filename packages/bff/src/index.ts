@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
+import { OpenAPIHono } from '@hono/zod-openapi'
+import { swaggerUI } from '@hono/swagger-ui'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 import { shopRoutes } from './routes/shop'
@@ -15,7 +16,7 @@ import { adminMenuRoutes } from './routes/admin/menu'
 import { adminReviewRoutes } from './routes/admin/review'
 import { adminAccountRoutes } from './routes/admin/account'
 
-const app = new Hono()
+const app = new OpenAPIHono()
 
 // Security headers
 app.use('/*', secureHeaders())
@@ -55,6 +56,26 @@ app.route('/api/v1/admin/staffs', adminStaffRoutes)
 app.route('/api/v1/admin/menu', adminMenuRoutes)
 app.route('/api/v1/admin/reviews', adminReviewRoutes)
 app.route('/api/v1/admin/staff-accounts', adminAccountRoutes)
+
+// OpenAPI: Bearer 認証スキームを登録
+app.openAPIRegistry.registerComponent('securitySchemes', 'Bearer', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'JWT',
+})
+
+// OpenAPI JSON ドキュメント
+app.doc('/api/v1/doc', {
+  openapi: '3.0.0',
+  info: {
+    title: 'Tiara BFF API',
+    version: '1.0.0',
+    description: 'Bar Tiara の BFF API 仕様書',
+  },
+})
+
+// Swagger UI
+app.get('/api/v1/docs', swaggerUI({ url: '/api/v1/doc' }))
 
 // Static file proxy: アップロード画像を Backend から配信
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1323'
