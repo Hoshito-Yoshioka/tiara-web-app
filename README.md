@@ -92,10 +92,10 @@ docker-compose ps
 
 ```bash
 cd packages/backend
-set -a && source ../../.env && set +a && go run ./cmd/server/
+go run ./cmd/server/
 ```
 
-> **Note:** Go は `.env` ファイルを自動で読み込みません。`set -a` で変数を自動 export する設定にしてから `source` で読み込み、`set +a` で元に戻しています。
+> **Note:** viper が `.env` ファイルを自動で読み込みます。`source .env` は不要です。環境変数が明示的にセットされている場合は、そちらが `.env` より優先されます。
 
 起動確認：ターミナルに `Successfully connected to the database!` が表示されれば OK。
 
