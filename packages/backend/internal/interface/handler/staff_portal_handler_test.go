@@ -58,7 +58,11 @@ func (m *mockStaffPortalUsecase) SubmitScheduleDraft(_ context.Context, _ uuid.U
 
 // newPortalHandler はテスト用の StaffPortalHandler を生成するヘルパー。
 func newPortalHandler(auth usecase.StaffAuthUsecase, portal usecase.StaffPortalUsecase, staff usecase.StaffUsecase) *StaffPortalHandler {
-	return NewStaffPortalHandler(auth, portal, staff, "test-secret", 2, "/tmp/test-uploads")
+	return NewStaffPortalHandler(auth, portal, staff,
+		WithJWTSecret("test-secret"),
+		WithJWTExpiryHours(2),
+		WithUploadDir("/tmp/test-uploads"),
+	)
 }
 
 // --- Auth Tests ---

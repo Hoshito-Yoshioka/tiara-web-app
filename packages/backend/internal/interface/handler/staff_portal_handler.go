@@ -27,16 +27,42 @@ type StaffPortalHandler struct {
 	uploadDir      string
 }
 
-// NewStaffPortalHandler は新しいStaffPortalHandlerのインスタンスを作成する。
-func NewStaffPortalHandler(auth usecase.StaffAuthUsecase, portal usecase.StaffPortalUsecase, staff usecase.StaffUsecase, jwtSecret string, jwtExpiryHours int, uploadDir string) *StaffPortalHandler {
-	return &StaffPortalHandler{
-		authUsecase:    auth,
-		portalUsecase:  portal,
-		staffUsecase:   staff,
-		jwtSecret:      jwtSecret,
-		jwtExpiryHours: jwtExpiryHours,
-		uploadDir:      uploadDir,
+// StaffPortalHandlerOption は StaffPortalHandler の設定を変更する Functional Option。
+type StaffPortalHandlerOption func(*StaffPortalHandler)
+
+// WithJWTSecret は JWT 署名用の秘密鍵を設定する。
+func WithJWTSecret(secret string) StaffPortalHandlerOption {
+	return func(h *StaffPortalHandler) {
+		h.jwtSecret = secret
 	}
+}
+
+// WithJWTExpiryHours は JWT トークンの有効期限（時間）を設定する。
+func WithJWTExpiryHours(hours int) StaffPortalHandlerOption {
+	return func(h *StaffPortalHandler) {
+		h.jwtExpiryHours = hours
+	}
+}
+
+// WithUploadDir はファイルアップロード先ディレクトリを設定する。
+func WithUploadDir(dir string) StaffPortalHandlerOption {
+	return func(h *StaffPortalHandler) {
+		h.uploadDir = dir
+	}
+}
+
+// NewStaffPortalHandler は新しいStaffPortalHandlerのインスタンスを作成する。
+// 必須の usecase 依存は位置引数、設定値は Functional Options で受け取る。
+func NewStaffPortalHandler(auth usecase.StaffAuthUsecase, portal usecase.StaffPortalUsecase, staff usecase.StaffUsecase, opts ...StaffPortalHandlerOption) *StaffPortalHandler {
+	h := &StaffPortalHandler{
+		authUsecase:   auth,
+		portalUsecase: portal,
+		staffUsecase:  staff,
+	}
+	for _, opt := range opts {
+		opt(h)
+	}
+	return h
 }
 
 // --- Helper ---
