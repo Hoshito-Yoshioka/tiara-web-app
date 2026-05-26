@@ -32,6 +32,8 @@ services:
         value: '1323'
       - key: UPLOAD_DIR
         value: uploads
+      - key: APP_ENV
+        value: production
 
   # ==============================
   # BFF (Hono + Node.js)
@@ -40,8 +42,8 @@ services:
     name: tiara-bff
     runtime: node
     plan: free
-    buildCommand: pnpm install --frozen-lockfile
-    startCommand: pnpm --filter bff start
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter bff build
+    startCommand: pnpm --filter bff start:prod
     envVars:
       - key: BACKEND_URL
         value: https://tiara-backend.onrender.com
@@ -67,5 +69,7 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         value: https://tiara-bff.onrender.com
+      - key: VITE_ADMIN_BASE_PATH
+        value: /admin
       - key: NODE_VERSION
         value: '20'

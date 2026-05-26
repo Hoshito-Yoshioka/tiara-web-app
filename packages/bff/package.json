@@ -5,8 +5,9 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "echo 'Using tsx runtime — no build step required'",
+    "build": "tsc -p tsconfig.build.json",
     "start": "tsx src/index.ts",
+    "start:prod": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

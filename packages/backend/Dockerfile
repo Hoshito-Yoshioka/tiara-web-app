@@ -25,4 +25,9 @@ RUN chmod +x /app/scripts/entrypoint.sh /app/scripts/migrate.sh \
     && mkdir -p uploads/staff
 
 EXPOSE 1323
+
+# ヘルスチェック: 30秒ごとに / エンドポイントへ疎通確認
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:1323/ || exit 1
+
 ENTRYPOINT ["/app/scripts/entrypoint.sh"]

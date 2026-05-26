@@ -32,7 +32,14 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	// 接続プール設定: Managed DB Micro の上限（約60接続）に対して安全マージンを確保
+	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Unable to parse database URL: %v\n", err)
+	}
+	poolConfig.MaxConns = 20
+
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}

@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+// 管理画面のベースパス。本番では VITE_ADMIN_BASE_PATH 環境変数で変更し、URLからの推測を困難にする。
+const adminBase = import.meta.env.VITE_ADMIN_BASE_PATH || '/admin'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   // ページ遷移のたびにスクロール位置をトップへリセット
@@ -47,53 +50,53 @@ const router = createRouter({
     // requiresAuth: true で認証ガードを適用
     // ==============================
     {
-      path: '/admin',
-      redirect: '/admin/login',
+      path: adminBase,
+      redirect: `${adminBase}/login`,
     },
     {
-      path: '/admin/login',
+      path: `${adminBase}/login`,
       name: 'admin-login',
       component: () => import('@/views/admin/AdminLoginView.vue'),
       meta: { layout: 'admin' },
     },
     {
-      path: '/admin/shop',
+      path: `${adminBase}/shop`,
       name: 'admin-shop-edit',
       component: () => import('@/views/admin/AdminShopEditView.vue'),
       meta: { layout: 'admin', requiresAuth: true },
     },
     {
-      path: '/admin/staffs',
+      path: `${adminBase}/staffs`,
       name: 'admin-staff-list',
       component: () => import('@/views/admin/AdminStaffListView.vue'),
       meta: { layout: 'admin', requiresAuth: true },
     },
     {
-      path: '/admin/staffs/new',
+      path: `${adminBase}/staffs/new`,
       name: 'admin-staff-new',
       component: () => import('@/views/admin/AdminStaffEditView.vue'),
       meta: { layout: 'admin', requiresAuth: true },
     },
     {
-      path: '/admin/staffs/:id/edit',
+      path: `${adminBase}/staffs/:id/edit`,
       name: 'admin-staff-edit',
       component: () => import('@/views/admin/AdminStaffEditView.vue'),
       meta: { layout: 'admin', requiresAuth: true },
     },
     {
-      path: '/admin/menu',
+      path: `${adminBase}/menu`,
       name: 'admin-menu-edit',
       component: () => import('@/views/admin/AdminMenuView.vue'),
       meta: { layout: 'admin', requiresAuth: true },
     },
     {
-      path: '/admin/profile-reviews',
+      path: `${adminBase}/profile-reviews`,
       name: 'admin-profile-reviews',
       component: () => import('@/views/admin/AdminProfileReviewView.vue'),
       meta: { layout: 'admin', requiresAuth: true },
     },
     {
-      path: '/admin/schedule-reviews',
+      path: `${adminBase}/schedule-reviews`,
       name: 'admin-schedule-reviews',
       component: () => import('@/views/admin/AdminScheduleReviewView.vue'),
       meta: { layout: 'admin', requiresAuth: true },
