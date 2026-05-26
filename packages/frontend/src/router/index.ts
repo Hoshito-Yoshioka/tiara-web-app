@@ -25,11 +25,12 @@ const router = createRouter({
       name: 'staff-detail',
       component: () => import('@/views/StaffDetailView.vue'),
     },
-    {
-      path: '/schedule',
-      name: 'schedule',
-      component: () => import('@/views/ScheduleView.vue'),
-    },
+    // NOTE: /schedule は一時的に非公開（admin/portal のスケジュール操作は有効）
+    // {
+    //   path: '/schedule',
+    //   name: 'schedule',
+    //   component: () => import('@/views/ScheduleView.vue'),
+    // },
     {
       path: '/price',
       name: 'price',
