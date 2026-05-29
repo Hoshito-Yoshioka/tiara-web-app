@@ -10,7 +10,7 @@
     { label: 'HOME', to: '/' },
     { label: 'SHOP', to: '/shop' },
     { label: 'STAFF', to: '/staff' },
-    // { label: 'SCHEDULE', to: '/schedule' }, // 一時的に非公開
+    { label: 'SCHEDULE', to: '/schedule' },
     { label: 'PRICE', to: '/price' },
     { label: 'ACCESS', to: '/access' },
   ]

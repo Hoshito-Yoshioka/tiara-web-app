@@ -45,6 +45,7 @@ export function useStaffPortalApi() {
     role: string
     bio: string
     imageUrl: string
+    externalScheduleUrl: string
     imageCropPosition: string
   }): Promise<ProfileDraft | null> {
     saveError.value = null

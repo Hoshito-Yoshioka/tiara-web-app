@@ -49,6 +49,7 @@ export const StaffSchema = z
     role: z.string(),
     bio: z.string(),
     imageUrl: z.string(),
+    externalScheduleUrl: z.string(),
     imageCropPosition: z.string(),
     sortOrder: z.number(),
   })
@@ -164,6 +165,7 @@ export const ProfileDraftResponseSchema = z
     role: z.string(),
     bio: z.string(),
     imageUrl: z.string(),
+    externalScheduleUrl: z.string(),
     imageCropPosition: z.string(),
     status: z.string(),
     adminComment: z.string(),

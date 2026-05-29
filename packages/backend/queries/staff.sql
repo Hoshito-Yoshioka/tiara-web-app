@@ -20,10 +20,10 @@ SELECT * FROM staff_schedules WHERE staff_id = $1 ORDER BY day_of_week ASC;
 SELECT * FROM staff_schedules ORDER BY staff_id, day_of_week ASC;
 
 -- name: CreateStaff :one
-INSERT INTO staffs (shop_id, name, role, bio, image_url, image_crop_position, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+INSERT INTO staffs (shop_id, name, role, bio, image_url, external_schedule_url, image_crop_position, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;
 
 -- name: UpdateStaff :one
-UPDATE staffs SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6, sort_order = $7 WHERE id = $1 RETURNING *;
+UPDATE staffs SET name = $2, role = $3, bio = $4, image_url = $5, external_schedule_url = $6, image_crop_position = $7, sort_order = $8 WHERE id = $1 RETURNING *;
 
 -- name: DeleteStaff :exec
 DELETE FROM staffs WHERE id = $1;

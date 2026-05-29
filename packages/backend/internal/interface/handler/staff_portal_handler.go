@@ -143,32 +143,34 @@ func (h *StaffPortalHandler) Verify(c echo.Context) error {
 
 // ProfileDraftResponse はプロフィール下書きのレスポンス型。
 type ProfileDraftResponse struct {
-	ID                string  `json:"id,omitempty"`
-	StaffID           string  `json:"staffId"`
-	Name              string  `json:"name"`
-	Role              string  `json:"role"`
-	Bio               string  `json:"bio"`
-	ImageURL          string  `json:"imageUrl"`
-	ImageCropPosition string  `json:"imageCropPosition"`
-	Status            string  `json:"status"`
-	AdminComment      string  `json:"adminComment"`
-	SubmittedAt       *string `json:"submittedAt,omitempty"`
-	ReviewedAt        *string `json:"reviewedAt,omitempty"`
-	CreatedAt         string  `json:"createdAt,omitempty"`
-	UpdatedAt         string  `json:"updatedAt,omitempty"`
+	ID                  string  `json:"id,omitempty"`
+	StaffID             string  `json:"staffId"`
+	Name                string  `json:"name"`
+	Role                string  `json:"role"`
+	Bio                 string  `json:"bio"`
+	ImageURL            string  `json:"imageUrl"`
+	ExternalScheduleURL string  `json:"externalScheduleUrl"`
+	ImageCropPosition   string  `json:"imageCropPosition"`
+	Status              string  `json:"status"`
+	AdminComment        string  `json:"adminComment"`
+	SubmittedAt         *string `json:"submittedAt,omitempty"`
+	ReviewedAt          *string `json:"reviewedAt,omitempty"`
+	CreatedAt           string  `json:"createdAt,omitempty"`
+	UpdatedAt           string  `json:"updatedAt,omitempty"`
 }
 
 // toProfileDraftResponse は domain.StaffProfileDraft をレスポンス型に変換する。
 func toProfileDraftResponse(d domain.StaffProfileDraft) ProfileDraftResponse {
 	resp := ProfileDraftResponse{
-		StaffID:           d.StaffID.String(),
-		Name:              d.Name,
-		Role:              d.Role,
-		Bio:               d.Bio,
-		ImageURL:          d.ImageURL,
-		ImageCropPosition: d.ImageCropPosition,
-		Status:            string(d.Status),
-		AdminComment:      d.AdminComment,
+		StaffID:             d.StaffID.String(),
+		Name:                d.Name,
+		Role:                d.Role,
+		Bio:                 d.Bio,
+		ImageURL:            d.ImageURL,
+		ExternalScheduleURL: d.ExternalScheduleURL,
+		ImageCropPosition:   d.ImageCropPosition,
+		Status:              string(d.Status),
+		AdminComment:        d.AdminComment,
 	}
 	if d.ID != uuid.Nil {
 		resp.ID = d.ID.String()
@@ -207,12 +209,13 @@ func (h *StaffPortalHandler) GetMyProfileDraft(c echo.Context) error {
 
 // SaveProfileDraftRequest はプロフィール下書き保存リクエストのボディ型。
 type SaveProfileDraftRequest struct {
-	Name              string `json:"name"`
-	Role              string `json:"role"`
-	Bio               string `json:"bio"`
-	ImageURL          string `json:"imageUrl"`
-	ImageCropPosition string `json:"imageCropPosition"`
-	UpdatedAt         string `json:"updatedAt"`
+	Name                string `json:"name"`
+	Role                string `json:"role"`
+	Bio                 string `json:"bio"`
+	ImageURL            string `json:"imageUrl"`
+	ExternalScheduleURL string `json:"externalScheduleUrl"`
+	ImageCropPosition   string `json:"imageCropPosition"`
+	UpdatedAt           string `json:"updatedAt"`
 }
 
 // SaveMyProfileDraft はプロフィール下書きを保存する。
@@ -228,11 +231,12 @@ func (h *StaffPortalHandler) SaveMyProfileDraft(c echo.Context) error {
 	}
 
 	input := domain.SaveProfileDraftInput{
-		Name:              req.Name,
-		Role:              req.Role,
-		Bio:               req.Bio,
-		ImageURL:          req.ImageURL,
-		ImageCropPosition: req.ImageCropPosition,
+		Name:                req.Name,
+		Role:                req.Role,
+		Bio:                 req.Bio,
+		ImageURL:            req.ImageURL,
+		ExternalScheduleURL: req.ExternalScheduleURL,
+		ImageCropPosition:   req.ImageCropPosition,
 	}
 
 	updatedAt, _ := time.Parse(time.RFC3339, req.UpdatedAt)

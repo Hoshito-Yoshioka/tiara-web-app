@@ -61,19 +61,20 @@ func timeToPgTimestamptz(t time.Time) pgtype.Timestamptz {
 // convertToProfileDraftDomain は sqlc 生成の StaffProfileDraft を domain に変換する。
 func convertToProfileDraftDomain(row StaffProfileDraft) domain.StaffProfileDraft {
 	return domain.StaffProfileDraft{
-		ID:                uuid.UUID(row.ID.Bytes),
-		StaffID:           uuid.UUID(row.StaffID.Bytes),
-		Name:              row.Name,
-		Role:              row.Role,
-		Bio:               row.Bio,
-		ImageURL:          row.ImageUrl,
-		ImageCropPosition: row.ImageCropPosition,
-		Status:            domain.DraftStatus(row.Status),
-		AdminComment:      row.AdminComment,
-		SubmittedAt:       convertNullableTimestamptz(row.SubmittedAt),
-		ReviewedAt:        convertNullableTimestamptz(row.ReviewedAt),
-		CreatedAt:         row.CreatedAt.Time,
-		UpdatedAt:         row.UpdatedAt.Time,
+		ID:                  uuid.UUID(row.ID.Bytes),
+		StaffID:             uuid.UUID(row.StaffID.Bytes),
+		Name:                row.Name,
+		Role:                row.Role,
+		Bio:                 row.Bio,
+		ImageURL:            row.ImageUrl,
+		ExternalScheduleURL: row.ExternalScheduleUrl,
+		ImageCropPosition:   row.ImageCropPosition,
+		Status:              domain.DraftStatus(row.Status),
+		AdminComment:        row.AdminComment,
+		SubmittedAt:         convertNullableTimestamptz(row.SubmittedAt),
+		ReviewedAt:          convertNullableTimestamptz(row.ReviewedAt),
+		CreatedAt:           row.CreatedAt.Time,
+		UpdatedAt:           row.UpdatedAt.Time,
 	}
 }
 
@@ -111,13 +112,14 @@ func (r *staffDraftRepository) ListPendingProfileDrafts(ctx context.Context) ([]
 // CreateProfileDraft は新しいプロフィール下書きを作成する。
 func (r *staffDraftRepository) CreateProfileDraft(ctx context.Context, staffID uuid.UUID, input domain.SaveProfileDraftInput) (domain.StaffProfileDraft, error) {
 	row, err := r.q.CreateProfileDraft(ctx, CreateProfileDraftParams{
-		StaffID:           uuidToPgtype(staffID),
-		Name:              input.Name,
-		Role:              input.Role,
-		Bio:               input.Bio,
-		ImageUrl:          input.ImageURL,
-		ImageCropPosition: input.ImageCropPosition,
-		Status:            string(domain.DraftStatusDraft),
+		StaffID:             uuidToPgtype(staffID),
+		Name:                input.Name,
+		Role:                input.Role,
+		Bio:                 input.Bio,
+		ImageUrl:            input.ImageURL,
+		ExternalScheduleUrl: input.ExternalScheduleURL,
+		ImageCropPosition:   input.ImageCropPosition,
+		Status:              string(domain.DraftStatusDraft),
 	})
 	if err != nil {
 		return domain.StaffProfileDraft{}, err
@@ -129,14 +131,15 @@ func (r *staffDraftRepository) CreateProfileDraft(ctx context.Context, staffID u
 // 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
 func (r *staffDraftRepository) UpdateProfileDraft(ctx context.Context, id uuid.UUID, input domain.SaveProfileDraftInput, updatedAt time.Time) (domain.StaffProfileDraft, error) {
 	row, err := r.q.UpdateProfileDraft(ctx, UpdateProfileDraftParams{
-		ID:                uuidToPgtype(id),
-		Name:              input.Name,
-		Role:              input.Role,
-		Bio:               input.Bio,
-		ImageUrl:          input.ImageURL,
-		ImageCropPosition: input.ImageCropPosition,
-		Status:            string(domain.DraftStatusDraft),
-		UpdatedAt:         timeToPgTimestamptz(updatedAt),
+		ID:                  uuidToPgtype(id),
+		Name:                input.Name,
+		Role:                input.Role,
+		Bio:                 input.Bio,
+		ImageUrl:            input.ImageURL,
+		ExternalScheduleUrl: input.ExternalScheduleURL,
+		ImageCropPosition:   input.ImageCropPosition,
+		Status:              string(domain.DraftStatusDraft),
+		UpdatedAt:           timeToPgTimestamptz(updatedAt),
 	})
 	if err != nil {
 		return domain.StaffProfileDraft{}, detectConflict(err)
@@ -434,13 +437,14 @@ func (r *staffDraftRepository) DeleteScheduleDraft(ctx context.Context, id uuid.
 // 楽観的ロック: updated_at が一致しない場合は ErrConflict を返す。
 func (r *staffDraftRepository) UpdateProfileDraftContent(ctx context.Context, id uuid.UUID, input domain.SaveProfileDraftInput, updatedAt time.Time) (domain.StaffProfileDraft, error) {
 	row, err := r.q.UpdateProfileDraftContent(ctx, UpdateProfileDraftContentParams{
-		ID:                uuidToPgtype(id),
-		Name:              input.Name,
-		Role:              input.Role,
-		Bio:               input.Bio,
-		ImageUrl:          input.ImageURL,
-		ImageCropPosition: input.ImageCropPosition,
-		UpdatedAt:         timeToPgTimestamptz(updatedAt),
+		ID:                  uuidToPgtype(id),
+		Name:                input.Name,
+		Role:                input.Role,
+		Bio:                 input.Bio,
+		ImageUrl:            input.ImageURL,
+		ExternalScheduleUrl: input.ExternalScheduleURL,
+		ImageCropPosition:   input.ImageCropPosition,
+		UpdatedAt:           timeToPgTimestamptz(updatedAt),
 	})
 	if err != nil {
 		return domain.StaffProfileDraft{}, detectConflict(err)

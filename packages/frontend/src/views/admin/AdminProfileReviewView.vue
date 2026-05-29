@@ -26,6 +26,7 @@
     role: '',
     bio: '',
     imageUrl: '',
+    externalScheduleUrl: '',
     imageCropPosition: '',
   })
 
@@ -81,6 +82,7 @@
         role: draft.role,
         bio: draft.bio,
         imageUrl: draft.imageUrl,
+        externalScheduleUrl: draft.externalScheduleUrl,
         imageCropPosition: draft.imageCropPosition,
       }
     }
@@ -141,6 +143,7 @@
       editForm.value.role !== draft.role ||
       editForm.value.bio !== draft.bio ||
       editForm.value.imageUrl !== draft.imageUrl ||
+      editForm.value.externalScheduleUrl !== draft.externalScheduleUrl ||
       editForm.value.imageCropPosition !== draft.imageCropPosition
     )
   }
@@ -263,6 +266,18 @@
                 v-model="editForm.bio"
                 rows="3"
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors resize-none"
+              />
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs text-muted-foreground/70 tracking-wider uppercase"
+                >外部出勤URL</label
+              >
+              <input
+                v-model="editForm.externalScheduleUrl"
+                type="url"
+                class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-white/30 transition-colors"
+                placeholder="https://www.pokepara.jp/..."
               />
             </div>
 

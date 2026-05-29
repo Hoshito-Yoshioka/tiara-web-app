@@ -9,6 +9,7 @@ export interface ProfileDraft {
   role: string
   bio: string
   imageUrl: string
+  externalScheduleUrl: string
   imageCropPosition: string
   status: string
   adminComment: string

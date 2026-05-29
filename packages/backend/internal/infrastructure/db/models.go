@@ -47,16 +47,17 @@ type Shop struct {
 }
 
 type Staff struct {
-	ID                pgtype.UUID
-	ShopID            pgtype.UUID
-	Name              string
-	Role              string
-	Bio               string
-	ImageUrl          string
-	ImageCropPosition string
-	SortOrder         int32
-	CreatedAt         pgtype.Timestamptz
-	UpdatedAt         pgtype.Timestamptz
+	ID                  pgtype.UUID
+	ShopID              pgtype.UUID
+	Name                string
+	Role                string
+	Bio                 string
+	ImageUrl            string
+	ExternalScheduleUrl string
+	ImageCropPosition   string
+	SortOrder           int32
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
 }
 
 type StaffAccount struct {
@@ -80,19 +81,20 @@ type StaffImage struct {
 }
 
 type StaffProfileDraft struct {
-	ID                pgtype.UUID
-	StaffID           pgtype.UUID
-	Name              string
-	Role              string
-	Bio               string
-	ImageUrl          string
-	ImageCropPosition string
-	Status            string
-	AdminComment      string
-	SubmittedAt       pgtype.Timestamptz
-	ReviewedAt        pgtype.Timestamptz
-	CreatedAt         pgtype.Timestamptz
-	UpdatedAt         pgtype.Timestamptz
+	ID                  pgtype.UUID
+	StaffID             pgtype.UUID
+	Name                string
+	Role                string
+	Bio                 string
+	ImageUrl            string
+	ExternalScheduleUrl string
+	ImageCropPosition   string
+	Status              string
+	AdminComment        string
+	SubmittedAt         pgtype.Timestamptz
+	ReviewedAt          pgtype.Timestamptz
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
 }
 
 type StaffSchedule struct {

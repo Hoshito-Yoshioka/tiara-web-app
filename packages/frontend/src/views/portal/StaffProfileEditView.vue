@@ -25,6 +25,7 @@
   const role = ref('')
   const bio = ref('')
   const imageUrl = ref('')
+  const externalScheduleUrl = ref('')
   const imageCropPosition = ref('50 50')
   const isSaving = ref(false)
   const successMessage = ref<string | null>(null)
@@ -81,6 +82,7 @@
       role.value = profileDraft.value.role
       bio.value = profileDraft.value.bio
       imageUrl.value = profileDraft.value.imageUrl
+      externalScheduleUrl.value = profileDraft.value.externalScheduleUrl || ''
       imageCropPosition.value = profileDraft.value.imageCropPosition || '50 50'
       savedSnapshot.value = { name: name.value, role: role.value, bio: bio.value }
     }
@@ -248,6 +250,7 @@
       role: role.value,
       bio: bio.value,
       imageUrl: currentImageUrl,
+      externalScheduleUrl: externalScheduleUrl.value,
       imageCropPosition: imageCropPosition.value,
     })
 
@@ -280,6 +283,7 @@
       role: role.value,
       bio: bio.value,
       imageUrl: currentImageUrl,
+      externalScheduleUrl: externalScheduleUrl.value,
       imageCropPosition: imageCropPosition.value,
     })
 
@@ -397,6 +401,22 @@
             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors resize-none disabled:opacity-50"
             placeholder="自己紹介を入力"
           />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs text-muted-foreground tracking-wider uppercase">
+            外部スケジュールURL（ポケパラ）
+          </label>
+          <input
+            v-model="externalScheduleUrl"
+            type="url"
+            :disabled="!isEditable()"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50"
+            placeholder="https://www.pokepara.jp/..."
+          />
+          <p class="text-[11px] text-muted-foreground/70">
+            スタッフ個別の出勤情報ページURLを入力してください。承認後に公開ページへ反映されます。
+          </p>
         </div>
 
         <!-- 画像管理セクション -->

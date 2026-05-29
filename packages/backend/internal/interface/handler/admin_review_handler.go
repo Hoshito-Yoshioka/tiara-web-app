@@ -35,34 +35,36 @@ type StaffImageJSON struct {
 
 // PendingProfileDraftResponse は管理者向けの承認待ちプロフィール下書きレスポンス。
 type PendingProfileDraftResponse struct {
-	ID                string           `json:"id"`
-	StaffID           string           `json:"staffId"`
-	StaffName         string           `json:"staffName"`
-	Name              string           `json:"name"`
-	Role              string           `json:"role"`
-	Bio               string           `json:"bio"`
-	ImageURL          string           `json:"imageUrl"`
-	ImageCropPosition string           `json:"imageCropPosition"`
-	Status            string           `json:"status"`
-	AdminComment      string           `json:"adminComment,omitempty"`
-	SubmittedAt       *string          `json:"submittedAt,omitempty"`
-	CreatedAt         string           `json:"createdAt"`
-	Images            []StaffImageJSON `json:"images"`
+	ID                  string           `json:"id"`
+	StaffID             string           `json:"staffId"`
+	StaffName           string           `json:"staffName"`
+	Name                string           `json:"name"`
+	Role                string           `json:"role"`
+	Bio                 string           `json:"bio"`
+	ImageURL            string           `json:"imageUrl"`
+	ExternalScheduleURL string           `json:"externalScheduleUrl"`
+	ImageCropPosition   string           `json:"imageCropPosition"`
+	Status              string           `json:"status"`
+	AdminComment        string           `json:"adminComment,omitempty"`
+	SubmittedAt         *string          `json:"submittedAt,omitempty"`
+	CreatedAt           string           `json:"createdAt"`
+	Images              []StaffImageJSON `json:"images"`
 }
 
 // toPendingProfileDraftResponse は domain を管理者向けレスポンスに変換する。
 func toPendingProfileDraftResponse(d domain.StaffProfileDraft) PendingProfileDraftResponse {
 	resp := PendingProfileDraftResponse{
-		ID:                d.ID.String(),
-		StaffID:           d.StaffID.String(),
-		Name:              d.Name,
-		Role:              d.Role,
-		Bio:               d.Bio,
-		ImageURL:          d.ImageURL,
-		ImageCropPosition: d.ImageCropPosition,
-		Status:            string(d.Status),
-		AdminComment:      d.AdminComment,
-		CreatedAt:         d.CreatedAt.Format(time.RFC3339),
+		ID:                  d.ID.String(),
+		StaffID:             d.StaffID.String(),
+		Name:                d.Name,
+		Role:                d.Role,
+		Bio:                 d.Bio,
+		ImageURL:            d.ImageURL,
+		ExternalScheduleURL: d.ExternalScheduleURL,
+		ImageCropPosition:   d.ImageCropPosition,
+		Status:              string(d.Status),
+		AdminComment:        d.AdminComment,
+		CreatedAt:           d.CreatedAt.Format(time.RFC3339),
 	}
 	if d.SubmittedAt != nil {
 		s := d.SubmittedAt.Format(time.RFC3339)
@@ -290,11 +292,12 @@ func (h *AdminReviewHandler) UpdateProfileDraftContent(c echo.Context) error {
 	}
 
 	input := domain.SaveProfileDraftInput{
-		Name:              req.Name,
-		Role:              req.Role,
-		Bio:               req.Bio,
-		ImageURL:          req.ImageURL,
-		ImageCropPosition: req.ImageCropPosition,
+		Name:                req.Name,
+		Role:                req.Role,
+		Bio:                 req.Bio,
+		ImageURL:            req.ImageURL,
+		ExternalScheduleURL: req.ExternalScheduleURL,
+		ImageCropPosition:   req.ImageCropPosition,
 	}
 
 	contentUpdatedAt, _ := time.Parse(time.RFC3339, req.UpdatedAt)
