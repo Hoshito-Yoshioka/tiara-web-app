@@ -1,8 +1,11 @@
 #!/bin/sh
 # ============================================================
-# DB マイグレーション & シードスクリプト（Render 用）
+# DB マイグレーションスクリプト（スキーマのみ）
 # DATABASE_URL 環境変数を使用して PostgreSQL に接続する。
-# べき等: テーブルが既に存在する場合はスキップ、seed はコンフリクト時に何もしない。
+# べき等: テーブルが既に存在する場合はスキップ。
+#
+# シードデータは entrypoint.sh が APP_ENV に応じて制御するため、
+# このスクリプトでは実行しない。
 # ============================================================
 set -e
 
@@ -16,8 +19,5 @@ MIGRATIONS_DIR="$SCRIPT_DIR/../migrations"
 
 echo "Running schema migration..."
 psql "$DATABASE_URL" -f "$MIGRATIONS_DIR/schema.sql"
-
-echo "Running seed data..."
-psql "$DATABASE_URL" -f "$MIGRATIONS_DIR/seed.sql"
 
 echo "Migration complete."
