@@ -115,13 +115,14 @@ func (u *staffPortalUsecase) GetMyProfileDraft(ctx context.Context, staffID uuid
 			return domain.StaffProfileDraft{}, staffErr
 		}
 		return domain.StaffProfileDraft{
-			StaffID:           staffID,
-			Name:              staff.Name,
-			Role:              staff.Role,
-			Bio:               staff.Bio,
-			ImageURL:          staff.ImageURL,
-			ImageCropPosition: staff.ImageCropPosition,
-			Status:            "", // 下書き未作成を示す
+			StaffID:             staffID,
+			Name:                staff.Name,
+			Role:                staff.Role,
+			Bio:                 staff.Bio,
+			ImageURL:            staff.ImageURL,
+			ExternalScheduleURL: staff.ExternalScheduleURL,
+			ImageCropPosition:   staff.ImageCropPosition,
+			Status:              "", // 下書き未作成を示す
 		}, nil
 	}
 	return draft, nil
@@ -294,11 +295,12 @@ func (u *adminReviewUsecase) ReviewProfileDraft(ctx context.Context, draftID uui
 	// 承認の場合、ライブデータに反映
 	if input.Status == domain.DraftStatusApproved {
 		_, err := u.staffRepo.UpdateStaff(ctx, draft.StaffID.String(), domain.UpdateStaffInput{
-			Name:              draft.Name,
-			Role:              draft.Role,
-			Bio:               draft.Bio,
-			ImageURL:          draft.ImageURL,
-			ImageCropPosition: draft.ImageCropPosition,
+			Name:                draft.Name,
+			Role:                draft.Role,
+			Bio:                 draft.Bio,
+			ImageURL:            draft.ImageURL,
+			ExternalScheduleURL: draft.ExternalScheduleURL,
+			ImageCropPosition:   draft.ImageCropPosition,
 		})
 		if err != nil {
 			return domain.StaffProfileDraft{}, fmt.Errorf("ライブデータへの反映に失敗しました: %w", domain.ErrInternal)

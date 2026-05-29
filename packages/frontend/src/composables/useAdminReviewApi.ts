@@ -79,7 +79,14 @@ export function useAdminReviewApi() {
   /** プロフィール下書きの内容を修正（ステータス変更なし） */
   async function updateProfileDraftContent(
     draftId: string,
-    data: { name: string; role: string; bio: string; imageUrl: string; imageCropPosition: string }
+    data: {
+      name: string
+      role: string
+      bio: string
+      imageUrl: string
+      externalScheduleUrl: string
+      imageCropPosition: string
+    }
   ): Promise<ProfileDraft | null> {
     try {
       return await apiFetch<ProfileDraft>(`/api/v1/admin/reviews/profiles/${draftId}/content`, {

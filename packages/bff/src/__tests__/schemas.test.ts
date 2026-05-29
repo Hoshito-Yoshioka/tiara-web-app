@@ -57,6 +57,7 @@ describe('createStaffSchema', () => {
       role: 'キャスト',
       bio: '',
       imageUrl: '',
+      externalScheduleUrl: '',
       imageCropPosition: '50 50',
       sortOrder: 1,
       schedules: [{ dayOfWeek: 1, startTime: '20:00', endTime: '05:00' }],
@@ -70,6 +71,7 @@ describe('createStaffSchema', () => {
       role: 'キャスト',
       bio: '',
       imageUrl: '',
+      externalScheduleUrl: '',
       imageCropPosition: '',
       sortOrder: 1,
       schedules: [],
@@ -83,6 +85,7 @@ describe('createStaffSchema', () => {
       role: 'キャスト',
       bio: '',
       imageUrl: '',
+      externalScheduleUrl: '',
       imageCropPosition: '',
       sortOrder: 1,
       schedules: [{ dayOfWeek: 1, startTime: '8pm', endTime: '05:00' }],
@@ -140,6 +143,7 @@ describe('saveProfileDraftSchema', () => {
       role: 'キャスト',
       bio: '',
       imageUrl: '',
+      externalScheduleUrl: '',
       imageCropPosition: '50 50',
     })
     expect(result.success).toBe(true)

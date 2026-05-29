@@ -35,6 +35,7 @@
     role: '',
     bio: '',
     imageUrl: '',
+    externalScheduleUrl: '',
     imageCropPosition: '50 50',
     sortOrder: 0,
     shopId: '',
@@ -313,6 +314,7 @@
           role: staff.role,
           bio: staff.bio,
           imageUrl: staff.imageUrl,
+          externalScheduleUrl: staff.externalScheduleUrl || '',
           imageCropPosition: staff.imageCropPosition || '50 50',
           sortOrder: staff.sortOrder,
           shopId: staff.shopId,
@@ -529,6 +531,18 @@
             type="text"
             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors"
             placeholder="https://... または /uploads/..."
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs text-muted-foreground tracking-wider uppercase">
+            外部スケジュールURL（ポケパラ）
+          </label>
+          <input
+            v-model="form.externalScheduleUrl"
+            type="url"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-white/30 transition-colors"
+            placeholder="https://www.pokepara.jp/..."
           />
         </div>
 

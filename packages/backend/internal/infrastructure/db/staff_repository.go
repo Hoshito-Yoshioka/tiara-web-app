@@ -25,16 +25,17 @@ func NewStaffRepository(q *Queries, pool *pgxpool.Pool) usecase.StaffRepository 
 // convertToStaffDomain は sqlc 生成の Staff モデルを domain.Staff に変換する。
 func convertToStaffDomain(row Staff) domain.Staff {
 	return domain.Staff{
-		ID:                uuid.UUID(row.ID.Bytes),
-		ShopID:            uuid.UUID(row.ShopID.Bytes),
-		Name:              row.Name,
-		Role:              row.Role,
-		Bio:               row.Bio,
-		ImageURL:          row.ImageUrl,
-		ImageCropPosition: row.ImageCropPosition,
-		SortOrder:         int(row.SortOrder),
-		CreatedAt:         row.CreatedAt.Time,
-		UpdatedAt:         row.UpdatedAt.Time,
+		ID:                  uuid.UUID(row.ID.Bytes),
+		ShopID:              uuid.UUID(row.ShopID.Bytes),
+		Name:                row.Name,
+		Role:                row.Role,
+		Bio:                 row.Bio,
+		ImageURL:            row.ImageUrl,
+		ExternalScheduleURL: row.ExternalScheduleUrl,
+		ImageCropPosition:   row.ImageCropPosition,
+		SortOrder:           int(row.SortOrder),
+		CreatedAt:           row.CreatedAt.Time,
+		UpdatedAt:           row.UpdatedAt.Time,
 	}
 }
 
@@ -151,13 +152,14 @@ func (r *staffRepository) CreateStaff(ctx context.Context, input domain.CreateSt
 	}
 
 	row, err := r.q.CreateStaff(ctx, CreateStaffParams{
-		ShopID:            pgtype.UUID{Bytes: shopUID, Valid: true},
-		Name:              input.Name,
-		Role:              input.Role,
-		Bio:               input.Bio,
-		ImageUrl:          input.ImageURL,
-		ImageCropPosition: input.ImageCropPosition,
-		SortOrder:         int32(input.SortOrder),
+		ShopID:              pgtype.UUID{Bytes: shopUID, Valid: true},
+		Name:                input.Name,
+		Role:                input.Role,
+		Bio:                 input.Bio,
+		ImageUrl:            input.ImageURL,
+		ExternalScheduleUrl: input.ExternalScheduleURL,
+		ImageCropPosition:   input.ImageCropPosition,
+		SortOrder:           int32(input.SortOrder),
 	})
 	if err != nil {
 		return domain.Staff{}, err
@@ -202,13 +204,14 @@ func (r *staffRepository) UpdateStaff(ctx context.Context, id string, input doma
 	}
 
 	row, err := qtx.UpdateStaff(ctx, UpdateStaffParams{
-		ID:                pgtypeUID,
-		Name:              input.Name,
-		Role:              input.Role,
-		Bio:               input.Bio,
-		ImageUrl:          input.ImageURL,
-		ImageCropPosition: input.ImageCropPosition,
-		SortOrder:         int32(input.SortOrder),
+		ID:                  pgtypeUID,
+		Name:                input.Name,
+		Role:                input.Role,
+		Bio:                 input.Bio,
+		ImageUrl:            input.ImageURL,
+		ExternalScheduleUrl: input.ExternalScheduleURL,
+		ImageCropPosition:   input.ImageCropPosition,
+		SortOrder:           int32(input.SortOrder),
 	})
 	if err != nil {
 		return domain.Staff{}, err

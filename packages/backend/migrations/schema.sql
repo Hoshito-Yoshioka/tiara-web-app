@@ -54,11 +54,15 @@ CREATE TABLE IF NOT EXISTS staffs (
     role VARCHAR(100) NOT NULL DEFAULT '',
     bio TEXT NOT NULL DEFAULT '',
     image_url TEXT NOT NULL DEFAULT '',
+    external_schedule_url TEXT NOT NULL DEFAULT '',
     image_crop_position VARCHAR(20) NOT NULL DEFAULT '50 50',
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE staffs
+    ADD COLUMN IF NOT EXISTS external_schedule_url TEXT NOT NULL DEFAULT '';
 
 CREATE TRIGGER IF NOT EXISTS update_staffs_updated_at
 BEFORE UPDATE ON staffs
@@ -96,6 +100,7 @@ CREATE TABLE IF NOT EXISTS staff_profile_drafts (
     role VARCHAR(100) NOT NULL DEFAULT '',
     bio TEXT NOT NULL DEFAULT '',
     image_url TEXT NOT NULL DEFAULT '',
+    external_schedule_url TEXT NOT NULL DEFAULT '',
     image_crop_position VARCHAR(20) NOT NULL DEFAULT '50 50',
     status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'pending', 'approved', 'rejected')),
     admin_comment TEXT NOT NULL DEFAULT '',
@@ -104,6 +109,9 @@ CREATE TABLE IF NOT EXISTS staff_profile_drafts (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE staff_profile_drafts
+    ADD COLUMN IF NOT EXISTS external_schedule_url TEXT NOT NULL DEFAULT '';
 
 CREATE TRIGGER IF NOT EXISTS update_staff_profile_drafts_updated_at
 BEFORE UPDATE ON staff_profile_drafts

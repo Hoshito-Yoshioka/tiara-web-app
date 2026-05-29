@@ -22,6 +22,7 @@ export interface SaveProfileDraftRequest {
   role: string
   bio: string
   imageUrl: string
+  externalScheduleUrl: string
   imageCropPosition: string
 }
 
@@ -33,6 +34,7 @@ export interface ProfileDraftResponse {
   role: string
   bio: string
   imageUrl: string
+  externalScheduleUrl: string
   imageCropPosition: string
   status: string
   adminComment: string

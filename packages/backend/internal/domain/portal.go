@@ -48,19 +48,20 @@ type StaffAccount struct {
 
 // StaffProfileDraft はスタッフがポータルから提出するプロフィール変更の下書き。
 type StaffProfileDraft struct {
-	ID                uuid.UUID
-	StaffID           uuid.UUID
-	Name              string
-	Role              string
-	Bio               string
-	ImageURL          string
-	ImageCropPosition string
-	Status            DraftStatus
-	AdminComment      string
-	SubmittedAt       *time.Time
-	ReviewedAt        *time.Time
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID                  uuid.UUID
+	StaffID             uuid.UUID
+	Name                string
+	Role                string
+	Bio                 string
+	ImageURL            string
+	ExternalScheduleURL string
+	ImageCropPosition   string
+	Status              DraftStatus
+	AdminComment        string
+	SubmittedAt         *time.Time
+	ReviewedAt          *time.Time
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }
 
 // StaffScheduleDraft はスタッフがポータルから提出するスケジュール変更の下書き。
@@ -88,11 +89,12 @@ type ScheduleDraftItem struct {
 
 // SaveProfileDraftInput はプロフィール下書き保存時の入力構造体。
 type SaveProfileDraftInput struct {
-	Name              string
-	Role              string
-	Bio               string
-	ImageURL          string
-	ImageCropPosition string
+	Name                string
+	Role                string
+	Bio                 string
+	ImageURL            string
+	ExternalScheduleURL string
+	ImageCropPosition   string
 }
 
 // ReviewDraftInput は管理者がドラフトをレビューする際の入力構造体。

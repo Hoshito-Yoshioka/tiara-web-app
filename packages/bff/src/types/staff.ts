@@ -6,6 +6,7 @@ export interface StaffResponse {
   Role: string
   Bio: string
   ImageURL: string
+  ExternalScheduleURL: string
   ImageCropPosition: string
   SortOrder: number
   CreatedAt: string
@@ -50,6 +51,7 @@ export interface Staff {
   role: string
   bio: string
   imageUrl: string
+  externalScheduleUrl: string
   imageCropPosition: string
   sortOrder: number
 }

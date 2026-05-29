@@ -30,6 +30,7 @@ export const createStaffSchema = z.object({
   role: z.string().min(1, '役職は必須です'),
   bio: z.string(),
   imageUrl: z.string(),
+  externalScheduleUrl: z.string(),
   imageCropPosition: z.string(),
   sortOrder: z.number().int(),
   schedules: z.array(scheduleInputSchema),
@@ -40,6 +41,7 @@ export const updateStaffSchema = z.object({
   role: z.string().min(1, '役職は必須です'),
   bio: z.string(),
   imageUrl: z.string(),
+  externalScheduleUrl: z.string(),
   imageCropPosition: z.string(),
   sortOrder: z.number().int(),
   schedules: z.array(scheduleInputSchema),
@@ -81,6 +83,7 @@ export const saveProfileDraftSchema = z.object({
   role: z.string().min(1, '役職は必須です'),
   bio: z.string(),
   imageUrl: z.string(),
+  externalScheduleUrl: z.string(),
   imageCropPosition: z.string(),
   updatedAt: z.string().optional(),
 })

@@ -8,16 +8,17 @@ import (
 
 // Staff はスタッフのドメインモデル。
 type Staff struct {
-	ID                uuid.UUID
-	ShopID            uuid.UUID
-	Name              string
-	Role              string
-	Bio               string
-	ImageURL          string
-	ImageCropPosition string
-	SortOrder         int
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID                  uuid.UUID
+	ShopID              uuid.UUID
+	Name                string
+	Role                string
+	Bio                 string
+	ImageURL            string
+	ExternalScheduleURL string
+	ImageCropPosition   string
+	SortOrder           int
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }
 
 // StaffSchedule はスタッフの出勤スケジュールのドメインモデル。
@@ -54,25 +55,27 @@ type StaffImage struct {
 
 // CreateStaffInput はスタッフ作成時の入力構造体。
 type CreateStaffInput struct {
-	ShopID            string
-	Name              string
-	Role              string
-	Bio               string
-	ImageURL          string
-	ImageCropPosition string
-	SortOrder         int
-	Schedules         []ScheduleInput
+	ShopID              string
+	Name                string
+	Role                string
+	Bio                 string
+	ImageURL            string
+	ExternalScheduleURL string
+	ImageCropPosition   string
+	SortOrder           int
+	Schedules           []ScheduleInput
 }
 
 // UpdateStaffInput はスタッフ更新時の入力構造体。
 type UpdateStaffInput struct {
-	Name              string
-	Role              string
-	Bio               string
-	ImageURL          string
-	ImageCropPosition string
-	SortOrder         int
-	Schedules         []ScheduleInput
+	Name                string
+	Role                string
+	Bio                 string
+	ImageURL            string
+	ExternalScheduleURL string
+	ImageCropPosition   string
+	SortOrder           int
+	Schedules           []ScheduleInput
 }
 
 // ScheduleInput は出勤スケジュールの入力構造体。

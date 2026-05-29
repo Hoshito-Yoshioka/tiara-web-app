@@ -12,18 +12,19 @@ import (
 )
 
 const createProfileDraft = `-- name: CreateProfileDraft :one
-INSERT INTO staff_profile_drafts (staff_id, name, role, bio, image_url, image_crop_position, status)
-VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+INSERT INTO staff_profile_drafts (staff_id, name, role, bio, image_url, external_schedule_url, image_crop_position, status)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, staff_id, name, role, bio, image_url, external_schedule_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type CreateProfileDraftParams struct {
-	StaffID           pgtype.UUID
-	Name              string
-	Role              string
-	Bio               string
-	ImageUrl          string
-	ImageCropPosition string
-	Status            string
+	StaffID             pgtype.UUID
+	Name                string
+	Role                string
+	Bio                 string
+	ImageUrl            string
+	ExternalScheduleUrl string
+	ImageCropPosition   string
+	Status              string
 }
 
 func (q *Queries) CreateProfileDraft(ctx context.Context, arg CreateProfileDraftParams) (StaffProfileDraft, error) {
@@ -33,6 +34,7 @@ func (q *Queries) CreateProfileDraft(ctx context.Context, arg CreateProfileDraft
 		arg.Role,
 		arg.Bio,
 		arg.ImageUrl,
+		arg.ExternalScheduleUrl,
 		arg.ImageCropPosition,
 		arg.Status,
 	)
@@ -44,6 +46,7 @@ func (q *Queries) CreateProfileDraft(ctx context.Context, arg CreateProfileDraft
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ExternalScheduleUrl,
 		&i.ImageCropPosition,
 		&i.Status,
 		&i.AdminComment,
@@ -65,7 +68,7 @@ func (q *Queries) DeleteProfileDraft(ctx context.Context, id pgtype.UUID) error 
 }
 
 const getProfileDraftByID = `-- name: GetProfileDraftByID :one
-SELECT id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_profile_drafts WHERE id = $1
+SELECT id, staff_id, name, role, bio, image_url, external_schedule_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_profile_drafts WHERE id = $1
 `
 
 func (q *Queries) GetProfileDraftByID(ctx context.Context, id pgtype.UUID) (StaffProfileDraft, error) {
@@ -78,6 +81,7 @@ func (q *Queries) GetProfileDraftByID(ctx context.Context, id pgtype.UUID) (Staf
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ExternalScheduleUrl,
 		&i.ImageCropPosition,
 		&i.Status,
 		&i.AdminComment,
@@ -90,7 +94,7 @@ func (q *Queries) GetProfileDraftByID(ctx context.Context, id pgtype.UUID) (Staf
 }
 
 const getProfileDraftByStaffID = `-- name: GetProfileDraftByStaffID :one
-SELECT id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_profile_drafts WHERE staff_id = $1 AND status IN ('draft', 'pending', 'rejected') ORDER BY created_at DESC LIMIT 1
+SELECT id, staff_id, name, role, bio, image_url, external_schedule_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_profile_drafts WHERE staff_id = $1 AND status IN ('draft', 'pending', 'rejected') ORDER BY created_at DESC LIMIT 1
 `
 
 func (q *Queries) GetProfileDraftByStaffID(ctx context.Context, staffID pgtype.UUID) (StaffProfileDraft, error) {
@@ -103,6 +107,7 @@ func (q *Queries) GetProfileDraftByStaffID(ctx context.Context, staffID pgtype.U
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ExternalScheduleUrl,
 		&i.ImageCropPosition,
 		&i.Status,
 		&i.AdminComment,
@@ -115,7 +120,7 @@ func (q *Queries) GetProfileDraftByStaffID(ctx context.Context, staffID pgtype.U
 }
 
 const listPendingProfileDrafts = `-- name: ListPendingProfileDrafts :many
-SELECT id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_profile_drafts WHERE status = 'pending' ORDER BY submitted_at ASC
+SELECT id, staff_id, name, role, bio, image_url, external_schedule_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at FROM staff_profile_drafts WHERE status = 'pending' ORDER BY submitted_at ASC
 `
 
 func (q *Queries) ListPendingProfileDrafts(ctx context.Context) ([]StaffProfileDraft, error) {
@@ -134,6 +139,7 @@ func (q *Queries) ListPendingProfileDrafts(ctx context.Context) ([]StaffProfileD
 			&i.Role,
 			&i.Bio,
 			&i.ImageUrl,
+			&i.ExternalScheduleUrl,
 			&i.ImageCropPosition,
 			&i.Status,
 			&i.AdminComment,
@@ -153,7 +159,7 @@ func (q *Queries) ListPendingProfileDrafts(ctx context.Context) ([]StaffProfileD
 }
 
 const reviewProfileDraft = `-- name: ReviewProfileDraft :one
-UPDATE staff_profile_drafts SET status = $2, admin_comment = $3, reviewed_at = NOW() WHERE id = $1 AND updated_at = $4 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+UPDATE staff_profile_drafts SET status = $2, admin_comment = $3, reviewed_at = NOW() WHERE id = $1 AND updated_at = $4 RETURNING id, staff_id, name, role, bio, image_url, external_schedule_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type ReviewProfileDraftParams struct {
@@ -178,6 +184,7 @@ func (q *Queries) ReviewProfileDraft(ctx context.Context, arg ReviewProfileDraft
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ExternalScheduleUrl,
 		&i.ImageCropPosition,
 		&i.Status,
 		&i.AdminComment,
@@ -190,7 +197,7 @@ func (q *Queries) ReviewProfileDraft(ctx context.Context, arg ReviewProfileDraft
 }
 
 const submitProfileDraft = `-- name: SubmitProfileDraft :one
-UPDATE staff_profile_drafts SET status = 'pending', submitted_at = NOW() WHERE id = $1 AND updated_at = $2 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+UPDATE staff_profile_drafts SET status = 'pending', submitted_at = NOW() WHERE id = $1 AND updated_at = $2 RETURNING id, staff_id, name, role, bio, image_url, external_schedule_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type SubmitProfileDraftParams struct {
@@ -208,6 +215,7 @@ func (q *Queries) SubmitProfileDraft(ctx context.Context, arg SubmitProfileDraft
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ExternalScheduleUrl,
 		&i.ImageCropPosition,
 		&i.Status,
 		&i.AdminComment,
@@ -221,19 +229,20 @@ func (q *Queries) SubmitProfileDraft(ctx context.Context, arg SubmitProfileDraft
 
 const updateProfileDraft = `-- name: UpdateProfileDraft :one
 UPDATE staff_profile_drafts
-SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6, status = $7
-WHERE id = $1 AND updated_at = $8 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+SET name = $2, role = $3, bio = $4, image_url = $5, external_schedule_url = $6, image_crop_position = $7, status = $8
+WHERE id = $1 AND updated_at = $9 RETURNING id, staff_id, name, role, bio, image_url, external_schedule_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type UpdateProfileDraftParams struct {
-	ID                pgtype.UUID
-	Name              string
-	Role              string
-	Bio               string
-	ImageUrl          string
-	ImageCropPosition string
-	Status            string
-	UpdatedAt         pgtype.Timestamptz
+	ID                  pgtype.UUID
+	Name                string
+	Role                string
+	Bio                 string
+	ImageUrl            string
+	ExternalScheduleUrl string
+	ImageCropPosition   string
+	Status              string
+	UpdatedAt           pgtype.Timestamptz
 }
 
 func (q *Queries) UpdateProfileDraft(ctx context.Context, arg UpdateProfileDraftParams) (StaffProfileDraft, error) {
@@ -243,6 +252,7 @@ func (q *Queries) UpdateProfileDraft(ctx context.Context, arg UpdateProfileDraft
 		arg.Role,
 		arg.Bio,
 		arg.ImageUrl,
+		arg.ExternalScheduleUrl,
 		arg.ImageCropPosition,
 		arg.Status,
 		arg.UpdatedAt,
@@ -255,6 +265,7 @@ func (q *Queries) UpdateProfileDraft(ctx context.Context, arg UpdateProfileDraft
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ExternalScheduleUrl,
 		&i.ImageCropPosition,
 		&i.Status,
 		&i.AdminComment,
@@ -268,18 +279,19 @@ func (q *Queries) UpdateProfileDraft(ctx context.Context, arg UpdateProfileDraft
 
 const updateProfileDraftContent = `-- name: UpdateProfileDraftContent :one
 UPDATE staff_profile_drafts
-SET name = $2, role = $3, bio = $4, image_url = $5, image_crop_position = $6
-WHERE id = $1 AND updated_at = $7 RETURNING id, staff_id, name, role, bio, image_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
+SET name = $2, role = $3, bio = $4, image_url = $5, external_schedule_url = $6, image_crop_position = $7
+WHERE id = $1 AND updated_at = $8 RETURNING id, staff_id, name, role, bio, image_url, external_schedule_url, image_crop_position, status, admin_comment, submitted_at, reviewed_at, created_at, updated_at
 `
 
 type UpdateProfileDraftContentParams struct {
-	ID                pgtype.UUID
-	Name              string
-	Role              string
-	Bio               string
-	ImageUrl          string
-	ImageCropPosition string
-	UpdatedAt         pgtype.Timestamptz
+	ID                  pgtype.UUID
+	Name                string
+	Role                string
+	Bio                 string
+	ImageUrl            string
+	ExternalScheduleUrl string
+	ImageCropPosition   string
+	UpdatedAt           pgtype.Timestamptz
 }
 
 func (q *Queries) UpdateProfileDraftContent(ctx context.Context, arg UpdateProfileDraftContentParams) (StaffProfileDraft, error) {
@@ -289,6 +301,7 @@ func (q *Queries) UpdateProfileDraftContent(ctx context.Context, arg UpdateProfi
 		arg.Role,
 		arg.Bio,
 		arg.ImageUrl,
+		arg.ExternalScheduleUrl,
 		arg.ImageCropPosition,
 		arg.UpdatedAt,
 	)
@@ -300,6 +313,7 @@ func (q *Queries) UpdateProfileDraftContent(ctx context.Context, arg UpdateProfi
 		&i.Role,
 		&i.Bio,
 		&i.ImageUrl,
+		&i.ExternalScheduleUrl,
 		&i.ImageCropPosition,
 		&i.Status,
 		&i.AdminComment,
