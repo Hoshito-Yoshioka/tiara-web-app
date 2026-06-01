@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS admins (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER IF NOT EXISTS update_admins_updated_at
+DROP TRIGGER IF EXISTS update_admins_updated_at ON admins;
+CREATE TRIGGER update_admins_updated_at
 BEFORE UPDATE ON admins
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -39,7 +40,8 @@ CREATE TABLE IF NOT EXISTS shops (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER IF NOT EXISTS update_shops_updated_at
+DROP TRIGGER IF EXISTS update_shops_updated_at ON shops;
+CREATE TRIGGER update_shops_updated_at
 BEFORE UPDATE ON shops
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -64,7 +66,8 @@ CREATE TABLE IF NOT EXISTS staffs (
 ALTER TABLE staffs
     ADD COLUMN IF NOT EXISTS external_schedule_url TEXT NOT NULL DEFAULT '';
 
-CREATE TRIGGER IF NOT EXISTS update_staffs_updated_at
+DROP TRIGGER IF EXISTS update_staffs_updated_at ON staffs;
+CREATE TRIGGER update_staffs_updated_at
 BEFORE UPDATE ON staffs
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -83,7 +86,8 @@ CREATE TABLE IF NOT EXISTS staff_accounts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER IF NOT EXISTS update_staff_accounts_updated_at
+DROP TRIGGER IF EXISTS update_staff_accounts_updated_at ON staff_accounts;
+CREATE TRIGGER update_staff_accounts_updated_at
 BEFORE UPDATE ON staff_accounts
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -113,7 +117,8 @@ CREATE TABLE IF NOT EXISTS staff_profile_drafts (
 ALTER TABLE staff_profile_drafts
     ADD COLUMN IF NOT EXISTS external_schedule_url TEXT NOT NULL DEFAULT '';
 
-CREATE TRIGGER IF NOT EXISTS update_staff_profile_drafts_updated_at
+DROP TRIGGER IF EXISTS update_staff_profile_drafts_updated_at ON staff_profile_drafts;
+CREATE TRIGGER update_staff_profile_drafts_updated_at
 BEFORE UPDATE ON staff_profile_drafts
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -135,7 +140,8 @@ CREATE TABLE IF NOT EXISTS staff_schedule_drafts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER IF NOT EXISTS update_staff_schedule_drafts_updated_at
+DROP TRIGGER IF EXISTS update_staff_schedule_drafts_updated_at ON staff_schedule_drafts;
+CREATE TRIGGER update_staff_schedule_drafts_updated_at
 BEFORE UPDATE ON staff_schedule_drafts
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -168,7 +174,8 @@ CREATE TABLE IF NOT EXISTS staff_images (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER IF NOT EXISTS update_staff_images_updated_at
+DROP TRIGGER IF EXISTS update_staff_images_updated_at ON staff_images;
+CREATE TRIGGER update_staff_images_updated_at
 BEFORE UPDATE ON staff_images
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -189,7 +196,8 @@ CREATE TABLE IF NOT EXISTS staff_schedules (
     UNIQUE (staff_id, day_of_week)
 );
 
-CREATE TRIGGER IF NOT EXISTS update_staff_schedules_updated_at
+DROP TRIGGER IF EXISTS update_staff_schedules_updated_at ON staff_schedules;
+CREATE TRIGGER update_staff_schedules_updated_at
 BEFORE UPDATE ON staff_schedules
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -207,7 +215,8 @@ CREATE TABLE IF NOT EXISTS menu_categories (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER IF NOT EXISTS update_menu_categories_updated_at
+DROP TRIGGER IF EXISTS update_menu_categories_updated_at ON menu_categories;
+CREATE TRIGGER update_menu_categories_updated_at
 BEFORE UPDATE ON menu_categories
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
@@ -228,7 +237,8 @@ CREATE TABLE IF NOT EXISTS menu_items (
     UNIQUE (category_id, name)
 );
 
-CREATE TRIGGER IF NOT EXISTS update_menu_items_updated_at
+DROP TRIGGER IF EXISTS update_menu_items_updated_at ON menu_items;
+CREATE TRIGGER update_menu_items_updated_at
 BEFORE UPDATE ON menu_items
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
