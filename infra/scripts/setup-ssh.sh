@@ -61,10 +61,17 @@ else
     exit 1
 fi
 
-# sshd を再起動
+# sshd を再起動（Ubuntu 24.04 では ssh.service、旧バージョンでは sshd.service）
 echo ""
 echo "🔄 sshd を再起動中..."
-systemctl restart sshd
+if systemctl list-units --type=service --all | grep -q 'ssh\.service'; then
+    systemctl restart ssh
+elif systemctl list-units --type=service --all | grep -q 'sshd\.service'; then
+    systemctl restart sshd
+else
+    echo "❌ SSH サービスが見つかりません"
+    exit 1
+fi
 
 echo ""
 echo "=== 設定完了 ==="
