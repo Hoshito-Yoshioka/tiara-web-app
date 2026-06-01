@@ -1,0 +1,110 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+# 同時デプロイ防止
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # CI チェック（lint, test）を先に実行
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy to XServer VPS
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---- Setup ----
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: packages/backend/go.mod
+          cache-dependency-path: packages/backend/go.sum
+
+      # ---- Build Frontend ----
+      - name: Build Frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter frontend build
+        env:
+          VITE_API_BASE_URL: '' # 同一ドメイン（Nginx がプロキシ）
+
+      # ---- Build BFF ----
+      - name: Build BFF
+        run: pnpm --filter bff build
+
+      # ---- Build Backend ----
+      - name: Build Backend
+        working-directory: packages/backend
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server ./cmd/server
+
+      # ---- SSH 鍵セットアップ ----
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # ---- Deploy Frontend (静的ファイル) ----
+      - name: Deploy Frontend
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }}" \
+            packages/frontend/dist/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/tiara/
+
+      # ---- Deploy BFF ----
+      - name: Deploy BFF
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }}" \
+            --include='dist/***' \
+            --include='package.json' \
+            --include='node_modules/***' \
+            --exclude='*' \
+            packages/bff/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/tiara/bff/
+
+      # ---- Deploy Backend ----
+      - name: Deploy Backend
+        run: |
+          rsync -avz \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }}" \
+            packages/backend/server \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/tiara/backend/
+
+          rsync -avz \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }}" \
+            packages/backend/migrations/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/tiara/backend/migrations/
+
+      # ---- Restart Services ----
+      - name: Restart services
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }} \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          sudo systemctl restart tiara-backend
+          sudo systemctl restart tiara-bff
+
+          # ヘルスチェック（起動待ち）
+          sleep 3
+          curl -sf http://127.0.0.1:1323/ > /dev/null && echo "✅ Backend OK" || echo "❌ Backend FAILED"
+          curl -sf http://127.0.0.1:3001/ > /dev/null && echo "✅ BFF OK" || echo "❌ BFF FAILED"
+          EOF
