@@ -71,16 +71,23 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/tiara/
 
       # ---- Deploy BFF ----
+      # pnpm の node_modules は symlink のため rsync 不可。
+      # dist/ と package.json のみ転送し、VPS 上で npm install する。
       - name: Deploy BFF
         run: |
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }}" \
             --include='dist/***' \
             --include='package.json' \
-            --include='node_modules/***' \
             --exclude='*' \
             packages/bff/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/tiara/bff/
+
+      - name: Install BFF dependencies
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }} \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'cd /opt/tiara/bff && npm install --omit=dev'
 
       # ---- Deploy Backend ----
       - name: Deploy Backend
