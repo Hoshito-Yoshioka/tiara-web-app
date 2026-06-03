@@ -5,10 +5,10 @@
  *
  * 開発環境: BFF は localhost:3001 で起動する。
  *           BFF 側で CORS が設定済み（origin: localhost:5173）。
- * 本番環境: VITE_API_BASE_URL で BFF の URL を指定する。
+ * 本番環境: VITE_API_BASE_URL="" で同一ドメイン（Nginx プロキシ経由）。
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`
