@@ -57,9 +57,12 @@ jobs:
       # ---- SSH 鍵セットアップ ----
       - name: Setup SSH
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          install -m 700 -d ~/.ssh
+          # Secret を復元し、CRLF 混入時の解析エラーを防ぐ
+          printf "%s" "${{ secrets.VPS_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # 壊れた鍵はここで失敗させる（libcrypto エラーの早期検知）
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
           ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
       # ---- Deploy Frontend (静的ファイル) ----
