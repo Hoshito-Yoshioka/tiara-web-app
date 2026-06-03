@@ -1,6 +1,8 @@
 # TIARA Web App
 
 「TIARA」の Web サイト。店舗・スタッフ情報を顧客に提供するモノレポ構成のフルスタックアプリケーション。
+公式サイト（[https://tiara-hakodate.com/](https://tiara-hakodate.com/)）にて確認できます。
+
 
 ## Tech Stack
 
