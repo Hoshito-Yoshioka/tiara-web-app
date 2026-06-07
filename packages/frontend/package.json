@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "generate:sitemap": "node ./scripts/generate-sitemap.mjs",
+    "build": "pnpm run generate:sitemap && vue-tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
