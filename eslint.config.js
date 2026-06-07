@@ -49,6 +49,16 @@ export default tseslint.config(
       },
     },
   },
+  {
+    files: ['packages/frontend/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        URL: 'readonly',
+        fetch: 'readonly',
+      },
+    },
+  },
 
   // --- 共通ルール上書き ---
   {
