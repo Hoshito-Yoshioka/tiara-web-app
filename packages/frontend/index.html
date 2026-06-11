@@ -1,10 +1,82 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/Tiara-logo-transparent.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Tiara</title>
+    <meta
+      name="description"
+      content="函館にあるニュークラブ「Tiara」の公式ウェブサイトです。店舗情報やスタッフ、メニューをご覧いただけます。"
+    />
+
+    <link rel="icon" type="image/png" sizes="192x192" href="/Tiara-logo-transparent.png" />
+    <link rel="apple-touch-icon" href="/Tiara-logo-transparent.png" />
+
+    <meta property="og:site_name" content="Tiara" />
+    <meta property="og:title" content="Tiara" />
+    <meta
+      property="og:description"
+      content="函館にあるニュークラブ「Tiara」の公式ウェブサイトです。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tiara-hakodate.com/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://tiara-hakodate.com/#website",
+            "name": "Tiara",
+            "url": "https://tiara-hakodate.com/",
+            "inLanguage": "ja-JP",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://tiara-hakodate.com/?s={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "NightClub",
+            "@id": "https://tiara-hakodate.com/#organization",
+            "name": "Tiara",
+            "url": "https://tiara-hakodate.com/",
+            "description": "函館にあるニュークラブ「Tiara」の公式ウェブサイトです。",
+            "areaServed": "函館",
+            "address": {
+              "@type": "PostalAddress",
+              "postalCode": "040-0011",
+              "addressRegion": "北海道",
+              "addressLocality": "函館市",
+              "streetAddress": "本町1-28 第5大栄ビル 1F 右",
+              "addressCountry": "JP"
+            },
+            "telephone": "+81-138-83-6040",
+            "openingHoursSpecification": {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday"
+              ],
+              "opens": "20:00",
+              "closes": "05:00"
+            },
+            "sameAs": [
+              "https://www.tiktok.com/discover/%E3%83%8B%E3%83%A5%E3%83%BC%E3%82%AF%E3%83%A9%E3%80%80%E3%83%86%E3%82%A3%E3%82%A2%E3%83%A9%E5%87%BD%E9%A4%A8"
+            ],
+            "mainEntityOfPage": {
+              "@id": "https://tiara-hakodate.com/#website"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>
