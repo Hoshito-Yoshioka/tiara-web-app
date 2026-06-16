@@ -32,9 +32,11 @@ func (m *mockStaffAuthUsecase) Login(_ context.Context, _, _ string) (domain.Sta
 // --- Mock: StaffPortalUsecase ---
 
 type mockStaffPortalUsecase struct {
-	profileDraft  domain.StaffProfileDraft
-	scheduleDraft domain.StaffScheduleDraft
-	err           error
+	profileDraft      domain.StaffProfileDraft
+	scheduleDraft     domain.StaffScheduleDraft
+	err               error
+	submitProfileErr  error
+	submitScheduleErr error
 }
 
 func (m *mockStaffPortalUsecase) GetMyProfileDraft(_ context.Context, _ uuid.UUID) (domain.StaffProfileDraft, error) {
@@ -44,6 +46,9 @@ func (m *mockStaffPortalUsecase) SaveProfileDraft(_ context.Context, _ uuid.UUID
 	return m.profileDraft, m.err
 }
 func (m *mockStaffPortalUsecase) SubmitProfileDraft(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ time.Time) (domain.StaffProfileDraft, error) {
+	if m.submitProfileErr != nil {
+		return domain.StaffProfileDraft{}, m.submitProfileErr
+	}
 	return m.profileDraft, m.err
 }
 func (m *mockStaffPortalUsecase) GetMyScheduleDraft(_ context.Context, _ uuid.UUID) (domain.StaffScheduleDraft, error) {
@@ -53,6 +58,9 @@ func (m *mockStaffPortalUsecase) SaveScheduleDraft(_ context.Context, _ uuid.UUI
 	return m.scheduleDraft, m.err
 }
 func (m *mockStaffPortalUsecase) SubmitScheduleDraft(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ time.Time) (domain.StaffScheduleDraft, error) {
+	if m.submitScheduleErr != nil {
+		return domain.StaffScheduleDraft{}, m.submitScheduleErr
+	}
 	return m.scheduleDraft, m.err
 }
 
@@ -301,6 +309,30 @@ func TestStaffPortalHandler_SubmitMyProfileDraft(t *testing.T) {
 		_ = h.SubmitMyProfileDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
+
+	t.Run("異常系: 他人のドラフト → 403", func(t *testing.T) {
+		mock := &mockStaffPortalUsecase{
+			submitProfileErr: domain.ErrForbidden,
+		}
+		h := newPortalHandler(&mockStaffAuthUsecase{}, mock, &mockStaffUsecase{})
+
+		otherDraftID := uuid.New()
+		req := httptest.NewRequest(http.MethodPost, "/portal/profile/:id/submit", nil)
+		rec := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(otherDraftID.String())
+		testutil.SetStaffID(c, staffID)
+
+		_ = h.SubmitMyProfileDraft(c)
+		assert.Equal(t, http.StatusForbidden, rec.Code)
+
+		var body map[string]string
+		err := json.Unmarshal(rec.Body.Bytes(), &body)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, body["error"])
+	})
 }
 
 // --- Schedule Draft Tests ---
@@ -423,6 +455,30 @@ func TestStaffPortalHandler_SubmitMyScheduleDraft(t *testing.T) {
 
 		_ = h.SubmitMyScheduleDraft(c)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("異常系: 他人のドラフト → 403", func(t *testing.T) {
+		mock := &mockStaffPortalUsecase{
+			submitScheduleErr: domain.ErrForbidden,
+		}
+		h := newPortalHandler(&mockStaffAuthUsecase{}, mock, &mockStaffUsecase{})
+
+		otherDraftID := uuid.New()
+		req := httptest.NewRequest(http.MethodPost, "/portal/schedule/:id/submit", nil)
+		rec := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(otherDraftID.String())
+		testutil.SetStaffID(c, staffID)
+
+		_ = h.SubmitMyScheduleDraft(c)
+		assert.Equal(t, http.StatusForbidden, rec.Code)
+
+		var body map[string]string
+		err := json.Unmarshal(rec.Body.Bytes(), &body)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, body["error"])
 	})
 }
 
