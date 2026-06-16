@@ -3,7 +3,6 @@
 「TIARA」の Web サイト。店舗・スタッフ情報を顧客に提供するモノレポ構成のフルスタックアプリケーション。
 公式サイト（[https://tiara-hakodate.com/](https://tiara-hakodate.com/)）にて確認できます。
 
-
 ## Tech Stack
 
 | レイヤー | 技術                                                  |
@@ -116,7 +115,7 @@ pnpm --filter bff dev
 
 > `http://localhost:3001` で BFF が起動します。
 
-> **API 仕様書:** `http://localhost:3001/api/v1/docs` で Swagger UI を確認できます。
+> **API 仕様書:** `http://localhost:3001/api/v1/docs` で Swagger UI、`http://localhost:3001/api/v1/redoc` でより見やすい Redoc を確認できます。
 
 ### ④ フロントエンド（Vue / Vite）を起動
 
