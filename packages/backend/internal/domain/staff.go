@@ -53,6 +53,15 @@ type StaffImage struct {
 	UpdatedAt    time.Time
 }
 
+// StaffRefreshToken はスタッフのリフレッシュトークンドメインモデル。
+type StaffRefreshToken struct {
+	ID        uuid.UUID
+	StaffID   uuid.UUID
+	Token     string
+	ExpiresAt time.Time
+	CreatedAt time.Time
+}
+
 // CreateStaffInput はスタッフ作成時の入力構造体。
 type CreateStaffInput struct {
 	ShopID              string

@@ -181,6 +181,19 @@ FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 
 -- ==============================
+-- staff_refresh_tokens テーブル
+-- スタッフのリフレッシュトークン（DB保存型・失効可能）
+-- token: crypto/rand で生成した安全なランダムトークン
+-- ==============================
+CREATE TABLE IF NOT EXISTS staff_refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    staff_id UUID NOT NULL REFERENCES staffs(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==============================
 -- staff_schedules テーブル
 -- スタッフの出勤スケジュール（曜日ベース）
 -- day_of_week: 0=日, 1=月, 2=火, ..., 6=土

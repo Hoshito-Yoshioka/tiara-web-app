@@ -45,6 +45,24 @@ func (m *mockStaffAccountRepository) DeleteStaffAccount(_ context.Context, _ uui
 	return m.err
 }
 
+type mockStaffRefreshTokenRepository struct {
+	token domain.StaffRefreshToken
+	err   error
+}
+
+func (m *mockStaffRefreshTokenRepository) CreateRefreshToken(_ context.Context, _ uuid.UUID, _ string, _ time.Time) (domain.StaffRefreshToken, error) {
+	return m.token, m.err
+}
+func (m *mockStaffRefreshTokenRepository) GetRefreshToken(_ context.Context, _ string) (domain.StaffRefreshToken, error) {
+	return m.token, m.err
+}
+func (m *mockStaffRefreshTokenRepository) DeleteRefreshToken(_ context.Context, _ string) error {
+	return m.err
+}
+func (m *mockStaffRefreshTokenRepository) DeleteRefreshTokensByStaffID(_ context.Context, _ uuid.UUID) error {
+	return m.err
+}
+
 type mockStaffDraftRepository struct {
 	profileDraft   domain.StaffProfileDraft
 	profileDrafts  []domain.StaffProfileDraft
@@ -151,7 +169,7 @@ func TestStaffAuthUsecase_Login_Success(t *testing.T) {
 	}
 
 	repo := &mockStaffAccountRepository{account: account}
-	uc := NewStaffAuthUsecase(repo)
+	uc := NewStaffAuthUsecase(repo, &mockStaffRefreshTokenRepository{})
 
 	result, err := uc.Login(context.Background(), "staff1", "password123")
 
@@ -161,7 +179,7 @@ func TestStaffAuthUsecase_Login_Success(t *testing.T) {
 
 func TestStaffAuthUsecase_Login_UserNotFound(t *testing.T) {
 	repo := &mockStaffAccountRepository{err: errors.New("not found")}
-	uc := NewStaffAuthUsecase(repo)
+	uc := NewStaffAuthUsecase(repo, &mockStaffRefreshTokenRepository{})
 
 	_, err := uc.Login(context.Background(), "unknown", "pass")
 
@@ -178,7 +196,7 @@ func TestStaffAuthUsecase_Login_WrongPassword(t *testing.T) {
 	}
 
 	repo := &mockStaffAccountRepository{account: account}
-	uc := NewStaffAuthUsecase(repo)
+	uc := NewStaffAuthUsecase(repo, &mockStaffRefreshTokenRepository{})
 
 	_, err := uc.Login(context.Background(), "staff1", "wrong")
 

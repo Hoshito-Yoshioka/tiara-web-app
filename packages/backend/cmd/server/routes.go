@@ -58,6 +58,8 @@ var loginRateLimiter = middleware.RateLimiter(
 func registerAuthRoutes(g *echo.Group, h *handlers) {
 	g.POST("/auth/login", h.auth.Login, loginRateLimiter)
 	g.POST("/staff-auth/login", h.staffPortal.Login, loginRateLimiter)
+	g.POST("/staff-auth/refresh", h.staffPortal.RefreshToken, loginRateLimiter)
+	g.POST("/staff-auth/logout", h.staffPortal.Logout)
 }
 
 // --- Admin (JWT Protected) ---
