@@ -11,6 +11,7 @@ export interface StaffLoginRequest {
 /** スタッフログインレスポンス（Backend がそのまま camelCase で返す） */
 export interface StaffLoginResponse {
   token: string
+  refreshToken: string
   staffId: string
 }
 

@@ -97,6 +97,14 @@ type StaffProfileDraft struct {
 	UpdatedAt           pgtype.Timestamptz
 }
 
+type StaffRefreshToken struct {
+	ID        pgtype.UUID
+	StaffID   pgtype.UUID
+	Token     string
+	ExpiresAt pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+}
+
 type StaffSchedule struct {
 	ID        pgtype.UUID
 	StaffID   pgtype.UUID

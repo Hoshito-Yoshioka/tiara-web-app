@@ -140,9 +140,17 @@ export const TokenResponseSchema = z
 export const StaffTokenResponseSchema = z
   .object({
     token: z.string(),
+    refreshToken: z.string(),
     staffId: z.string(),
   })
   .openapi('StaffTokenResponse')
+
+export const RefreshTokenResponseSchema = z
+  .object({
+    token: z.string(),
+    refreshToken: z.string(),
+  })
+  .openapi('RefreshTokenResponse')
 
 // --- Portal: Profile Draft ---
 

@@ -17,9 +17,11 @@ type Config struct {
 	CORSOrigins []string
 
 	// JWT
-	JWTSecret      string
-	JWTExpiryHours int
-	UploadDir      string
+	JWTSecret                   string
+	JWTExpiryHours              int
+	JWTStaffAccessExpiryMinutes int
+	JWTStaffRefreshExpiryDays   int
+	UploadDir                   string
 }
 
 // Load は viper を使って環境変数・.env ファイルから Config を読み込む。
@@ -31,6 +33,8 @@ func Load() *Config {
 	v.SetDefault("PORT", "1323")
 	v.SetDefault("CORS_ORIGIN", "http://localhost:3001")
 	v.SetDefault("JWT_EXPIRY_HOURS", 2)
+	v.SetDefault("JWT_STAFF_ACCESS_EXPIRY_MINUTES", 15)
+	v.SetDefault("JWT_STAFF_REFRESH_EXPIRY_DAYS", 7)
 	v.SetDefault("UPLOAD_DIR", "uploads")
 
 	// .env ファイルの自動読み込み（source .env 不要）
@@ -48,12 +52,14 @@ func Load() *Config {
 	corsOrigins := parseCORSOrigins(v.GetString("CORS_ORIGIN"))
 
 	return &Config{
-		DatabaseURL:    v.GetString("DATABASE_URL"),
-		Port:           v.GetString("PORT"),
-		CORSOrigins:    corsOrigins,
-		JWTSecret:      v.GetString("JWT_SECRET"),
-		JWTExpiryHours: v.GetInt("JWT_EXPIRY_HOURS"),
-		UploadDir:      v.GetString("UPLOAD_DIR"),
+		DatabaseURL:                 v.GetString("DATABASE_URL"),
+		Port:                        v.GetString("PORT"),
+		CORSOrigins:                 corsOrigins,
+		JWTSecret:                   v.GetString("JWT_SECRET"),
+		JWTExpiryHours:              v.GetInt("JWT_EXPIRY_HOURS"),
+		JWTStaffAccessExpiryMinutes: v.GetInt("JWT_STAFF_ACCESS_EXPIRY_MINUTES"),
+		JWTStaffRefreshExpiryDays:   v.GetInt("JWT_STAFF_REFRESH_EXPIRY_DAYS"),
+		UploadDir:                   v.GetString("UPLOAD_DIR"),
 	}
 }
 

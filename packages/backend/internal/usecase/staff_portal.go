@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"tiara-web-app/backend/internal/domain"
 	"time"
@@ -20,6 +22,14 @@ type StaffAccountRepository interface {
 	CreateStaffAccount(ctx context.Context, staffID uuid.UUID, username, passwordHash string) (domain.StaffAccount, error)
 	UpdateStaffAccount(ctx context.Context, id uuid.UUID, username, passwordHash string) (domain.StaffAccount, error)
 	DeleteStaffAccount(ctx context.Context, id uuid.UUID) error
+}
+
+// StaffRefreshTokenRepository はリフレッシュトークンの永続化を抽象化するインターフェース。
+type StaffRefreshTokenRepository interface {
+	CreateRefreshToken(ctx context.Context, staffID uuid.UUID, token string, expiresAt time.Time) (domain.StaffRefreshToken, error)
+	GetRefreshToken(ctx context.Context, token string) (domain.StaffRefreshToken, error)
+	DeleteRefreshToken(ctx context.Context, token string) error
+	DeleteRefreshTokensByStaffID(ctx context.Context, staffID uuid.UUID) error
 }
 
 // StaffDraftRepository はプロフィール/スケジュール下書きの永続化を抽象化するインターフェース。
@@ -53,15 +63,19 @@ type StaffDraftRepository interface {
 // StaffAuthUsecase はスタッフ認証のビジネスロジックを定義するインターフェース。
 type StaffAuthUsecase interface {
 	Login(ctx context.Context, username, password string) (domain.StaffAccount, error)
+	IssueRefreshToken(ctx context.Context, staffID uuid.UUID, expiryDays int) (string, error)
+	RotateRefreshToken(ctx context.Context, token string, expiryDays int) (domain.StaffAccount, string, error)
+	RevokeRefreshToken(ctx context.Context, token string) error
 }
 
 type staffAuthUsecase struct {
-	accountRepo StaffAccountRepository
+	accountRepo      StaffAccountRepository
+	refreshTokenRepo StaffRefreshTokenRepository
 }
 
 // NewStaffAuthUsecase は新しいStaffAuthUsecaseのインスタンスを作成する。
-func NewStaffAuthUsecase(repo StaffAccountRepository) StaffAuthUsecase {
-	return &staffAuthUsecase{accountRepo: repo}
+func NewStaffAuthUsecase(repo StaffAccountRepository, refreshRepo StaffRefreshTokenRepository) StaffAuthUsecase {
+	return &staffAuthUsecase{accountRepo: repo, refreshTokenRepo: refreshRepo}
 }
 
 // Login はユーザー名とパスワードでスタッフを認証する。
@@ -77,6 +91,57 @@ func (u *staffAuthUsecase) Login(ctx context.Context, username, password string)
 	}
 
 	return account, nil
+}
+
+// IssueRefreshToken はスタッフIDに対してリフレッシュトークンをDBに保存し返す。
+func (u *staffAuthUsecase) IssueRefreshToken(ctx context.Context, staffID uuid.UUID, expiryDays int) (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+	token := hex.EncodeToString(b)
+	expiresAt := time.Now().Add(time.Duration(expiryDays) * 24 * time.Hour)
+
+	if _, err := u.refreshTokenRepo.CreateRefreshToken(ctx, staffID, token, expiresAt); err != nil {
+		return "", fmt.Errorf("failed to store refresh token: %w", err)
+	}
+	return token, nil
+}
+
+// RotateRefreshToken は旧トークンを検証・削除し、新トークンを発行する。
+// 旧トークンが無効または期限切れの場合はエラーを返す。
+func (u *staffAuthUsecase) RotateRefreshToken(ctx context.Context, token string, expiryDays int) (domain.StaffAccount, string, error) {
+	rt, err := u.refreshTokenRepo.GetRefreshToken(ctx, token)
+	if err != nil {
+		return domain.StaffAccount{}, "", fmt.Errorf("invalid refresh token: %w", domain.ErrUnauthorized)
+	}
+
+	if time.Now().After(rt.ExpiresAt) {
+		_ = u.refreshTokenRepo.DeleteRefreshToken(ctx, token)
+		return domain.StaffAccount{}, "", fmt.Errorf("refresh token expired: %w", domain.ErrUnauthorized)
+	}
+
+	account, err := u.accountRepo.GetStaffAccountByStaffID(ctx, rt.StaffID)
+	if err != nil {
+		return domain.StaffAccount{}, "", fmt.Errorf("staff not found: %w", domain.ErrUnauthorized)
+	}
+
+	// トークンローテーション: 旧トークンを削除
+	if err := u.refreshTokenRepo.DeleteRefreshToken(ctx, token); err != nil {
+		return domain.StaffAccount{}, "", fmt.Errorf("failed to revoke old token: %w", err)
+	}
+
+	newToken, err := u.IssueRefreshToken(ctx, rt.StaffID, expiryDays)
+	if err != nil {
+		return domain.StaffAccount{}, "", err
+	}
+
+	return account, newToken, nil
+}
+
+// RevokeRefreshToken はリフレッシュトークンをDBから削除する（ログアウト）。
+func (u *staffAuthUsecase) RevokeRefreshToken(ctx context.Context, token string) error {
+	return u.refreshTokenRepo.DeleteRefreshToken(ctx, token)
 }
 
 // --- Staff Portal Usecase ---

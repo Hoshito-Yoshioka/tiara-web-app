@@ -29,6 +29,18 @@ func (m *mockStaffAuthUsecase) Login(_ context.Context, _, _ string) (domain.Sta
 	return m.account, m.err
 }
 
+func (m *mockStaffAuthUsecase) IssueRefreshToken(_ context.Context, _ uuid.UUID, _ int) (string, error) {
+	return "mock-refresh-token", m.err
+}
+
+func (m *mockStaffAuthUsecase) RotateRefreshToken(_ context.Context, _ string, _ int) (domain.StaffAccount, string, error) {
+	return m.account, "mock-new-refresh-token", m.err
+}
+
+func (m *mockStaffAuthUsecase) RevokeRefreshToken(_ context.Context, _ string) error {
+	return m.err
+}
+
 // --- Mock: StaffPortalUsecase ---
 
 type mockStaffPortalUsecase struct {
@@ -68,7 +80,8 @@ func (m *mockStaffPortalUsecase) SubmitScheduleDraft(_ context.Context, _ uuid.U
 func newPortalHandler(auth usecase.StaffAuthUsecase, portal usecase.StaffPortalUsecase, staff usecase.StaffUsecase) *StaffPortalHandler {
 	return NewStaffPortalHandler(auth, portal, staff,
 		WithJWTSecret("test-secret"),
-		WithJWTExpiryHours(2),
+		WithJWTAccessExpiryMinutes(15),
+		WithJWTRefreshExpiryDays(7),
 		WithUploadDir("/tmp/test-uploads"),
 	)
 }

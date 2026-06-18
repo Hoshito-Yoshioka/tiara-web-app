@@ -19,12 +19,13 @@ import (
 
 // StaffPortalHandler はスタッフポータル関連のHTTPハンドラー。
 type StaffPortalHandler struct {
-	authUsecase    usecase.StaffAuthUsecase
-	portalUsecase  usecase.StaffPortalUsecase
-	staffUsecase   usecase.StaffUsecase
-	jwtSecret      string
-	jwtExpiryHours int
-	uploadDir      string
+	authUsecase         usecase.StaffAuthUsecase
+	portalUsecase       usecase.StaffPortalUsecase
+	staffUsecase        usecase.StaffUsecase
+	jwtSecret           string
+	accessExpiryMinutes int
+	refreshExpiryDays   int
+	uploadDir           string
 }
 
 // StaffPortalHandlerOption は StaffPortalHandler の設定を変更する Functional Option。
@@ -37,10 +38,17 @@ func WithJWTSecret(secret string) StaffPortalHandlerOption {
 	}
 }
 
-// WithJWTExpiryHours は JWT トークンの有効期限（時間）を設定する。
-func WithJWTExpiryHours(hours int) StaffPortalHandlerOption {
+// WithJWTAccessExpiryMinutes はアクセストークンの有効期限（分）を設定する。
+func WithJWTAccessExpiryMinutes(minutes int) StaffPortalHandlerOption {
 	return func(h *StaffPortalHandler) {
-		h.jwtExpiryHours = hours
+		h.accessExpiryMinutes = minutes
+	}
+}
+
+// WithJWTRefreshExpiryDays はリフレッシュトークンの有効期限（日）を設定する。
+func WithJWTRefreshExpiryDays(days int) StaffPortalHandlerOption {
+	return func(h *StaffPortalHandler) {
+		h.refreshExpiryDays = days
 	}
 }
 
@@ -86,11 +94,12 @@ type StaffLoginRequest struct {
 
 // StaffLoginResponse はスタッフログイン成功時のレスポンス型。
 type StaffLoginResponse struct {
-	Token   string `json:"token"`
-	StaffID string `json:"staffId"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshToken"`
+	StaffID      string `json:"staffId"`
 }
 
-// Login はスタッフのユーザー名とパスワードで認証し、JWTトークンを返す。
+// Login はスタッフのユーザー名とパスワードで認証し、アクセストークンとリフレッシュトークンを返す。
 // 管理者トークンと区別するため、type: "staff" クレームを含む。
 func (h *StaffPortalHandler) Login(c echo.Context) error {
 	var req StaffLoginRequest
@@ -107,24 +116,80 @@ func (h *StaffPortalHandler) Login(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	jwtClaims := jwt.MapClaims{
-		"sub":      account.StaffID.String(),
-		"username": account.Username,
-		"type":     "staff", // 管理者トークンと区別するためのクレーム
-		"exp":      time.Now().Add(time.Duration(h.jwtExpiryHours) * time.Hour).Unix(),
-		"iat":      time.Now().Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaims)
-	tokenString, err := token.SignedString([]byte(h.jwtSecret))
+	accessToken, err := h.issueAccessToken(account.StaffID.String(), account.Username)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate token"})
 	}
 
+	refreshToken, err := h.authUsecase.IssueRefreshToken(c.Request().Context(), account.StaffID, h.refreshExpiryDays)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to issue refresh token"})
+	}
+
 	return c.JSON(http.StatusOK, StaffLoginResponse{
-		Token:   tokenString,
-		StaffID: account.StaffID.String(),
+		Token:        accessToken,
+		RefreshToken: refreshToken,
+		StaffID:      account.StaffID.String(),
 	})
+}
+
+// issueAccessToken はスタッフIDとユーザー名から JWT アクセストークンを生成する。
+func (h *StaffPortalHandler) issueAccessToken(staffID, username string) (string, error) {
+	claims := jwt.MapClaims{
+		"sub":      staffID,
+		"username": username,
+		"type":     "staff",
+		"exp":      time.Now().Add(time.Duration(h.accessExpiryMinutes) * time.Minute).Unix(),
+		"iat":      time.Now().Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(h.jwtSecret))
+}
+
+// RefreshTokenRequest はトークン再発行リクエストのボディ型。
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
+// RefreshTokenResponse はトークン再発行成功時のレスポンス型。
+type RefreshTokenResponse struct {
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshToken"`
+}
+
+// RefreshToken はリフレッシュトークンを検証し、新しいアクセストークンとリフレッシュトークンを発行する。
+func (h *StaffPortalHandler) RefreshToken(c echo.Context) error {
+	var req RefreshTokenRequest
+	if err := c.Bind(&req); err != nil || req.RefreshToken == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "refreshToken is required"})
+	}
+
+	account, newRefreshToken, err := h.authUsecase.RotateRefreshToken(c.Request().Context(), req.RefreshToken, h.refreshExpiryDays)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid or expired refresh token"})
+	}
+
+	accessToken, err := h.issueAccessToken(account.StaffID.String(), account.Username)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate token"})
+	}
+
+	return c.JSON(http.StatusOK, RefreshTokenResponse{
+		Token:        accessToken,
+		RefreshToken: newRefreshToken,
+	})
+}
+
+// Logout はリフレッシュトークンをDBから削除してログアウトする。
+func (h *StaffPortalHandler) Logout(c echo.Context) error {
+	var req RefreshTokenRequest
+	if err := c.Bind(&req); err != nil || req.RefreshToken == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "refreshToken is required"})
+	}
+
+	// エラーを無視: すでに削除済みのトークンでも正常終了
+	_ = h.authUsecase.RevokeRefreshToken(c.Request().Context(), req.RefreshToken)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // Verify はスタッフJWTトークンの有効性を確認する。

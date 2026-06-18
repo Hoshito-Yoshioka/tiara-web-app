@@ -56,5 +56,12 @@ export interface ScheduleDraft {
 /** スタッフログインレスポンス */
 export interface StaffLoginResponse {
   token: string
+  refreshToken: string
   staffId: string
+}
+
+/** トークン再発行レスポンス */
+export interface RefreshTokenResponse {
+  token: string
+  refreshToken: string
 }
