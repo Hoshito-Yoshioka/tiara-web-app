@@ -139,7 +139,8 @@ func (u *staffPortalUsecase) SaveProfileDraft(ctx context.Context, staffID uuid.
 	}
 
 	// 既存の下書きを更新（pending でも更新可能 → ステータスは draft に戻る）
-	return u.draftRepo.UpdateProfileDraft(ctx, existing.ID, input, updatedAt)
+	// existing.UpdatedAt を使用してDB上の実際の値で楽観的ロックを通過させる。
+	return u.draftRepo.UpdateProfileDraft(ctx, existing.ID, input, existing.UpdatedAt)
 }
 
 // SubmitProfileDraft はプロフィール下書きを承認申請する。
@@ -159,7 +160,9 @@ func (u *staffPortalUsecase) SubmitProfileDraft(ctx context.Context, staffID uui
 		return domain.StaffProfileDraft{}, fmt.Errorf("draft または rejected 状態の下書きのみ申請できます: %w", domain.ErrInvalidInput)
 	}
 
-	return u.draftRepo.SubmitProfileDraft(ctx, draftID, updatedAt)
+	// draft.UpdatedAt を使用してDB上の実際の値で楽観的ロックを通過させる。
+	// フロントエンドから updatedAt が送られない場合のゼロ値ミスマッチを防ぐ。
+	return u.draftRepo.SubmitProfileDraft(ctx, draftID, draft.UpdatedAt)
 }
 
 // GetMyScheduleDraft は自分のアクティブなスケジュール下書きを取得する。
@@ -197,7 +200,8 @@ func (u *staffPortalUsecase) SaveScheduleDraft(ctx context.Context, staffID uuid
 	}
 
 	// 既存の下書きを更新（pending でも更新可能 → ステータスは draft に戻る）
-	return u.draftRepo.UpdateScheduleDraftItems(ctx, existing.ID, items, updatedAt)
+	// existing.UpdatedAt を使用してDB上の実際の値で楽観的ロックを通過させる。
+	return u.draftRepo.UpdateScheduleDraftItems(ctx, existing.ID, items, existing.UpdatedAt)
 }
 
 // SubmitScheduleDraft はスケジュール下書きを承認申請する。
@@ -215,7 +219,8 @@ func (u *staffPortalUsecase) SubmitScheduleDraft(ctx context.Context, staffID uu
 		return domain.StaffScheduleDraft{}, fmt.Errorf("draft または rejected 状態の下書きのみ申請できます: %w", domain.ErrInvalidInput)
 	}
 
-	return u.draftRepo.SubmitScheduleDraft(ctx, draftID, updatedAt)
+	// draft.UpdatedAt を使用してDB上の実際の値で楽観的ロックを通過させる。
+	return u.draftRepo.SubmitScheduleDraft(ctx, draftID, draft.UpdatedAt)
 }
 
 // --- Admin Review Usecase ---
