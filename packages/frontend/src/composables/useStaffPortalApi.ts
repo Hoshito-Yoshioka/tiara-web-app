@@ -72,6 +72,7 @@ export function useStaffPortalApi() {
       const result = await apiFetch<ProfileDraft>(`/api/v1/portal/profile/${draftId}/submit`, {
         method: 'POST',
         headers: authHeaders(),
+        body: JSON.stringify({}),
       })
       profileDraft.value = result
       return result
@@ -125,6 +126,7 @@ export function useStaffPortalApi() {
       const result = await apiFetch<ScheduleDraft>(`/api/v1/portal/schedule/${draftId}/submit`, {
         method: 'POST',
         headers: authHeaders(),
+        body: JSON.stringify({}),
       })
       scheduleDraft.value = result
       return result
