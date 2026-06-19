@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { useStaffAuthStore } from '@/stores/staffAuth'
 
 // 管理画面のベースパス。本番では VITE_ADMIN_BASE_PATH 環境変数で変更し、URLからの推測を困難にする。
 const adminBase = import.meta.env.VITE_ADMIN_BASE_PATH || '/admin'
@@ -138,20 +140,30 @@ const router = createRouter({
 
 // 認証ナビゲーションガード
 // requiresAuth が設定されたルートでは、localStorage のトークンを確認する。
-// Pinia の初期化前でも動作するよう localStorage を直接参照。
-router.beforeEach((to) => {
+// 期限切れ時は verify（staff は refresh を含む）を実行し、失効していればログインへ戻す。
+router.beforeEach(async (to) => {
   // 管理者認証ガード
   if (to.meta.requiresAuth) {
-    const token = localStorage.getItem('tiara_admin_token')
-    if (!token) {
+    const authStore = useAuthStore()
+    if (!authStore.token) {
+      return { name: 'admin-login' }
+    }
+
+    const isValid = await authStore.verify()
+    if (!isValid) {
       return { name: 'admin-login' }
     }
   }
 
   // スタッフ認証ガード
   if (to.meta.requiresStaffAuth) {
-    const token = localStorage.getItem('tiara_staff_token')
-    if (!token) {
+    const staffAuthStore = useStaffAuthStore()
+    if (!staffAuthStore.token) {
+      return { name: 'portal-login' }
+    }
+
+    const isValid = await staffAuthStore.verify()
+    if (!isValid) {
       return { name: 'portal-login' }
     }
   }
