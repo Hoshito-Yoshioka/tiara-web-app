@@ -356,8 +356,9 @@ func (u *adminReviewUsecase) ReviewProfileDraft(ctx context.Context, draftID uui
 		return domain.StaffProfileDraft{}, fmt.Errorf("pending 状態の下書きのみレビューできます: %w", domain.ErrInvalidInput)
 	}
 
-	// レビュー結果を記録
-	reviewed, err := u.draftRepo.ReviewProfileDraft(ctx, draftID, input, updatedAt)
+	// リクエスト値ではなくDB上の最新updated_atで楽観的ロックを通過させる。
+	_ = updatedAt
+	reviewed, err := u.draftRepo.ReviewProfileDraft(ctx, draftID, input, draft.UpdatedAt)
 	if err != nil {
 		return domain.StaffProfileDraft{}, err
 	}
@@ -398,7 +399,9 @@ func (u *adminReviewUsecase) ReviewScheduleDraft(ctx context.Context, draftID uu
 
 	// 承認しても店舗ページには即時反映しない。
 	// 管理者が別途 PublishScheduleDraft を呼び出して反映する。
-	reviewed, err := u.draftRepo.ReviewScheduleDraft(ctx, draftID, input, updatedAt)
+	// リクエスト値ではなくDB上の最新updated_atで楽観的ロックを通過させる。
+	_ = updatedAt
+	reviewed, err := u.draftRepo.ReviewScheduleDraft(ctx, draftID, input, draft.UpdatedAt)
 	if err != nil {
 		return domain.StaffScheduleDraft{}, err
 	}
@@ -444,12 +447,24 @@ func (u *adminReviewUsecase) GetScheduleDraft(ctx context.Context, draftID uuid.
 
 // UpdateProfileDraftContent は管理者がプロフィール下書きの内容のみ更新する（ステータス変更なし）。
 func (u *adminReviewUsecase) UpdateProfileDraftContent(ctx context.Context, draftID uuid.UUID, input domain.SaveProfileDraftInput, updatedAt time.Time) (domain.StaffProfileDraft, error) {
-	return u.draftRepo.UpdateProfileDraftContent(ctx, draftID, input, updatedAt)
+	draft, err := u.draftRepo.GetProfileDraftByID(ctx, draftID)
+	if err != nil {
+		return domain.StaffProfileDraft{}, fmt.Errorf("下書きが見つかりません: %w", domain.ErrNotFound)
+	}
+
+	_ = updatedAt
+	return u.draftRepo.UpdateProfileDraftContent(ctx, draftID, input, draft.UpdatedAt)
 }
 
 // UpdateScheduleDraftContent は管理者がスケジュール下書きの内容のみ更新する（ステータス変更なし）。
 func (u *adminReviewUsecase) UpdateScheduleDraftContent(ctx context.Context, draftID uuid.UUID, items []domain.ScheduleDraftItem, updatedAt time.Time) (domain.StaffScheduleDraft, error) {
-	return u.draftRepo.ReplaceScheduleDraftItems(ctx, draftID, items, updatedAt)
+	draft, err := u.draftRepo.GetScheduleDraftByID(ctx, draftID)
+	if err != nil {
+		return domain.StaffScheduleDraft{}, fmt.Errorf("下書きが見つかりません: %w", domain.ErrNotFound)
+	}
+
+	_ = updatedAt
+	return u.draftRepo.ReplaceScheduleDraftItems(ctx, draftID, items, draft.UpdatedAt)
 }
 
 // GetStaffName はスタッフIDからスタッフ名を取得する。
