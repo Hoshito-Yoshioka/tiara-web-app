@@ -9,6 +9,34 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'
+const ADMIN_BASE_PATH = import.meta.env.VITE_ADMIN_BASE_PATH || '/admin'
+
+function redirectTo(path: string): void {
+  if (typeof window === 'undefined') return
+  if (window.location.pathname === path) return
+  window.location.href = path
+}
+
+function handleUnauthorized(path: string): void {
+  const isStaffProtectedApi =
+    path.startsWith('/api/v1/portal') ||
+    path === '/api/v1/staff-auth/verify' ||
+    path === '/api/v1/staff-auth/refresh'
+  const isAdminProtectedApi = path.startsWith('/api/v1/admin') || path === '/api/v1/auth/verify'
+
+  if (isStaffProtectedApi) {
+    localStorage.removeItem('tiara_staff_token')
+    localStorage.removeItem('tiara_staff_refresh_token')
+    localStorage.removeItem('tiara_staff_id')
+    redirectTo('/mypage/login')
+    return
+  }
+
+  if (isAdminProtectedApi) {
+    localStorage.removeItem('tiara_admin_token')
+    redirectTo(`${ADMIN_BASE_PATH}/login`)
+  }
+}
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`
@@ -42,6 +70,9 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized(path)
+    }
     throw new Error(`API Error: ${res.status} ${res.statusText}`)
   }
 
@@ -82,6 +113,9 @@ export async function apiUpload<T>(
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized(path)
+    }
     throw new Error(`API Error: ${res.status} ${res.statusText}`)
   }
 
