@@ -1,14 +1,20 @@
 <script setup lang="ts">
   import { ref, onMounted } from 'vue'
+  import { useRouter } from 'vue-router'
   import { useStaffApi } from '@/composables/useStaffApi'
 
   const { staffList, pagination, isLoading, error, fetchStaffsPaginated } = useStaffApi()
   const currentPage = ref(1)
+  const router = useRouter()
 
   function goToPage(page: number) {
     currentPage.value = page
     fetchStaffsPaginated(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function goToStaffDetail(staffId: string) {
+    router.push({ name: 'staff-detail', params: { id: staffId } })
   }
 
   onMounted(() => {
@@ -59,14 +65,18 @@
       <!-- スタッフカード一覧（縦一列・横長カード） -->
       <template v-else>
         <div class="max-w-4xl mx-auto space-y-6">
-          <router-link
+          <article
             v-for="(staff, index) in staffList"
             :key="staff.id"
-            :to="`/staff/${staff.id}`"
             v-motion
             :initial="{ opacity: 0, y: 30 }"
             :visibleOnce="{ opacity: 1, y: 0, transition: { duration: 600, delay: index * 150 } }"
             class="group block"
+            role="link"
+            tabindex="0"
+            @click="goToStaffDetail(staff.id)"
+            @keydown.enter="goToStaffDetail(staff.id)"
+            @keydown.space.prevent="goToStaffDetail(staff.id)"
           >
             <div
               class="border border-border bg-card overflow-hidden transition-all duration-500 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 flex flex-col sm:flex-row sm:h-52"
@@ -121,7 +131,7 @@
                 </div>
               </div>
             </div>
-          </router-link>
+          </article>
         </div>
 
         <!-- ページネーション -->
