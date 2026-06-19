@@ -28,9 +28,17 @@ const staffLoginRoute = createRoute({
       content: { 'application/json': { schema: StaffTokenResponseSchema } },
       description: 'ログイン成功',
     },
+    400: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'リクエストエラー',
+    },
     401: {
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: '認証失敗',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
     },
   },
 })
@@ -65,8 +73,8 @@ staffAuthRoutes.openapi(staffLoginRoute, async (c) => {
   })
 
   if (!res.ok) {
-    const error = await res.json()
-    return c.json(error as { error: string }, 401)
+    const error = await res.json().catch(() => ({ error: 'Login failed' }))
+    return c.json(error as { error: string }, res.status as 400 | 401 | 500)
   }
 
   const data: StaffLoginResponse = await res.json()
@@ -112,9 +120,17 @@ const staffRefreshRoute = createRoute({
       content: { 'application/json': { schema: RefreshTokenResponseSchema } },
       description: '再発行成功',
     },
+    400: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'リクエストエラー',
+    },
     401: {
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'リフレッシュトークン無効',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'サーバーエラー',
     },
   },
 })
@@ -149,7 +165,8 @@ staffAuthRoutes.openapi(staffRefreshRoute, async (c) => {
   })
 
   if (!res.ok) {
-    return c.json({ error: 'Invalid or expired refresh token' }, 401)
+    const error = await res.json().catch(() => ({ error: 'Invalid or expired refresh token' }))
+    return c.json(error as { error: string }, res.status as 400 | 401 | 500)
   }
 
   const data = (await res.json()) as { token: string; refreshToken: string }

@@ -123,7 +123,9 @@ func (h *StaffPortalHandler) Login(c echo.Context) error {
 
 	refreshToken, err := h.authUsecase.IssueRefreshToken(c.Request().Context(), account.StaffID, h.refreshExpiryDays)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to issue refresh token"})
+		// リフレッシュトークン発行失敗時でもログイン不能にしない（アクセストークンは返す）。
+		// これにより DB マイグレーション不整合などの影響を最小化する。
+		refreshToken = ""
 	}
 
 	return c.JSON(http.StatusOK, StaffLoginResponse{
