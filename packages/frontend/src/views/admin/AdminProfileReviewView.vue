@@ -2,6 +2,7 @@
   import { ref, onMounted, computed } from 'vue'
   import AdminLayout from '@/components/layout/AdminLayout.vue'
   import { useAdminReviewApi } from '@/composables/useAdminReviewApi'
+  import { resolveApiBaseUrl } from '@/lib/api'
   import type { ProfileDraft, StaffImageForDraft } from '@/types/staffPortal'
   import { Check, X, ChevronDown, ChevronUp, UserCheck, ImageOff, Star } from 'lucide-vue-next'
 
@@ -43,7 +44,7 @@
   const imageLoadErrors = ref<Record<string, boolean>>({})
 
   /** BFF ベース URL（画像プロキシ先） */
-  const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'
+  const API_BASE = resolveApiBaseUrl()
 
   /** 画像URLをフルパスに解決 */
   function resolveImageUrl(url: string): string {

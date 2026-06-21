@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { apiFetch, apiUpload } from '@/lib/api'
+import { apiFetch, apiUpload, resolveApiBaseUrl } from '@/lib/api'
 
 // fetch のモック
 const fetchMock = vi.fn()
@@ -176,5 +176,23 @@ describe('apiUpload', () => {
     await expect(apiUpload('/api/upload', formData)).rejects.toThrow(
       'BFF (http://localhost:3001) に接続できません'
     )
+  })
+})
+
+// ============================================================
+// resolveApiBaseUrl
+// ============================================================
+describe('resolveApiBaseUrl', () => {
+  it('development では未設定や空文字でも localhost:3001 を返す', () => {
+    expect(resolveApiBaseUrl(undefined, true)).toBe('http://localhost:3001')
+    expect(resolveApiBaseUrl('', true)).toBe('http://localhost:3001')
+  })
+
+  it('production では空文字を同一ドメイン扱いにする', () => {
+    expect(resolveApiBaseUrl('', false)).toBe('')
+  })
+
+  it('production では明示 URL をそのまま使う', () => {
+    expect(resolveApiBaseUrl('https://example.com', false)).toBe('https://example.com')
   })
 })
