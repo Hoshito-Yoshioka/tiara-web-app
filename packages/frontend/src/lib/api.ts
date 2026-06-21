@@ -8,7 +8,18 @@
  * 本番環境: VITE_API_BASE_URL="" で同一ドメイン（Nginx プロキシ経由）。
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'
+export function resolveApiBaseUrl(
+  apiBaseUrl: string | undefined = import.meta.env.VITE_API_BASE_URL,
+  isDev: boolean = import.meta.env.DEV
+): string {
+  if (isDev) {
+    return apiBaseUrl && apiBaseUrl.trim().length > 0 ? apiBaseUrl : 'http://localhost:3001'
+  }
+
+  return apiBaseUrl ?? ''
+}
+
+const API_BASE_URL = resolveApiBaseUrl()
 const ADMIN_BASE_PATH = import.meta.env.VITE_ADMIN_BASE_PATH || '/admin'
 
 function redirectTo(path: string): void {
