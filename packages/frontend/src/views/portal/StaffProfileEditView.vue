@@ -174,7 +174,16 @@
     document.removeEventListener('touchend', onDragEnd)
     // ドラッグ終了時に自動保存
     if (selectedImageId.value) {
-      await updateMyImageCropPosition(selectedImageId.value, selectedCropPosition.value)
+      const result = await updateMyImageCropPosition(
+        selectedImageId.value,
+        selectedCropPosition.value
+      )
+      if (result) {
+        // Backend への保存成功時、imageCropPosition を同期
+        // これにより、メイン画像以外をドラッグして位置調整した場合でも
+        // 下書き保存時にその位置情報がプロフィール下書きに反映される
+        imageCropPosition.value = selectedCropPosition.value
+      }
     }
   }
 
