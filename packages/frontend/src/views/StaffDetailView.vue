@@ -231,17 +231,33 @@
           </div>
 
           <!-- プロフィール情報 -->
-          <div class="flex flex-col justify-center">
-            <p class="text-primary text-[11px] tracking-[0.3em] uppercase mb-3">
-              {{ staffDetail.staff.role }}
-            </p>
-            <h1 class="text-3xl md:text-4xl font-light tracking-[0.15em] text-foreground mb-6">
-              {{ staffDetail.staff.name }}
-            </h1>
-            <span class="block w-10 h-px bg-primary mb-8" />
-            <p class="text-sm text-muted-foreground leading-[1.8] whitespace-pre-wrap">
-              {{ staffDetail.staff.bio }}
-            </p>
+          <div class="flex flex-col">
+            <!-- 上部グループ -->
+            <div>
+              <p class="text-primary text-[11px] tracking-[0.3em] uppercase mb-3">
+                {{ staffDetail.staff.role }}
+              </p>
+              <h1 class="text-3xl md:text-4xl font-light tracking-[0.15em] text-foreground mb-6">
+                {{ staffDetail.staff.name }}
+              </h1>
+              <span class="block w-10 h-px bg-primary mb-8" />
+              <p class="text-sm text-muted-foreground leading-[1.8] whitespace-pre-wrap">
+                {{ staffDetail.staff.bio }}
+              </p>
+            </div>
+
+            <!-- ポケパラシフトリンクカード（下部寄せ） -->
+            <div v-if="staffDetail.staff.externalScheduleUrl" class="mt-auto pt-8">
+              <a
+                :href="staffDetail.staff.externalScheduleUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-3 px-4 py-3 rounded border border-primary/30 hover:border-primary hover:bg-primary/5 transition-colors duration-300 text-sm text-muted-foreground hover:text-primary"
+              >
+                <Calendar class="w-4 h-4" />
+                <span>ポケパラシフト</span>
+              </a>
+            </div>
           </div>
         </div>
 

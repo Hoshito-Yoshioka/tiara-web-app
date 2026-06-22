@@ -141,6 +141,10 @@ const router = createRouter({
 // 認証ナビゲーションガード
 // requiresAuth が設定されたルートでは、localStorage のトークンを確認する。
 // 期限切れ時は verify（staff は refresh を含む）を実行し、失効していればログインへ戻す。
+//
+// 複数タブ対応: localStorage は複数タブで自動同期される。タブ複製時など
+// 複数タブが同時に verify/refresh を実行しても、localStorage の更新を
+// 各ストアが検出して再同期するため、不整合は解決される。
 router.beforeEach(async (to) => {
   // 管理者認証ガード
   if (to.meta.requiresAuth) {

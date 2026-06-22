@@ -82,6 +82,19 @@ export const useStaffAuthStore = defineStore('staffAuth', () => {
       localStorage.setItem('tiara_staff_refresh_token', data.refreshToken)
       return true
     } catch {
+      // refresh失敗時: 他タブで新しいトークンが既に取得されている可能性があるため、
+      // localStorage を再チェック。あれば同期、なければ logout する。
+      const latestToken = localStorage.getItem('tiara_staff_token')
+      const latestRefreshToken = localStorage.getItem('tiara_staff_refresh_token')
+
+      if (latestToken && latestRefreshToken && latestToken !== token.value) {
+        // 他タブで更新されたトークンを検出 → Pinia に同期
+        token.value = latestToken
+        refreshToken.value = latestRefreshToken
+        return true
+      }
+
+      // 他タブでもトークンがない、またはリフレッシュに本当に失敗 → ログアウト
       await logout()
       return false
     }
