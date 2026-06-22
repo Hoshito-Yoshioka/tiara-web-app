@@ -42,6 +42,17 @@ export const useAuthStore = defineStore('auth', () => {
       })
       return true
     } catch {
+      // verify失敗時: 他タブでログアウトされている可能性があるため、
+      // localStorage を再チェック。あれば同期、なければ logout する。
+      const latestToken = localStorage.getItem('tiara_admin_token')
+
+      if (latestToken && latestToken !== token.value) {
+        // 他タブで更新されたトークンを検出 → Pinia に同期
+        token.value = latestToken
+        return true
+      }
+
+      // トークンがない、またはverifyに本当に失敗 → ログアウト
       logout()
       return false
     }
