@@ -247,9 +247,12 @@
             </div>
 
             <!-- ポケパラシフトリンクカード（下部寄せ） -->
-            <div v-if="staffDetail.staff.externalScheduleUrl" class="mt-auto pt-8">
+            <div class="mt-auto pt-8">
               <a
-                :href="staffDetail.staff.externalScheduleUrl"
+                :href="
+                  staffDetail.staff.externalScheduleUrl ||
+                  'https://www.pokepara.jp/_hokkaido/m824/a1990/shop24197/'
+                "
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex items-center gap-3 px-4 py-3 rounded border border-primary/30 hover:border-primary hover:bg-primary/5 transition-colors duration-300 text-sm text-muted-foreground hover:text-primary"
