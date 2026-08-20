@@ -12,6 +12,16 @@ export function resolveApiBaseUrl(
   apiBaseUrl: string | undefined = import.meta.env.VITE_API_BASE_URL,
   isDev: boolean = import.meta.env.DEV
 ): string {
+  // SSG ビルド（Node 上のプリレンダリング）では相対 URL で fetch できないため、
+  // 絶対 URL を環境変数から解決する。クライアントバンドルではこの分岐は除去される。
+  if (import.meta.env.SSR) {
+    return (
+      process.env.SITEMAP_API_BASE_URL ||
+      (apiBaseUrl && apiBaseUrl.trim().length > 0 ? apiBaseUrl : '') ||
+      'http://localhost:3001'
+    )
+  }
+
   if (isDev) {
     return apiBaseUrl && apiBaseUrl.trim().length > 0 ? apiBaseUrl : 'http://localhost:3001'
   }

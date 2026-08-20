@@ -1,12 +1,17 @@
 <script setup lang="ts">
-  import { onMounted } from 'vue'
   import { useMenuApi } from '@/composables/useMenuApi'
+  import { usePageMeta } from '@/composables/usePageMeta'
 
   const { menuList, isLoading, error, fetchMenus } = useMenuApi()
 
-  onMounted(() => {
-    fetchMenus()
+  usePageMeta({
+    title: '料金システム',
+    description:
+      '函館のニュークラブ「Tiara（ティアラ）」の料金システムのご案内です。セット料金や各種メニューを掲載しています。表示価格はすべて税込です。',
   })
+
+  // async setup で取得することで、SSG ビルド時に料金情報が HTML に含まれる
+  await fetchMenus()
 </script>
 
 <template>

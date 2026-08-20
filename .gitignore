@@ -60,3 +60,8 @@ docs/
 
 # uploads
 .packages/backend/uploads/staff/
+
+# --- harneses ---
+.claude/
+aidlc/
+.aidcl/
