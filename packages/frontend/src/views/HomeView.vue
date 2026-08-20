@@ -1,14 +1,24 @@
 <script setup lang="ts">
-  import { computed, onMounted } from 'vue'
+  import { computed } from 'vue'
+  import { useHead } from '@unhead/vue'
   import Button from '@/components/ui/button.vue'
   import { MapPin, Phone } from 'lucide-vue-next'
   import { useShopApi } from '@/composables/useShopApi'
+  import { usePageMeta } from '@/composables/usePageMeta'
+
+  /** ヒーロー背景画像。LCP 改善のため preload する */
+  const HERO_IMAGE_URL =
+    'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?q=80&w=2940&auto=format&fit=crop'
 
   const { shops, fetchShops } = useShopApi()
 
-  onMounted(() => {
-    fetchShops()
+  usePageMeta()
+  useHead({
+    link: [{ rel: 'preload', as: 'image', href: HERO_IMAGE_URL }],
   })
+
+  // async setup で取得することで、SSG ビルド時に店舗情報が HTML に含まれる
+  await fetchShops()
 
   /** 一店舗のみ想定 */
   const shop = computed(() => shops.value[0] ?? null)
@@ -19,9 +29,7 @@
     <!-- Hero Section: h-screen でヘッダー下から全画面 -->
     <section
       class="relative h-screen flex items-center justify-center text-center bg-cover bg-center"
-      style="
-        background-image: url('https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?q=80&w=2940&auto=format&fit=crop');
-      "
+      :style="{ backgroundImage: `url('${HERO_IMAGE_URL}')` }"
     >
       <!-- オーバーレイ -->
       <div class="absolute inset-0 bg-black/70" />

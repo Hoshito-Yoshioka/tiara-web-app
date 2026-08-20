@@ -1,7 +1,8 @@
 <script setup lang="ts">
-  import { onMounted, computed } from 'vue'
+  import { computed } from 'vue'
   import { ExternalLink, CalendarDays, UserRound } from 'lucide-vue-next'
   import { useScheduleApi } from '@/composables/useScheduleApi'
+  import { usePageMeta } from '@/composables/usePageMeta'
 
   const { scheduleData, isLoading, error, fetchSchedules } = useScheduleApi()
 
@@ -15,9 +16,14 @@
       .sort((a, b) => a.staff.sortOrder - b.staff.sortOrder)
   })
 
-  onMounted(() => {
-    fetchSchedules()
+  usePageMeta({
+    title: '出勤スケジュール',
+    description:
+      '函館のニュークラブ「Tiara（ティアラ）」の出勤スケジュールのご案内です。店舗全体・スタッフ個別の最新の出勤情報をご確認いただけます。',
   })
+
+  // async setup で取得することで、SSG ビルド時にスケジュール情報が HTML に含まれる
+  await fetchSchedules()
 </script>
 
 <template>
@@ -116,6 +122,10 @@
                   v-if="item.staff.imageUrl"
                   :src="item.staff.imageUrl"
                   :alt="item.staff.name"
+                  loading="lazy"
+                  decoding="async"
+                  width="48"
+                  height="48"
                   class="w-12 h-12 rounded-full object-cover border border-white/15"
                   :style="{
                     objectPosition: item.staff.imageCropPosition

@@ -2,6 +2,11 @@
   "name": "tiara-web-app",
   "private": true,
   "description": "A web application for the new club 'TIARA', built with Vue, Hono, and Go.",
+  "pnpm": {
+    "overrides": {
+      "jsdom": "^26.1.0"
+    }
+  },
   "scripts": {
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:bff": "pnpm --filter bff dev",

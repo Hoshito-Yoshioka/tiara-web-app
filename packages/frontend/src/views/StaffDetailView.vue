@@ -1,13 +1,53 @@
 <script setup lang="ts">
-  import { onMounted, computed, ref } from 'vue'
+  import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
+  import { useHead } from '@unhead/vue'
   import { useStaffApi } from '@/composables/useStaffApi'
+  import { usePageMeta } from '@/composables/usePageMeta'
+  import { SITE_URL, toJsonLd } from '@/lib/seo'
   import { ArrowLeft, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-vue-next'
   import type { StaffSchedule, StaffImage } from '@/types/staff'
 
   const route = useRoute()
   const router = useRouter()
   const { staffDetail, isLoading, error, fetchStaffById } = useStaffApi()
+
+  usePageMeta({
+    title: () => {
+      const staff = staffDetail.value?.staff
+      return staff ? `${staff.name}（${staff.role}）` : 'スタッフ紹介'
+    },
+    description: () => {
+      const staff = staffDetail.value?.staff
+      if (!staff) return undefined
+      const base = `函館のニュークラブ「Tiara（ティアラ）」${staff.role}・${staff.name}のプロフィールページです。`
+      const bio = (staff.bio ?? '').replace(/\s+/g, ' ').trim()
+      return bio ? `${base}${bio}`.slice(0, 120) : base
+    },
+  })
+
+  // スタッフ個人の構造化データ（Person）。検索結果でのリッチ表示・指名検索対策
+  useHead({
+    script: computed(() => {
+      const staff = staffDetail.value?.staff
+      if (!staff) return []
+      return [
+        {
+          type: 'application/ld+json',
+          innerHTML: toJsonLd({
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            name: staff.name,
+            jobTitle: staff.role,
+            description: staff.bio || undefined,
+            image: staff.imageUrl ? new URL(staff.imageUrl, SITE_URL).href : undefined,
+            url: `${SITE_URL}/staff/${staff.id}`,
+            worksFor: { '@id': `${SITE_URL}/#organization` },
+          }),
+        },
+      ]
+    }),
+  })
 
   /** 曜日ラベル（0=日 … 6=土） */
   const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'] as const
@@ -58,10 +98,8 @@
     currentImageIndex.value = index
   }
 
-  onMounted(() => {
-    const id = route.params.id as string
-    fetchStaffById(id)
-  })
+  // async setup で取得することで、SSG ビルド時にプロフィールが HTML に含まれる
+  await fetchStaffById(route.params.id as string)
 
   /** TIME型のISO文字列から "HH:MM" を抽出 */
   function formatTime(raw: string): string {
@@ -224,6 +262,10 @@
                 <img
                   :src="img.imageUrl"
                   :alt="`${staffDetail.staff.name} ${idx + 1}`"
+                  loading="lazy"
+                  decoding="async"
+                  width="64"
+                  height="64"
                   class="w-full h-full object-cover"
                 />
               </button>

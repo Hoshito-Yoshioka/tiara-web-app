@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "vite",
     "generate:sitemap": "node ./scripts/generate-sitemap.mjs",
-    "build": "pnpm run generate:sitemap && vue-tsc && vite build",
+    "build": "pnpm run generate:sitemap && vue-tsc && vite-ssg build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@unhead/vue": "^2.1.17",
     "@vueuse/motion": "^2.2.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -32,7 +33,9 @@
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.4.5",
+    "unhead": "2.1.17",
     "vite": "^5.2.0",
+    "vite-ssg": "^28.3.0",
     "vitest": "^2.0.0",
     "vue-tsc": "^2.0.13"
   }

@@ -3,26 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0a0a" />
 
-    <title>Tiara （函館 ニュークラブ ティアラ）</title>
+    <!--
+      title / description / OGP / canonical は unhead がページごとに生成する。
+      サイト共通の既定値は src/lib/seo.ts、各ページの設定は usePageMeta() を参照。
+    -->
 
-    <meta
-      name="description"
-      content="函館にあるニュークラブ「Tiara」の公式ウェブサイトです。店舗情報やスタッフ、メニューをご覧いただけます。"
-    />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <link rel="icon" type="image/png" sizes="192x192" href="/Tiara-logo-transparent.png" />
-    <link rel="apple-touch-icon" href="/Tiara-logo-transparent.png" />
-
-    <meta property="og:site_name" content="Tiara" />
-    <meta property="og:title" content="Tiara （函館 ニュークラブ ティアラ）" />
-
-    <meta
-      property="og:description"
-      content="函館にあるニュークラブ「Tiara」の公式ウェブサイトです。"
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://tiara-hakodate.com/" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -32,12 +22,7 @@
             "@id": "https://tiara-hakodate.com/#website",
             "name": "Tiara",
             "url": "https://tiara-hakodate.com/",
-            "inLanguage": "ja-JP",
-            "potentialAction": {
-              "@type": "SearchAction",
-              "target": "https://tiara-hakodate.com/?s={search_term_string}",
-              "query-input": "required name=search_term_string"
-            }
+            "inLanguage": "ja-JP"
           },
           {
             "@type": "NightClub",
@@ -45,6 +30,8 @@
             "name": "Tiara",
             "url": "https://tiara-hakodate.com/",
             "description": "函館にあるニュークラブ「Tiara」の公式ウェブサイトです。",
+            "image": "https://tiara-hakodate.com/og-image.png",
+            "logo": "https://tiara-hakodate.com/og-image.png",
             "areaServed": "函館",
             "address": {
               "@type": "PostalAddress",

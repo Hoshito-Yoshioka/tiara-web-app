@@ -54,7 +54,8 @@
         class="flex items-center hover:opacity-80 transition-opacity duration-500"
         @click="closeMenu"
       >
-        <img src="/Tiara-logo-transparent.png" alt="TIARA" class="h-20 w-auto" />
+        <!-- ロゴは正方形のため width/height を明示して CLS を防ぐ（実体は 160x160 の WebP） -->
+        <img src="/tiara-logo.webp" alt="TIARA" width="160" height="160" class="h-20 w-20" />
       </RouterLink>
 
       <!-- デスクトップナビ -->

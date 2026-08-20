@@ -44,6 +44,9 @@ jobs:
           pnpm --filter frontend build
         env:
           VITE_API_BASE_URL: '' # 同一ドメイン（Nginx がプロキシ）
+          # サイトマップ生成と SSG プリレンダリングが、稼働中の本番 API から
+          # スタッフ一覧を取得するための絶対 URL（空だと localhost にフォールバックして必ず失敗する）
+          SITEMAP_API_BASE_URL: 'https://tiara-hakodate.com'
 
       # ---- Build BFF ----
       - name: Build BFF

@@ -1,13 +1,18 @@
 <script setup lang="ts">
-  import { onMounted } from 'vue'
   import { useShopApi } from '@/composables/useShopApi'
+  import { usePageMeta } from '@/composables/usePageMeta'
   import { Phone, MapPin } from 'lucide-vue-next'
 
   const { shops, isLoading, error, fetchShops } = useShopApi()
 
-  onMounted(() => {
-    fetchShops()
+  usePageMeta({
+    title: '店舗情報',
+    description:
+      '函館のニュークラブ「Tiara（ティアラ）」の店舗情報です。住所・電話番号などのご案内はこちらから。',
   })
+
+  // async setup で取得することで、SSG ビルド時に店舗情報が HTML に含まれる
+  await fetchShops()
 </script>
 
 <template>

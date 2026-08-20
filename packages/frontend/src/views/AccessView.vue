@@ -1,5 +1,12 @@
 <script setup lang="ts">
   import { MapPin, Clock, Train } from 'lucide-vue-next'
+  import { usePageMeta } from '@/composables/usePageMeta'
+
+  usePageMeta({
+    title: 'アクセス',
+    description:
+      '函館のニュークラブ「Tiara（ティアラ）」へのアクセス。北海道函館市本町1-28 第5大栄ビル1F、函館市電「中央病院前」電停より徒歩約3分です。',
+  })
 
   /** 店舗情報 */
   const shopInfo = {

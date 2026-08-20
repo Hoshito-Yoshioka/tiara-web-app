@@ -1,7 +1,8 @@
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
+  import { ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useStaffApi } from '@/composables/useStaffApi'
+  import { usePageMeta } from '@/composables/usePageMeta'
 
   const { staffList, pagination, isLoading, error, fetchStaffsPaginated } = useStaffApi()
   const currentPage = ref(1)
@@ -17,9 +18,14 @@
     router.push({ name: 'staff-detail', params: { id: staffId } })
   }
 
-  onMounted(() => {
-    fetchStaffsPaginated(1)
+  usePageMeta({
+    title: 'スタッフ紹介',
+    description:
+      '函館のニュークラブ「Tiara（ティアラ）」に在籍するキャスト・スタッフの一覧です。プロフィールや出勤スケジュールは各詳細ページからご覧いただけます。',
   })
+
+  // async setup で取得することで、SSG ビルド時にスタッフ一覧が HTML に含まれる
+  await fetchStaffsPaginated(1)
 </script>
 
 <template>
@@ -89,6 +95,8 @@
                   v-if="staff.imageUrl"
                   :src="staff.imageUrl"
                   :alt="staff.name"
+                  loading="lazy"
+                  decoding="async"
                   class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   :style="{
                     objectPosition: staff.imageCropPosition
