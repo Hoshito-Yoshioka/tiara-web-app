@@ -64,4 +64,9 @@ docs/
 # --- harneses ---
 .claude/
 aidlc/
-.aidcl/
+.aidlc/
+.vt-sdd-orchestrator/
+
+
+# APM dependencies
+apm_modules/

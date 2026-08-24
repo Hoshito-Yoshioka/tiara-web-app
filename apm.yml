@@ -1,0 +1,15 @@
+name: tiara-web-app
+version: 1.0.0
+description: APM project for tiara-web-app
+author: Hoshiy
+# Which agent platforms to deploy to.
+# Resolution order: --target flag > this field > auto-detect from filesystem.
+# Accepted values: agent-skills, antigravity, claude, codex, copilot, cursor, gemini, grok-build, kiro, opencode, windsurf
+targets:
+  - claude
+dependencies:
+  apm:
+    - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  mcp: []
+includes: auto
+scripts: {}
