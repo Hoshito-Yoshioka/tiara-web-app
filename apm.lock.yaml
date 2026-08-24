@@ -1,0 +1,111 @@
+lockfile_version: '1'
+generated_at: '2026-08-24T06:30:13.267370+00:00'
+apm_version: 0.28.0
+dependencies:
+- repo_url: v1/repos/vt-ai-tools
+  name: vt-ai-tools
+  host: git-codecommit.us-west-2.amazonaws.com
+  resolved_commit: c1bfe2d261523914ba1358bdac9ed179954af556
+  version: 1.2.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/skills/vt-add-convention
+  - .claude/skills/vt-add-convention/SKILL.md
+  - .claude/skills/vt-add-convention/scripts/add-convention.sh
+  - .claude/skills/vt-init
+  - .claude/skills/vt-init/SKILL.md
+  - .claude/skills/vt-init/overlay/rules/test-case-gate.md
+  - .claude/skills/vt-init/scripts/vt-sdd-init.sh
+  - .claude/skills/vt-sdd-orchestrator
+  - .claude/skills/vt-sdd-orchestrator/SKILL.md
+  deployed_file_hashes:
+    .claude/skills/vt-add-convention/SKILL.md: sha256:040485962f90a7293f4e7ea48516a84525135643c083db995051e5d38d0966ba
+    .claude/skills/vt-add-convention/scripts/add-convention.sh: sha256:30c4d3dc278e3c581d636462586b5aec961c58689d43c66ab1c825f782660017
+    .claude/skills/vt-init/SKILL.md: sha256:c884a0eb4d0e7fe13cdb4ad9adef5fd2476700e5a6d43aca2d1cfb913ba3711c
+    .claude/skills/vt-init/overlay/rules/test-case-gate.md: sha256:d4b8909fd212cdb3ebdf6cc2e53c00e88f51b6e421e78cb3ab88d766c30c7b5d
+    .claude/skills/vt-init/scripts/vt-sdd-init.sh: sha256:35bb27dda80969f6af28652041653a27dd3d23d9a0c02a903eca08b91fc20f1b
+    .claude/skills/vt-sdd-orchestrator/SKILL.md: sha256:85bf9b8b4d1f9c890f2393e8deaad75b37dcb1d7490a0c78b38b09fa244f56c5
+  content_hash: sha256:08faf34919563fb2482826f115a37931c5d6b042fdb5923ba503baec6c11b165
+  declared_license: UNLICENSED
+deployments:
+- kind: project-relative
+  target: claude
+  value: .claude/skills/vt-add-convention
+  runtime: null
+  scope: project
+  owners:
+  - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  active_owner: git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/vt-add-convention/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  active_owner: git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  content_hash: sha256:040485962f90a7293f4e7ea48516a84525135643c083db995051e5d38d0966ba
+- kind: project-relative
+  target: claude
+  value: .claude/skills/vt-add-convention/scripts/add-convention.sh
+  runtime: null
+  scope: project
+  owners:
+  - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  active_owner: git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  content_hash: sha256:30c4d3dc278e3c581d636462586b5aec961c58689d43c66ab1c825f782660017
+- kind: project-relative
+  target: claude
+  value: .claude/skills/vt-init
+  runtime: null
+  scope: project
+  owners:
+  - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  active_owner: git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/vt-init/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  active_owner: git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  content_hash: sha256:c884a0eb4d0e7fe13cdb4ad9adef5fd2476700e5a6d43aca2d1cfb913ba3711c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/vt-init/overlay/rules/test-case-gate.md
+  runtime: null
+  scope: project
+  owners:
+  - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  active_owner: git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  content_hash: sha256:d4b8909fd212cdb3ebdf6cc2e53c00e88f51b6e421e78cb3ab88d766c30c7b5d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/vt-init/scripts/vt-sdd-init.sh
+  runtime: null
+  scope: project
+  owners:
+  - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  active_owner: git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  content_hash: sha256:35bb27dda80969f6af28652041653a27dd3d23d9a0c02a903eca08b91fc20f1b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/vt-sdd-orchestrator
+  runtime: null
+  scope: project
+  owners:
+  - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  active_owner: git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/vt-sdd-orchestrator/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  active_owner: git-codecommit.us-west-2.amazonaws.com/v1/repos/vt-ai-tools
+  content_hash: sha256:85bf9b8b4d1f9c890f2393e8deaad75b37dcb1d7490a0c78b38b09fa244f56c5
