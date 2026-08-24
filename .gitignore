@@ -65,6 +65,8 @@ docs/
 .claude/
 aidlc/
 .aidlc/
+.vt-sdd-orchestrator/
+
 
 # APM dependencies
 apm_modules/
