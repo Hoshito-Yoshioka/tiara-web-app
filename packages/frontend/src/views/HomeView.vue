@@ -116,8 +116,10 @@
             <div class="flex items-start gap-4">
               <Phone class="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
               <p class="text-sm text-muted-foreground">
-                <a href="tel:0138-83-6040" class="hover:text-primary transition-colors duration-300"
-                  >0138-83-6040</a
+                <a
+                  href="tel:080-2818-2554"
+                  class="hover:text-primary transition-colors duration-300"
+                  >080-2818-2554</a
                 >
               </p>
             </div>

@@ -97,9 +97,9 @@
                 </p>
                 <p class="text-sm text-foreground">
                   <a
-                    href="tel:0138-83-6040"
+                    href="tel:080-2818-2554"
                     class="hover:text-primary transition-colors duration-300"
-                    >0138-83-6040</a
+                    >080-2818-2554</a
                   >
                 </p>
               </div>
