@@ -3,6 +3,7 @@
   import { ExternalLink, CalendarDays, UserRound } from 'lucide-vue-next'
   import { useScheduleApi } from '@/composables/useScheduleApi'
   import { usePageMeta } from '@/composables/usePageMeta'
+  import { PAGE_META } from '@/lib/seo'
 
   const { scheduleData, isLoading, error, fetchSchedules } = useScheduleApi()
 
@@ -16,10 +17,10 @@
       .sort((a, b) => a.staff.sortOrder - b.staff.sortOrder)
   })
 
+  // SEO コピーの正本（lib/seo.ts の PAGE_META）を参照する
   usePageMeta({
-    title: '出勤スケジュール',
-    description:
-      '函館のニュークラブ「Tiara（ティアラ）」の出勤スケジュールのご案内です。店舗全体・スタッフ個別の最新の出勤情報をご確認いただけます。',
+    title: PAGE_META.schedule.title,
+    description: PAGE_META.schedule.description,
   })
 
   // async setup で取得することで、SSG ビルド時にスケジュール情報が HTML に含まれる
@@ -36,8 +37,16 @@
         class="flex flex-col items-center mb-16 text-center"
       >
         <span class="text-primary text-[11px] tracking-[0.4em] uppercase mb-4">Attendance</span>
-        <h1 class="text-3xl md:text-4xl font-light tracking-[0.2em] uppercase text-foreground">
-          Schedule
+        <!-- h1 は「英語表示語 + 可視の日本語サブタイトル」の 2 行構成（要件 3.3 / 3.5） -->
+        <h1>
+          <span
+            class="block text-3xl md:text-4xl font-light tracking-[0.2em] uppercase text-foreground"
+          >
+            Schedule
+          </span>
+          <span class="mt-3 block text-xs tracking-[0.2em] text-muted-foreground">
+            {{ PAGE_META.schedule.headingSubtitle }}
+          </span>
         </h1>
         <p class="mt-5 text-sm md:text-base text-muted-foreground max-w-2xl leading-relaxed">
           出勤情報は外部サイトにて公開しています。以下のリンクから、店舗全体またはスタッフ個別の
@@ -121,7 +130,7 @@
                 <img
                   v-if="item.staff.imageUrl"
                   :src="item.staff.imageUrl"
-                  :alt="item.staff.name"
+                  :alt="`ティアラのキャスト ${item.staff.name}`"
                   loading="lazy"
                   decoding="async"
                   width="48"

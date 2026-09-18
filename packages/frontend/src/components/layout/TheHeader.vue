@@ -55,7 +55,13 @@
         @click="closeMenu"
       >
         <!-- ロゴは正方形のため width/height を明示して CLS を防ぐ（実体は 160x160 の WebP） -->
-        <img src="/tiara-logo.webp" alt="TIARA" width="160" height="160" class="h-20 w-20" />
+        <img
+          src="/tiara-logo.webp"
+          alt="函館のニュークラブ ティアラ(TIARA) ロゴ"
+          width="160"
+          height="160"
+          class="h-20 w-20"
+        />
       </RouterLink>
 
       <!-- デスクトップナビ -->

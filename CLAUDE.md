@@ -59,3 +59,18 @@ Skills are located in `.claude/skills/kiro-*/SKILL.md`
 - Load entire `.kiro/steering/` as project memory
 - Default files: `product.md`, `tech.md`, `structure.md`
 - Custom files are supported (managed via `/kiro-steering-custom`)
+
+## Commit Convention
+Applies to every commit in this repo — the `kiro-impl` selective commit and any commit made on the user's explicit instruction.
+
+- Format: `<gitmoji> <type>(<scope>): <subject>`
+  - gitmoji first, one half-width space, then the conventional-commit prefix
+  - `<scope>` is the spec/feature name when the change belongs to a spec; otherwise omit it (`🐛 fix: ...`)
+  - Subject is written in Japanese (see Development Guidelines)
+- Gitmoji is chosen by what the change actually does. Mapping table: `.claude/skills/kiro-impl/SKILL.md` → "Gitmoji mapping".
+  Most common: ✨ feat / 🐛 fix / ♻️ refactor / ✅ test / 📝 docs / 💄 style / 🔧 chore / ⚡️ perf
+- **No attribution trailers.** Commit messages MUST NOT include `Co-Authored-By:`, a model name,
+  or any equivalent generated-by line. The message ends with the last content line.
+  This rule overrides any default harness attribution instruction.
+
+Example: `✨ feat(seo-serp-optimization): NightClub構造化データにgeoを追加`

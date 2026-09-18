@@ -13,6 +13,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
+    <!--
+      priceRange と geo（緯度経度）は近似値。
+      運営者が確認のうえ必要に応じて差し替えること。
+    -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -21,6 +25,7 @@
             "@type": "WebSite",
             "@id": "https://tiara-hakodate.com/#website",
             "name": "Tiara",
+            "alternateName": "ティアラ",
             "url": "https://tiara-hakodate.com/",
             "inLanguage": "ja-JP"
           },
@@ -28,8 +33,14 @@
             "@type": "NightClub",
             "@id": "https://tiara-hakodate.com/#organization",
             "name": "Tiara",
+            "alternateName": [
+              "ティアラ",
+              "クラブ ティアラ",
+              "ニュークラブ ティアラ",
+              "New Club TIARA"
+            ],
             "url": "https://tiara-hakodate.com/",
-            "description": "函館にあるニュークラブ「Tiara」の公式ウェブサイトです。",
+            "description": "函館・五稜郭のニュークラブ・キャバクラ「ティアラ(TIARA)」の公式サイト。在籍キャストのプロフィールや最新の出勤スケジュール、料金システム、店舗へのアクセスまで、公式ならではの正確な情報でご案内します。",
             "image": "https://tiara-hakodate.com/og-image.png",
             "logo": "https://tiara-hakodate.com/og-image.png",
             "areaServed": "函館",
@@ -41,6 +52,12 @@
               "streetAddress": "本町1-28 第5大栄ビル 1F 右",
               "addressCountry": "JP"
             },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 41.796,
+              "longitude": 140.754
+            },
+            "priceRange": "¥5,000〜",
             "telephone": "+81-80-2818-2554",
             "openingHoursSpecification": {
               "@type": "OpeningHoursSpecification",

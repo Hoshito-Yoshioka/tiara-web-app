@@ -3,6 +3,7 @@
   import { useRouter } from 'vue-router'
   import { useStaffApi } from '@/composables/useStaffApi'
   import { usePageMeta } from '@/composables/usePageMeta'
+  import { PAGE_META } from '@/lib/seo'
 
   const { staffList, pagination, isLoading, error, fetchStaffsPaginated } = useStaffApi()
   const currentPage = ref(1)
@@ -18,10 +19,10 @@
     router.push({ name: 'staff-detail', params: { id: staffId } })
   }
 
+  // SEO コピーの正本（lib/seo.ts の PAGE_META）を参照する
   usePageMeta({
-    title: 'スタッフ紹介',
-    description:
-      '函館のニュークラブ「Tiara（ティアラ）」に在籍するキャスト・スタッフの一覧です。プロフィールや出勤スケジュールは各詳細ページからご覧いただけます。',
+    title: PAGE_META.staff.title,
+    description: PAGE_META.staff.description,
   })
 
   // async setup で取得することで、SSG ビルド時にスタッフ一覧が HTML に含まれる
@@ -39,8 +40,16 @@
         class="flex flex-col items-center mb-20 text-center"
       >
         <span class="text-primary text-[11px] tracking-[0.4em] uppercase mb-4">Our Team</span>
-        <h1 class="text-3xl md:text-4xl font-light tracking-[0.2em] uppercase text-foreground">
-          Staff
+        <!-- h1 は「英語表示語 + 可視の日本語サブタイトル」の 2 行構成（要件 3.3 / 3.5） -->
+        <h1>
+          <span
+            class="block text-3xl md:text-4xl font-light tracking-[0.2em] uppercase text-foreground"
+          >
+            Staff
+          </span>
+          <span class="mt-3 block text-xs tracking-[0.2em] text-muted-foreground">
+            {{ PAGE_META.staff.headingSubtitle }}
+          </span>
         </h1>
         <span class="block w-12 h-px bg-primary mt-6" />
       </div>
@@ -94,7 +103,7 @@
                 <img
                   v-if="staff.imageUrl"
                   :src="staff.imageUrl"
-                  :alt="staff.name"
+                  :alt="`函館のニュークラブ ティアラ キャスト${staff.name}`"
                   loading="lazy"
                   decoding="async"
                   class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
