@@ -5,6 +5,7 @@
   import { MapPin, Phone } from 'lucide-vue-next'
   import { useShopApi } from '@/composables/useShopApi'
   import { usePageMeta } from '@/composables/usePageMeta'
+  import { PAGE_META } from '@/lib/seo'
 
   /** ヒーロー背景画像。LCP 改善のため preload する */
   const HERO_IMAGE_URL =
@@ -12,7 +13,8 @@
 
   const { shops, fetchShops } = useShopApi()
 
-  usePageMeta()
+  // ホームは title 未指定（= HOME_TITLE）。description は SEO コピーの正本を明示参照する
+  usePageMeta({ description: PAGE_META.home.description })
   useHead({
     link: [{ rel: 'preload', as: 'image', href: HERO_IMAGE_URL }],
   })
@@ -45,7 +47,15 @@
         <span class="block w-12 h-px bg-primary mb-8" />
 
         <p class="text-[11px] tracking-[0.4em] uppercase text-white/50 mb-4">New Club</p>
-        <h1 class="tracking-[0.6em] text-4xl md:text-6xl font-light uppercase mb-6">TIARA</h1>
+        <!-- h1 は「英語表示語 + 可視の日本語サブタイトル」の 2 行構成（要件 3.2 / 3.5） -->
+        <h1 class="mb-6">
+          <span class="block tracking-[0.6em] text-4xl md:text-6xl font-light uppercase">
+            TIARA
+          </span>
+          <span class="mt-4 block text-xs md:text-sm tracking-[0.2em] font-light text-white/70">
+            {{ PAGE_META.home.headingSubtitle }}
+          </span>
+        </h1>
         <p class="text-sm md:text-base tracking-[0.2em] text-white/70 max-w-md uppercase">
           An exclusive space where elegance meets<br />the art of hospitality.
         </p>

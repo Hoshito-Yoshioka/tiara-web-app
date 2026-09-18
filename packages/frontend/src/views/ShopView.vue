@@ -1,14 +1,15 @@
 <script setup lang="ts">
   import { useShopApi } from '@/composables/useShopApi'
   import { usePageMeta } from '@/composables/usePageMeta'
+  import { PAGE_META } from '@/lib/seo'
   import { Phone, MapPin } from 'lucide-vue-next'
 
   const { shops, isLoading, error, fetchShops } = useShopApi()
 
+  // SEO コピーの正本（lib/seo.ts の PAGE_META）を参照する
   usePageMeta({
-    title: '店舗情報',
-    description:
-      '函館のニュークラブ「Tiara（ティアラ）」の店舗情報です。住所・電話番号などのご案内はこちらから。',
+    title: PAGE_META.shop.title,
+    description: PAGE_META.shop.description,
   })
 
   // async setup で取得することで、SSG ビルド時に店舗情報が HTML に含まれる
@@ -26,8 +27,16 @@
         class="flex flex-col items-center mb-20 text-center"
       >
         <span class="text-primary text-[11px] tracking-[0.4em] uppercase mb-4">Our Club</span>
-        <h1 class="text-3xl md:text-4xl font-light tracking-[0.2em] uppercase text-foreground">
-          Shop
+        <!-- h1 は「英語表示語 + 可視の日本語サブタイトル」の 2 行構成（要件 3.3 / 3.5） -->
+        <h1>
+          <span
+            class="block text-3xl md:text-4xl font-light tracking-[0.2em] uppercase text-foreground"
+          >
+            Shop
+          </span>
+          <span class="mt-3 block text-xs tracking-[0.2em] text-muted-foreground">
+            {{ PAGE_META.shop.headingSubtitle }}
+          </span>
         </h1>
         <span class="block w-12 h-px bg-primary mt-6" />
       </div>

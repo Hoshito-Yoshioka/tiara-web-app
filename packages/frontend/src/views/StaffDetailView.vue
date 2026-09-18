@@ -196,7 +196,7 @@
               <img
                 v-if="currentImageUrl"
                 :src="currentImageUrl"
-                :alt="staffDetail.staff.name"
+                :alt="`函館のニュークラブ ティアラ キャスト${staffDetail.staff.name}`"
                 class="w-full h-full object-cover transition-opacity duration-300"
                 :style="{
                   objectPosition: staffDetail.staff.imageCropPosition
@@ -261,7 +261,7 @@
               >
                 <img
                   :src="img.imageUrl"
-                  :alt="`${staffDetail.staff.name} ${idx + 1}`"
+                  :alt="`函館のニュークラブ ティアラ キャスト${staffDetail.staff.name}の写真${idx + 1}枚目`"
                   loading="lazy"
                   decoding="async"
                   width="64"

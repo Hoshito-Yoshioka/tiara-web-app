@@ -1,11 +1,12 @@
 <script setup lang="ts">
   import { MapPin, Clock, Train } from 'lucide-vue-next'
   import { usePageMeta } from '@/composables/usePageMeta'
+  import { PAGE_META } from '@/lib/seo'
 
+  // SEO コピーの正本（lib/seo.ts の PAGE_META）を参照する
   usePageMeta({
-    title: 'アクセス',
-    description:
-      '函館のニュークラブ「Tiara（ティアラ）」へのアクセス。北海道函館市本町1-28 第5大栄ビル1F、函館市電「中央病院前」電停より徒歩約3分です。',
+    title: PAGE_META.access.title,
+    description: PAGE_META.access.description,
   })
 
   /** 店舗情報 */
@@ -36,8 +37,16 @@
         class="flex flex-col items-center mb-20 text-center"
       >
         <span class="text-primary text-[11px] tracking-[0.4em] uppercase mb-4">Location</span>
-        <h1 class="text-3xl md:text-4xl font-light tracking-[0.2em] uppercase text-foreground">
-          Access
+        <!-- h1 は「英語表示語 + 可視の日本語サブタイトル」の 2 行構成（要件 3.3 / 3.5） -->
+        <h1>
+          <span
+            class="block text-3xl md:text-4xl font-light tracking-[0.2em] uppercase text-foreground"
+          >
+            Access
+          </span>
+          <span class="mt-3 block text-xs tracking-[0.2em] text-muted-foreground">
+            {{ PAGE_META.access.headingSubtitle }}
+          </span>
         </h1>
         <span class="block w-12 h-px bg-primary mt-6" />
       </div>
