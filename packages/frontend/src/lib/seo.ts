@@ -21,13 +21,6 @@ export const HOME_TITLE = '【公式】クラブ ティアラ(TIARA)｜函館・
 export const BRAND_TITLE = '函館のニュークラブ ティアラ【公式】'
 
 /**
- * 旧デフォルト title。
- * usePageMeta.ts / App.vue が参照中のため後方互換として残す（HOME_TITLE への切替はタスク 1.2）。
- * @deprecated 新規コードでは HOME_TITLE / BRAND_TITLE を使用すること。
- */
-export const DEFAULT_TITLE = 'Tiara（函館 ニュークラブ ティアラ）'
-
-/**
  * サイト共通のデフォルト meta description（ホームのコピーと同一）。
  * 要件 2.2: 函館・ニュークラブ・キャバクラのキーワードと、公式サイトで実際に
  * 提供している価値（キャストプロフィール・出勤スケジュール・料金・アクセス）を含む。

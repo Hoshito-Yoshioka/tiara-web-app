@@ -1,7 +1,14 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useHead, useSeoMeta } from '@unhead/vue'
 import { useRoute } from 'vue-router'
-import { SITE_URL, SITE_NAME, DEFAULT_TITLE, DEFAULT_DESCRIPTION, OG_IMAGE_URL } from '@/lib/seo'
+import {
+  SITE_URL,
+  SITE_NAME,
+  HOME_TITLE,
+  BRAND_TITLE,
+  DEFAULT_DESCRIPTION,
+  OG_IMAGE_URL,
+} from '@/lib/seo'
 
 interface PageMetaInput {
   /** ページ固有のタイトル。省略時はサイト共通タイトルのみ */
@@ -21,7 +28,9 @@ export function usePageMeta(input: PageMetaInput = {}) {
   const canonicalUrl = computed(() => `${SITE_URL}${route.path}`)
   const title = computed(() => {
     const pageTitle = toValue(input.title)
-    return pageTitle ? `${pageTitle} | ${DEFAULT_TITLE}` : DEFAULT_TITLE
+    // 下層ページ: 「ページ固有の内容 | ブランドサフィックス」（要件 1.3）
+    // 未指定（ホーム）: キーワードを網羅した HOME_TITLE（要件 1.1 / 1.2）
+    return pageTitle ? `${pageTitle} | ${BRAND_TITLE}` : HOME_TITLE
   })
   const description = computed(() => toValue(input.description) || DEFAULT_DESCRIPTION)
 

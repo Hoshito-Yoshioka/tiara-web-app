@@ -4,14 +4,14 @@
   import { useHead } from '@unhead/vue'
   import TheHeader from '@/components/layout/TheHeader.vue'
   import TheFooter from '@/components/layout/TheFooter.vue'
-  import { DEFAULT_TITLE, DEFAULT_DESCRIPTION } from '@/lib/seo'
+  import { HOME_TITLE, DEFAULT_DESCRIPTION } from '@/lib/seo'
 
   const route = useRoute()
 
   // サイト共通のデフォルトメタ。各公開ページは usePageMeta() で上書きする。
   // 管理画面・スタッフポータルは検索エンジンにインデックスさせない。
   useHead({
-    title: DEFAULT_TITLE,
+    title: HOME_TITLE,
     meta: computed(() => {
       const meta: { name: string; content: string }[] = [
         { name: 'description', content: DEFAULT_DESCRIPTION },
