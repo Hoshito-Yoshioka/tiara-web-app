@@ -45,9 +45,11 @@ jobs:
           version: v2.12.2
           working-directory: packages/backend
 
-      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
       - name: Vulnerability check
         run: govulncheck ./...
+        # 修正版が未公開の脆弱性（例: Echo GO-2026-6872/6875）で常時失敗しないよう、CIは止めない。
+        # 結果はログで確認すること。
         continue-on-error: true
       - run: go build ./...
       - run: go test ./internal/... -v
