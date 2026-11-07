@@ -55,7 +55,20 @@ func main() {
 
 	// --- Echo ---
 	e := echo.New()
-	e.Use(middleware.Logger())
+	// X-Forwarded-For / X-Real-IP は偽装可能なため信頼せず、直接の接続元IPのみを使う
+	// （レート制限の回避対策: GO-2026-6872 / GO-2026-6875）。
+	e.IPExtractor = echo.ExtractIPDirect()
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogMethod:   true,
+		LogURI:      true,
+		LogStatus:   true,
+		LogLatency:  true,
+		LogRemoteIP: true,
+		LogValuesFunc: func(_ echo.Context, v middleware.RequestLoggerValues) error {
+			log.Printf("%s %s status=%d latency=%s remote_ip=%s", v.Method, v.URI, v.Status, v.Latency, v.RemoteIP)
+			return nil
+		},
+	}))
 	e.Use(middleware.Recover())
 	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
 		XSSProtection:         "1; mode=block",
