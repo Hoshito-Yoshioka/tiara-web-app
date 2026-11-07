@@ -23,12 +23,14 @@ build/
 .env.production
 __pycache__/
 *.pyc
+*.tsbuildinfo
 
 # --- ログファイル ---
 *.log
 
 # --- VSCode 拡張 ---
 .history/
+*.code-workspace
 
 # --- Go modules ---
 go.work
@@ -48,7 +50,7 @@ packages/*/node_modules/
 
 # Go backend compiled binary
 packages/backend/backend
-packages/backend/backend # Go binary
+packages/backend/server
 packages/backend/bin/
 
 # github（workflows だけ追跡）
@@ -59,7 +61,7 @@ packages/backend/bin/
 docs/
 
 # uploads
-.packages/backend/uploads/staff/
+packages/backend/uploads/
 
 # --- harneses ---
 .claude/
@@ -67,6 +69,9 @@ aidlc/
 .aidlc/
 .vt-sdd-orchestrator/
 .kiro/
+CLAUDE.md
+apm.yml
+apm.lock.yaml
 
 # APM dependencies
 apm_modules/
